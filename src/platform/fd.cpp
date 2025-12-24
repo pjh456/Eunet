@@ -4,7 +4,6 @@
 #include <cerrno>
 #include <sys/socket.h>
 #include <fcntl.h>
-#include <stdio.h>
 
 #include <utility>
 
