@@ -128,7 +128,7 @@ eunet http https://example.com
 
 ## 开发路线图
 
-- [] Phase 0：工程骨架
+- [x] Phase 0：工程骨架
     - CMake
     - 空模块
     - 能 `cmake && make`
