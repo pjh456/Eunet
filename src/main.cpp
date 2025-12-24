@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "eunet/platform/time.h"
+#include "eunet/platform/time.hpp"
 
 template <typename T>
     requires requires(T a) {

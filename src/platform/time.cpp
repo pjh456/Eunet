@@ -1,4 +1,4 @@
-#include "eunet/platform/time.h"
+#include "eunet/platform/time.hpp"
 #include <thread>
 
 namespace platform::time
