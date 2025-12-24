@@ -1,6 +1,6 @@
 #include <cassert>
 #include <iostream>
-#include "eunet/platform/time.h"
+#include "eunet/platform/time.hpp"
 
 using namespace platform::time;
 
