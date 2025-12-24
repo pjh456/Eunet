@@ -126,6 +126,33 @@ eunet http https://example.com
 
 ---
 
+## 开发路线图
+
+- [] Phase 0：工程骨架
+    - CMake
+    - 空模块
+    - 能 `cmake && make`
+- [] Phase 1：platform + util
+    - 时间
+    - `Result` / `Error`
+    - 单元测试框架（Catch2 / GoogleTest）
+- [] Phase 2：core（无网络）
+    - `Event`
+    - `Timeline`
+    - `FSM`
+    - `Orchestrator`(mock scenario)
+- [] Phase 3：net（最小 TCP）
+    - TCP connect + send
+    - 本地 httpbin
+- [] Phase 4：HttpScenario
+    - `GET /`
+    - 事件流完整
+- [] Phase 5：TUI MVP
+    - 时间线列表
+    - 状态颜色
+
+---
+
 ## 🛠️ 技术栈（规划）
 
 * **平台**：Linux / openEuler
