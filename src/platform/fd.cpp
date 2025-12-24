@@ -5,8 +5,6 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 
-#include <utility>
-
 namespace platform::fd
 {
     Fd::Fd(int fd) noexcept : fd(fd) {}
@@ -57,17 +55,17 @@ namespace platform::fd
         return Fd(fd);
     }
 
-    std::tuple<Fd, Fd> Fd::pipe() noexcept
+    Pipe Fd::pipe() noexcept
     {
         int fds[2];
-        Fd read_end, write_end;
+        Pipe pipe;
 
         if (::pipe2(fds, O_CLOEXEC) == 0)
         {
-            read_end.reset(fds[0]);
-            write_end.reset(fds[1]);
+            pipe.read.reset(fds[0]);
+            pipe.write.reset(fds[1]);
         }
 
-        return {std::move(read_end), std::move(write_end)};
+        return pipe;
     }
 }
