@@ -1,3 +1,6 @@
+#ifndef INCLUDE_EUNET_PLATFORM_TIME
+#define INCLUDE_EUNET_PLATFORM_TIME
+
 #include <chrono>
 
 namespace platform::time
@@ -28,3 +31,5 @@ namespace platform::time
     void sleep_for(Duration d);
     void sleep_until(MonoPoint tp);
 }
+
+#endif // INCLUDE_EUNET_PLATFORM_TIME

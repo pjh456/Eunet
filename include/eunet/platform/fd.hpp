@@ -1,3 +1,6 @@
+#ifndef INCLUDE_EUNET_PLATFORM_FD
+#define INCLUDE_EUNET_PLATFORM_FD
+
 #include <tuple>
 
 namespace platform::fd
@@ -35,3 +38,5 @@ namespace platform::fd
         void reset(int new_fd) noexcept;
     };
 }
+
+#endif // INCLUDE_EUNET_PLATFORM_FD
