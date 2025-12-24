@@ -3,7 +3,8 @@
         {
             "name": "Linux",
             "includePath": [
-                "${default}"
+                "${default}",
+                "${workspaceFolder}/include"
             ],
             "defines": [],
             "cppStandard": "c++20",
