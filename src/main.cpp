@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include "eunet/platform/time.h"
 
 template <typename T>
     requires requires(T a) {
@@ -18,5 +19,6 @@ int main()
         << " and "
         << add(
                std::string("gcc, "),
-               std::string("g++"));
+               std::string("g++"))
+        << std::endl;
 }
