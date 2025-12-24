@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${default}"
+            ],
+            "defines": [],
+            "cppStandard": "c++20",
+            "cStandard": "c11"
+        }
+    ],
+    "version": 4
+}
