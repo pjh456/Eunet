@@ -1,10 +1,11 @@
 #ifndef INCLUDE_EUNET_PLATFORM_FD
 #define INCLUDE_EUNET_PLATFORM_FD
 
-#include <tuple>
-
 namespace platform::fd
 {
+    class Fd;
+    struct Pipe;
+
     class Fd
     {
     private:
@@ -31,11 +32,17 @@ namespace platform::fd
             int type,
             int protocol) noexcept;
 
-        static std::tuple<Fd, Fd> pipe() noexcept;
+        static Pipe pipe() noexcept;
 
     public:
         int release() noexcept;
         void reset(int new_fd) noexcept;
+    };
+
+    struct Pipe
+    {
+        Fd read;
+        Fd write;
     };
 }
 
