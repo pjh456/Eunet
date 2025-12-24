@@ -1,4 +1,5 @@
 #include "eunet/platform/time.h"
+#include <thread>
 
 namespace platform::time
 {
@@ -14,4 +15,16 @@ namespace platform::time
 
     MonoPoint deadline_after(Duration d) { return monotonic_now() + d; }
     bool expired(MonoPoint deadline) { return monotonic_now() >= deadline; }
+
+    void sleep_for(Duration d)
+    {
+        if (d.count() <= 0)
+            return;
+
+        std::this_thread::sleep_for(d);
+    }
+    void sleep_until(MonoPoint tp)
+    {
+        std::this_thread::sleep_until(tp);
+    }
 }

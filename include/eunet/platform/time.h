@@ -19,9 +19,12 @@ namespace platform::time
 
     // Unix 时间
     using UnixTime = std::time_t;
-    UnixTime to_unix(WallPoint);
-    WallPoint from_unix(UnixTime);
+    UnixTime to_unix(WallPoint tp);
+    WallPoint from_unix(UnixTime t);
 
     MonoPoint deadline_after(Duration d);
     bool expired(MonoPoint deadline);
+
+    void sleep_for(Duration d);
+    void sleep_until(MonoPoint tp);
 }
