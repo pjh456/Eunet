@@ -169,10 +169,12 @@ void test_map()
     auto ok = Result<int, std::string>::Ok(2);
     auto err = Result<int, std::string>::Err("x");
 
-    auto r1 = ok.map([](int x)
-                     { return x * 3; });
-    auto r2 = err.map([](int x)
-                      { return x * 3; });
+    auto r1 = ok.map(
+        [](int x)
+        { return x * 3; });
+    auto r2 = err.map(
+        [](int x)
+        { return x * 3; });
 
     assert(r1.unwrap() == 6);
     assert(r2.unwrap_err() == "x");
@@ -183,11 +185,13 @@ void test_map_or()
     auto ok = Result<int, std::string>::Ok(3);
     auto err = Result<int, std::string>::Err("fallback");
 
-    auto v1 = ok.map_or([](int x)
-                        { return std::string(x, 'a'); });
+    auto v1 = ok.map_or(
+        [](int x)
+        { return std::string(x, 'a'); });
 
-    auto v2 = err.map_or([](int)
-                         { return std::string("never"); });
+    auto v2 = err.map_or(
+        [](int)
+        { return std::string("never"); });
 
     assert(v1 == "aaa");
     assert(v2 == "fallback");
@@ -202,15 +206,18 @@ void test_map_err()
     auto ok = Result<int, std::string>::Ok(5);
     auto err = Result<int, std::string>::Err("err");
 
-    auto r1 = ok.map_err([](const std::string &)
-                         { return long{1}; });
+    auto r1 = ok.map_err(
+        [](const std::string &)
+        { return long{1}; });
 
-    auto r2 = err.map_err([](const std::string &s)
-                          { return long(s.size()); });
+    auto r2 = err.map_err(
+        [](const std::string &s)
+        { return long(s.size()); });
 
-    static_assert(std::same_as<
-                  decltype(r1),
-                  Result<int, long>>);
+    static_assert(
+        std::same_as<
+            decltype(r1),
+            Result<int, long>>);
 
     assert(r1.unwrap() == 5);
     assert(r2.unwrap_err() == 3);
@@ -221,11 +228,13 @@ void test_map_err_or()
     auto ok = Result<int, std::string>::Ok(7);
     auto err = Result<int, std::string>::Err("abc");
 
-    auto v1 = ok.map_err_or([](const std::string &)
-                            { return 0; });
+    auto v1 = ok.map_err_or(
+        [](const std::string &)
+        { return 0; });
 
-    auto v2 = err.map_err_or([](const std::string &s)
-                             { return static_cast<int>(s.size()); });
+    auto v2 = err.map_err_or(
+        [](const std::string &s)
+        { return static_cast<int>(s.size()); });
 
     assert(v1 == 7);
     assert(v2 == 3);
@@ -240,11 +249,13 @@ void test_and_then()
     auto ok = Result<int, std::string>::Ok(1);
     auto err = Result<int, std::string>::Err("x");
 
-    auto r1 = ok.and_then([](int x)
-                          { return Result<int, std::string>::Ok(x + 1); });
+    auto r1 = ok.and_then(
+        [](int x)
+        { return Result<int, std::string>::Ok(x + 1); });
 
-    auto r2 = err.and_then([](int x)
-                           { return Result<int, std::string>::Ok(x + 1); });
+    auto r2 = err.and_then(
+        [](int x)
+        { return Result<int, std::string>::Ok(x + 1); });
 
     assert(r1.unwrap() == 2);
     assert(r2.unwrap_err() == "x");
