@@ -1,20 +1,34 @@
-# 1. 找到 tests/ 下所有 .c/.cpp 文件
-file(GLOB TEST_SOURCES "*.c" "*.cpp")
+# 1. 收集测试源文件
+file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+)
 
-# 2. 为每个测试文件单独创建一个可执行文件
 foreach(test_src ${TEST_SOURCES})
-    # 提取文件名作为测试名
-    get_filename_component(test_name ${test_src} NAME_WE)
-
-    # 3. 创建可执行文件（输出目录设置到 build/tests）
-    add_executable(${test_name} ${test_src})
-    set_target_properties(${test_name} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+    # 2. 生成“相对路径名”作为唯一 test 名
+    file(RELATIVE_PATH rel_path
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${test_src}
     )
 
-    # 4. 链接你的主库
-    target_link_libraries(${test_name} eunet)
+    # 把路径变成合法 target 名
+    string(REPLACE "/" "_" test_name ${rel_path})
+    string(REPLACE "\\" "_" test_name ${test_name})
+    string(REPLACE "." "_" test_name ${test_name})
 
-    # 5. 加入 CTest
-    add_test(NAME ${test_name} COMMAND ${CMAKE_BINARY_DIR}/tests/${test_name})
+    # 3. 可执行文件
+    add_executable(${test_name} ${test_src})
+
+    target_link_libraries(${test_name} PRIVATE eunet)
+
+    # 4. 统一输出到 build/tests
+    set_target_properties(${test_name} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests
+    )
+
+    # 5. 用 TARGET_FILE 注册 CTest（关键）
+    add_test(
+        NAME ${test_name}
+        COMMAND $<TARGET_FILE:${test_name}>
+    )
 endforeach()
