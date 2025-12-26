@@ -110,6 +110,11 @@ namespace util
             return std::get<T>(data);
         }
 
+        [[nodiscard]] const T &unwrap_or(const T &val) const
+        {
+            return is_ok() ? std::get<T>(data) : val;
+        }
+
         [[nodiscard]] E &unwrap_err()
         {
             if (!is_err())
@@ -126,6 +131,11 @@ namespace util
                     bad_result_access(
                         "Result::unwrap_err() called on Ok");
             return std::get<E>(data);
+        }
+
+        [[nodiscard]] const E &unwrap_err_or(const E &err) const
+        {
+            return is_err() ? std::get<E>(data) : err;
         }
 
     public:
