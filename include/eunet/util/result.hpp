@@ -58,26 +58,20 @@ namespace util
         std::variant<T, E> data;
 
     public:
-        static Result Ok(const T &val)
-            requires std::same_as<std::remove_cvref_t<T>, T>
+        template <typename U>
+            requires std::constructible_from<T, U &&>
+        static Result Ok(U &&val) noexcept(
+            std::is_nothrow_constructible_v<T, U &&>)
         {
-            return Result(val);
-        }
-        static Result Ok(T &&val) noexcept
-            requires std::same_as<std::remove_cvref_t<T>, T>
-        {
-            return Result(std::move(val));
+            return Result(T(std::forward<U>(val)));
         }
 
-        static Result Err(const E &err)
-            requires std::same_as<std::remove_cvref_t<E>, E>
+        template <typename G>
+            requires std::constructible_from<E, G &&>
+        static Result Err(G &&err) noexcept(
+            std::is_nothrow_constructible_v<E, G &&>)
         {
-            return Result(err);
-        }
-        static Result Err(E &&err) noexcept
-            requires std::same_as<std::remove_cvref_t<E>, E>
-        {
-            return Result(std::move(err));
+            return Result(E(std::forward<G>(err)));
         }
 
     public:
@@ -105,7 +99,7 @@ namespace util
         bool is_err() const noexcept { return std::holds_alternative<E>(data); }
 
     public:
-        [[nodiscard]] T &unwrap()
+        [[nodiscard]] T &unwrap() &
         {
             if (!is_ok())
                 throw result_helper::
@@ -114,13 +108,21 @@ namespace util
             return std::get<T>(data);
         }
 
-        [[nodiscard]] const T &unwrap() const
+        [[nodiscard]] const T &unwrap() const &
         {
             if (!is_ok())
                 throw result_helper::
                     bad_result_access(
                         "Result::unwrap() called on Err");
             return std::get<T>(data);
+        }
+
+        [[nodiscard]] T unwrap() &&
+        {
+            if (!is_ok())
+                throw result_helper::
+                    bad_result_access("unwrap on Err");
+            return std::move(std::get<T>(data));
         }
 
         [[nodiscard]] const T &unwrap_or(const T &val) const
@@ -128,7 +130,7 @@ namespace util
             return is_ok() ? std::get<T>(data) : val;
         }
 
-        [[nodiscard]] E &unwrap_err()
+        [[nodiscard]] E &unwrap_err() &
         {
             if (!is_err())
                 throw result_helper::
@@ -137,13 +139,21 @@ namespace util
             return std::get<E>(data);
         }
 
-        [[nodiscard]] const E &unwrap_err() const
+        [[nodiscard]] const E &unwrap_err() const &
         {
             if (!is_err())
                 throw result_helper::
                     bad_result_access(
                         "Result::unwrap_err() called on Ok");
             return std::get<E>(data);
+        }
+
+        [[nodiscard]] E unwrap_err() &&
+        {
+            if (!is_err())
+                throw result_helper::
+                    bad_result_access("unwrap_err on Ok");
+            return std::move(std::get<E>(data));
         }
 
         [[nodiscard]] const E &unwrap_err_or(const E &err) const
@@ -220,21 +230,25 @@ namespace util
 
     public:
         template <typename F>
-            requires std::invocable<F, T> &&
-                     result_helper::ResultType<std::invoke_result_t<F, T>> &&
-                     std::same_as<
-                         result_helper::result_error_t<
-                             std::invoke_result_t<F, T>>,
-                         E>
-        [[nodiscard]] auto and_then(F &&f) const
-            -> std::invoke_result_t<F, T>
+        auto and_then(F &&f)
+            const & -> std::invoke_result_t<F, const T &>
+        {
+            using Ret = std::invoke_result_t<F, const T &>;
+            if (is_ok())
+                return std::invoke(f, std::get<T>(data));
+            else
+                return Ret::Err(std::get<E>(data));
+        }
+
+        template <typename F>
+        auto and_then(F &&f)
+            && -> std::invoke_result_t<F, T>
         {
             using Ret = std::invoke_result_t<F, T>;
-
             if (is_ok())
-                return std::invoke(f, unwrap());
+                return std::invoke(f, std::move(std::get<T>(data)));
             else
-                return Ret::Err(unwrap_err());
+                return Ret::Err(std::move(std::get<E>(data)));
         }
     };
 
