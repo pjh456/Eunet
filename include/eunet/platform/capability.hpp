@@ -59,7 +59,7 @@ namespace platform::capability
         util::Result<bool, CapabilityError>
         has_permitted(cap_value_t cap) noexcept;
 
-        util::Result<bool, CapabilityError>
+        util::Result<void, CapabilityError>
         set_effective(cap_value_t cap, bool enable) noexcept;
     }
 
@@ -82,13 +82,13 @@ namespace platform::capability
     public:
         util::Result<CapabilityState, CapabilityError>
         state(Capability cap) const noexcept;
-        util::Result<bool, CapabilityError>
+        util::Result<void, CapabilityError>
         enable(Capability cap) noexcept;
-        util::Result<bool, CapabilityError>
+        util::Result<void, CapabilityError>
         disable(Capability cap) noexcept;
 
     public:
-        util::Result<bool, CapabilityError>
+        util::Result<void, CapabilityError>
         drop_all_effective() noexcept;
     };
 
