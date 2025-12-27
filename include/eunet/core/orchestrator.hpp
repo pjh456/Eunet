@@ -14,7 +14,7 @@ namespace core
     class Orchestrator
     {
     public:
-        using EmitResult = util::Result<bool, EventError>;
+        using EmitResult = util::Result<void, EventError>;
 
     private:
         Timeline timeline;
