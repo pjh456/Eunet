@@ -1,0 +1,185 @@
+#include <cassert>
+#include <iostream>
+#include <thread>
+#include <chrono>
+
+#include "eunet/core/lifecycle_fsm.hpp"
+#include "eunet/core/event.hpp"
+#include "eunet/platform/time.hpp"
+
+using namespace core;
+
+/* -------------------------------------------------
+ * 工具函数
+ * -------------------------------------------------*/
+
+static Event make_ok(
+    EventType type,
+    int fd)
+{
+    return Event::info(type, "ok", fd);
+}
+
+static Event make_error(
+    EventType type,
+    int fd,
+    const char *msg = "error")
+{
+    return Event::failure(
+        type,
+        EventError{"test", msg},
+        fd);
+}
+
+/* -------------------------------------------------
+ * 单 FSM 测试
+ * -------------------------------------------------*/
+
+void test_fsm_normal_flow()
+{
+    LifecycleFSM fsm;
+
+    fsm.on_event(make_ok(EventType::DNS_START, 3));
+    assert(fsm.current_fd() == 3);
+    assert(fsm.current_state() == LifeState::Resolving);
+
+    fsm.on_event(make_ok(EventType::DNS_DONE, 3));
+    assert(fsm.current_state() == LifeState::Connecting);
+
+    fsm.on_event(make_ok(EventType::TCP_ESTABLISHED, 3));
+    assert(fsm.current_state() == LifeState::Established);
+
+    fsm.on_event(make_ok(EventType::REQUEST_SENT, 3));
+    assert(fsm.current_state() == LifeState::Sending);
+
+    fsm.on_event(make_ok(EventType::REQUEST_RECEIVED, 3));
+    assert(fsm.current_state() == LifeState::Receiving);
+
+    // Receiving → Finished 是无条件的
+    fsm.on_event(make_ok(EventType::REQUEST_RECEIVED, 3));
+    assert(fsm.current_state() == LifeState::Finished);
+
+    assert(!fsm.has_error());
+}
+
+void test_fsm_skip_dns()
+{
+    LifecycleFSM fsm;
+
+    fsm.on_event(make_ok(EventType::TCP_CONNECT, 4));
+    assert(fsm.current_state() == LifeState::Connecting);
+
+    fsm.on_event(make_ok(EventType::TCP_ESTABLISHED, 4));
+    assert(fsm.current_state() == LifeState::Established);
+}
+
+void test_fsm_error_interrupt()
+{
+    LifecycleFSM fsm;
+
+    fsm.on_event(make_ok(EventType::DNS_START, 5));
+    assert(fsm.current_state() == LifeState::Resolving);
+
+    fsm.on_event(make_error(EventType::DNS_DONE, 5, "dns failed"));
+    assert(fsm.current_state() == LifeState::Error);
+    assert(fsm.has_error());
+
+    const EventError *err = fsm.get_last_error();
+    assert(err);
+    assert(err->domain == "test");
+    assert(err->message == "dns failed");
+}
+
+void test_fsm_error_is_terminal()
+{
+    LifecycleFSM fsm;
+
+    fsm.on_event(make_error(EventType::TCP_CONNECT, 6));
+    assert(fsm.current_state() == LifeState::Error);
+
+    fsm.on_event(make_ok(EventType::TCP_ESTABLISHED, 6));
+    assert(fsm.current_state() == LifeState::Error);
+}
+
+void test_fsm_timestamp_behavior()
+{
+    LifecycleFSM fsm;
+
+    auto t0 = platform::time::wall_now();
+    fsm.on_event(make_ok(EventType::DNS_START, 7));
+    auto start = fsm.start_timestamp();
+    auto last = fsm.last_timestamp();
+
+    assert(start == last);
+    assert(start >= t0);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+    fsm.on_event(make_ok(EventType::DNS_DONE, 7));
+    assert(fsm.last_timestamp() > start);
+}
+
+/* -------------------------------------------------
+ * FsmManager 测试
+ * -------------------------------------------------*/
+
+void test_manager_basic()
+{
+    FsmManager mgr;
+
+    assert(mgr.size() == 0);
+
+    mgr.on_event(make_ok(EventType::DNS_START, 10));
+    assert(mgr.size() == 1);
+    assert(mgr.has(10));
+
+    const LifecycleFSM *fsm = mgr.get(10);
+    assert(fsm);
+    assert(fsm->current_state() == LifeState::Resolving);
+}
+
+void test_manager_multi_fd()
+{
+    FsmManager mgr;
+
+    mgr.on_event(make_ok(EventType::DNS_START, 1));
+    mgr.on_event(make_ok(EventType::DNS_START, 2));
+    mgr.on_event(make_ok(EventType::DNS_START, 3));
+
+    assert(mgr.size() == 3);
+    assert(mgr.has(1));
+    assert(mgr.has(2));
+    assert(mgr.has(3));
+}
+
+void test_manager_error_fsm_persist()
+{
+    FsmManager mgr;
+
+    mgr.on_event(make_error(EventType::TCP_CONNECT, 20));
+
+    const LifecycleFSM *fsm = mgr.get(20);
+    assert(fsm);
+    assert(fsm->current_state() == LifeState::Error);
+    assert(fsm->has_error());
+}
+
+/* -------------------------------------------------
+ * main
+ * -------------------------------------------------*/
+
+int main()
+{
+    test_fsm_normal_flow();
+    test_fsm_skip_dns();
+    test_fsm_error_interrupt();
+    test_fsm_error_is_terminal();
+    test_fsm_timestamp_behavior();
+
+    test_manager_basic();
+    test_manager_multi_fd();
+    test_manager_error_fsm_persist();
+
+    std::cout << "[LifecycleFSM] all tests passed\n";
+    return 0;
+}
