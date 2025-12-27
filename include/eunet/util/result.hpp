@@ -87,6 +87,19 @@ namespace util
         explicit Result(T &&val) noexcept : data(std::move(val)) {}
         explicit Result(E &&err) noexcept : data(std::move(err)) {}
 
+        explicit Result(const Result &)
+            requires std::copy_constructible<T> &&
+                         std::copy_constructible<E>
+        = default;
+
+        Result &operator=(const Result &)
+            requires(std::is_copy_assignable_v<T>) &&
+                        (std::is_copy_assignable_v<E>)
+        = default;
+
+        explicit Result(Result &&) noexcept = default;
+        Result &operator=(Result &&) noexcept = default;
+
     public:
         bool is_ok() const noexcept { return std::holds_alternative<T>(data); }
         bool is_err() const noexcept { return std::holds_alternative<E>(data); }
