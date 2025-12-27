@@ -1,6 +1,6 @@
 #include "eunet/platform/capability.hpp"
 
-#include <sstream>
+#include <errno.h>
 
 namespace platform::capability
 {
@@ -36,99 +36,81 @@ namespace platform::capability
         {
             using Result = util::Result<bool, CapabilityError>;
 
-            cap_t caps = cap_get_proc();
+            cap_t caps = ::cap_get_proc();
             if (!caps)
             {
-                return Result::Err(CapabilityError{
-                    .code = CapabilityErrorCode::GetProcCapsFailed,
-                    .capability = linux_to_cap(cap),
-                    .sys_errno = errno,
-                    .syscall = "cap_get_proc",
-                    .message = "failed to get process capabilities",
-                    .hint = "check process privilege or libcap availability",
-                });
+                return Result::Err(
+                    CapabilityError{
+                        CapabilityErrorCode::GetProcCapsFailed,
+                        linux_to_cap(cap),
+                        SysError::from_errno(errno),
+                    });
             }
 
             cap_flag_value_t value{};
-            if (cap_get_flag(caps, cap, CAP_PERMITTED, &value) != 0)
+            if (::cap_get_flag(caps, cap, CAP_PERMITTED, &value) != 0)
             {
-                int err = errno;
-                cap_free(caps);
-                return Result::Err(CapabilityError{
-                    .code = CapabilityErrorCode::GetFlagFailed,
-                    .capability = linux_to_cap(cap),
-                    .sys_errno = err,
-                    .syscall = "cap_get_flag",
-                    .message = "failed to query CAP_PERMITTED flag",
-                });
+                SysError err = SysError::from_errno(errno);
+                ::cap_free(caps);
+
+                return Result::Err(
+                    CapabilityError{
+                        CapabilityErrorCode::GetFlagFailed,
+                        linux_to_cap(cap),
+                        err,
+                    });
             }
 
-            cap_free(caps);
+            ::cap_free(caps);
             return Result::Ok(value == CAP_SET);
         }
 
-        util::Result<int, CapabilityError>
+        util::Result<bool, CapabilityError>
         set_effective(cap_value_t cap, bool enable) noexcept
         {
-            using Result = util::Result<int, CapabilityError>;
+            using Result = util::Result<bool, CapabilityError>;
 
-            cap_t caps = cap_get_proc();
+            cap_t caps = ::cap_get_proc();
             if (!caps)
             {
-                return Result::Err(CapabilityError{
-                    .code = CapabilityErrorCode::GetProcCapsFailed,
-                    .capability = linux_to_cap(cap),
-                    .sys_errno = errno,
-                    .syscall = "cap_get_proc",
-                    .message = "failed to get process capabilities",
-                });
+                return Result::Err(
+                    CapabilityError{
+                        CapabilityErrorCode::GetProcCapsFailed,
+                        linux_to_cap(cap),
+                        SysError::from_errno(errno),
+                    });
             }
 
             cap_flag_value_t flag = enable ? CAP_SET : CAP_CLEAR;
-            if (cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap, flag) != 0)
+            if (::cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap, flag) != 0)
             {
-                int err = errno;
-                cap_free(caps);
-                return Result::Err(CapabilityError{
-                    .code = CapabilityErrorCode::SetFlagFailed,
-                    .capability = linux_to_cap(cap),
-                    .sys_errno = err,
-                    .syscall = "cap_set_flag",
-                    .message = "failed to update CAP_EFFECTIVE flag",
-                });
+                SysError err = SysError::from_errno(errno);
+                ::cap_free(caps);
+
+                return Result::Err(
+                    CapabilityError{
+                        CapabilityErrorCode::SetFlagFailed,
+                        linux_to_cap(cap),
+                        err,
+                    });
             }
 
-            if (cap_set_proc(caps) != 0)
+            if (::cap_set_proc(caps) != 0)
             {
-                int err = errno;
-                cap_free(caps);
-                return Result::Err(CapabilityError{
-                    .code = CapabilityErrorCode::SetProcFailed,
-                    .capability = linux_to_cap(cap),
-                    .sys_errno = err,
-                    .syscall = "cap_set_proc",
-                    .message = "failed to apply process capabilities",
-                    .hint = "process may lack CAP_SETPCAP or be restricted by bounding set",
-                });
+                SysError err = SysError::from_errno(errno);
+                ::cap_free(caps);
+
+                return Result::Err(
+                    CapabilityError{
+                        CapabilityErrorCode::SetProcFailed,
+                        linux_to_cap(cap),
+                        err,
+                    });
             }
 
-            cap_free(caps);
+            ::cap_free(caps);
             return Result::Ok(1);
         }
-    }
-
-    std::string CapabilityError::to_string() const
-    {
-        std::ostringstream oss;
-        oss << message;
-
-        if (sys_errno)
-            oss << " (errno=" << *sys_errno << ")";
-        if (syscall)
-            oss << " at " << *syscall;
-        if (!hint.empty())
-            oss << " | hint: " << hint;
-        return oss.str();
     }
 
     CapabilityManager &CapabilityManager::instance()
@@ -148,18 +130,19 @@ namespace platform::capability
         using Result = util::Result<CapabilityState, CapabilityError>;
 
         auto res = helper::has_permitted(helper::to_linux_cap(cap));
-        return res.is_err()
-                   ? Result::Err(res.unwrap_err())
-                   : Result::Ok(
-                         res.unwrap()
-                             ? CapabilityState::Available
-                             : CapabilityState::Missing);
+        if (res.is_err())
+            return Result::Err(res.unwrap_err());
+
+        return Result::Ok(
+            res.unwrap()
+                ? CapabilityState::Available
+                : CapabilityState::Missing);
     }
 
-    util::Result<int, CapabilityError>
+    util::Result<bool, CapabilityError>
     CapabilityManager::enable(Capability cap) noexcept
     {
-        using Result = util::Result<int, CapabilityError>;
+        using Result = util::Result<bool, CapabilityError>;
 
         cap_value_t linux_cap = helper::to_linux_cap(cap);
 
@@ -169,69 +152,67 @@ namespace platform::capability
 
         if (!permitted.unwrap())
         {
-            return Result::Err(CapabilityError{
-                .code = CapabilityErrorCode::NotPermitted,
-                .capability = cap,
-                .message = "capability not present in permitted set",
-                .hint = "run as root or grant capability via setcap",
-            });
+            return Result::Err(
+                CapabilityError{
+                    CapabilityErrorCode::NotPermitted,
+                    cap,
+                    SysError{},
+                });
         }
 
         return helper::set_effective(linux_cap, true);
     }
 
-    util::Result<int, CapabilityError>
+    util::Result<bool, CapabilityError>
     CapabilityManager::disable(Capability cap) noexcept
     {
         return helper::set_effective(
             helper::to_linux_cap(cap), false);
     }
 
-    util::Result<int, CapabilityError>
+    util::Result<bool, CapabilityError>
     CapabilityManager::drop_all_effective() noexcept
     {
-        using Result = util::Result<int, CapabilityError>;
+        using Result = util::Result<bool, CapabilityError>;
 
-        cap_t caps = cap_get_proc();
+        cap_t caps = ::cap_get_proc();
         if (!caps)
         {
-            return Result::Err(CapabilityError{
-                .code = CapabilityErrorCode::GetProcCapsFailed,
-                .capability = Capability::_Process,
-                .sys_errno = errno,
-                .syscall = "cap_get_proc",
-                .message = "failed to get process capabilities",
-            });
+            return Result::Err(
+                CapabilityError{
+                    CapabilityErrorCode::GetProcCapsFailed,
+                    Capability::_Process,
+                    SysError::from_errno(errno),
+                });
         }
 
-        if (cap_clear_flag(caps, CAP_EFFECTIVE) != 0)
+        if (::cap_clear_flag(caps, CAP_EFFECTIVE) != 0)
         {
-            int err = errno;
-            cap_free(caps);
-            return Result::Err(CapabilityError{
-                .code = CapabilityErrorCode::SetFlagFailed,
-                .capability = Capability::RawSocket,
-                .sys_errno = err,
-                .syscall = "cap_clear_flag",
-                .message = "failed to clear CAP_EFFECTIVE flags",
-            });
+            SysError err = SysError::from_errno(errno);
+            ::cap_free(caps);
+
+            return Result::Err(
+                CapabilityError{
+                    CapabilityErrorCode::SetFlagFailed,
+                    Capability::_Process,
+                    err,
+                });
         }
 
-        if (cap_set_proc(caps) != 0)
+        if (::cap_set_proc(caps) != 0)
         {
-            int err = errno;
-            cap_free(caps);
-            return Result::Err(CapabilityError{
-                .code = CapabilityErrorCode::SetProcFailed,
-                .capability = Capability::RawSocket,
-                .sys_errno = err,
-                .syscall = "cap_set_proc",
-                .message = "failed to apply cleared effective capabilities",
-                .hint = "process may lack CAP_SETPCAP or be restricted by bounding set",
-            });
+            SysError err = SysError::from_errno(errno);
+            ::cap_free(caps);
+
+            return Result::Err(
+                CapabilityError{
+                    CapabilityErrorCode::SetProcFailed,
+                    Capability::_Process,
+                    err,
+                });
         }
 
-        cap_free(caps);
+        ::cap_free(caps);
         return Result::Ok(1);
     }
 
@@ -244,12 +225,7 @@ namespace platform::capability
 
     ScopedCapability::~ScopedCapability()
     {
-        auto &manager = CapabilityManager::instance();
-        auto res = manager.state(cap);
-        if (res.is_err())
-            return;
-        if (res.unwrap() == CapabilityState::Available)
-            (void)CapabilityManager::instance().disable(cap);
+        (void)CapabilityManager::instance().disable(cap);
     }
 
     util::Result<ScopedCapability, CapabilityError>
@@ -263,4 +239,45 @@ namespace platform::capability
 
         return Result::Ok(ScopedCapability(cap));
     }
+}
+
+std::string to_string(platform::capability::CapabilityErrorCode code)
+{
+    using namespace platform::capability;
+    switch (code)
+    {
+    case CapabilityErrorCode::NotPermitted:
+        return "not permitted";
+    case CapabilityErrorCode::NotInBoundingSet:
+        return "not in bounding set";
+
+    case CapabilityErrorCode::GetProcCapsFailed:
+        return "get proc caps failed";
+    case CapabilityErrorCode::GetFlagFailed:
+        return "get flag failed";
+    case CapabilityErrorCode::SetFlagFailed:
+        return "set flag failed";
+    case CapabilityErrorCode::SetProcFailed:
+        return "set proc failed";
+
+    case CapabilityErrorCode::InvalidCapability:
+        return "invalid capability";
+
+    default:
+        return "unknown";
+    }
+}
+
+std::string format_error(const platform::capability::CapabilityError &e)
+{
+    std::string out = "[capability] ";
+    out += to_string(e.code);
+
+    if (!e.cause.is_ok())
+    {
+        out += " | ";
+        out += format_error(e.cause);
+    }
+
+    return out;
 }

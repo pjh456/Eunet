@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "eunet/util/result.hpp"
+#include "eunet/platform/sys_error.hpp"
 
 namespace platform::capability
 {
@@ -47,17 +48,7 @@ namespace platform::capability
     {
         CapabilityErrorCode code;
         Capability capability;
-
-        // 系统级调试信息
-        std::optional<int> sys_errno;
-        std::optional<std::string> syscall;
-
-        // 面向开发 / 用户
-        std::string message; // 必填
-        std::string hint;    // 可为空
-
-        // 便于日志
-        std::string to_string() const;
+        SysError cause;
     };
 
     namespace helper
@@ -68,7 +59,7 @@ namespace platform::capability
         util::Result<bool, CapabilityError>
         has_permitted(cap_value_t cap) noexcept;
 
-        util::Result<int, CapabilityError>
+        util::Result<bool, CapabilityError>
         set_effective(cap_value_t cap, bool enable) noexcept;
     }
 
@@ -91,13 +82,13 @@ namespace platform::capability
     public:
         util::Result<CapabilityState, CapabilityError>
         state(Capability cap) const noexcept;
-        util::Result<int, CapabilityError>
+        util::Result<bool, CapabilityError>
         enable(Capability cap) noexcept;
-        util::Result<int, CapabilityError>
+        util::Result<bool, CapabilityError>
         disable(Capability cap) noexcept;
 
     public:
-        util::Result<int, CapabilityError>
+        util::Result<bool, CapabilityError>
         drop_all_effective() noexcept;
     };
 
@@ -123,5 +114,7 @@ namespace platform::capability
         acquire(Capability cap) noexcept;
     };
 }
+
+std::string to_string(platform::capability::CapabilityErrorCode code);
 
 #endif // INCLUDE_EUNET_PLATFORM_CAPABILITY
