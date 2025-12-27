@@ -17,7 +17,9 @@ void test_fd_basic()
     assert(!f.valid());
 
     // 2. socket 创建
-    Fd s = Fd::socket(AF_INET, SOCK_STREAM, 0);
+    auto ress = Fd::socket(AF_INET, SOCK_STREAM, 0);
+    assert(ress.is_ok());
+    Fd s = std::move(ress).unwrap();
     assert(s);
     assert(s.get() >= 0);
 
@@ -38,7 +40,9 @@ void test_fd_basic()
     ::close(released);
 
     // 5. reset
-    Fd a = Fd::socket(AF_INET, SOCK_STREAM, 0);
+    auto resa = Fd::socket(AF_INET, SOCK_STREAM, 0);
+    assert(resa.is_ok());
+    auto a = std::move(resa).unwrap();
     int a_fd = a.get();
     a.reset(-1);
     assert(!a);
@@ -47,7 +51,9 @@ void test_fd_basic()
     assert(::close(a_fd) == -1);
 
     // 6. pipe
-    auto [r, w] = Fd::pipe();
+    auto respip = Fd::pipe();
+    assert(respip.is_ok());
+    auto [r, w] = std::move(respip).unwrap();
     assert(r.get() >= 0 && w.get() >= 0);
 
     // 7. move assign
