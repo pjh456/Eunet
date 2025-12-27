@@ -252,6 +252,178 @@ namespace util
         }
     };
 
+    template <typename E>
+        requires result_helper::ValidResultTypes<void, E> &&
+                 result_helper::NotResult<E>
+    class [[nodiscard]] Result<void, E>
+    {
+    private:
+        std::variant<std::monostate, E> data;
+
+    public:
+        static Result Ok() noexcept { return Result(std::monostate{}); }
+
+        template <typename G>
+            requires std::constructible_from<E, G &&>
+        static Result Err(G &&err) noexcept(
+            std::is_nothrow_constructible_v<E, G &&>)
+        {
+            return Result(E(std::forward<G>(err)));
+        }
+
+    public:
+        explicit Result(std::monostate) : data(std::monostate{}) {}
+        explicit Result(const E &err) : data(err) {}
+
+        explicit Result(E &&err) noexcept : data(std::move(err)) {}
+
+        explicit Result(const Result &)
+            requires std::copy_constructible<E>
+        = default;
+
+        Result &operator=(const Result &)
+            requires(std::is_copy_assignable_v<E>)
+        = default;
+
+        explicit Result(Result &&) noexcept = default;
+        Result &operator=(Result &&) noexcept = default;
+
+    public:
+        bool is_ok() const noexcept { return std::holds_alternative<std::monostate>(data); }
+        bool is_err() const noexcept { return std::holds_alternative<E>(data); }
+
+    public:
+        void unwrap() const
+        {
+            if (is_err())
+                throw result_helper::bad_result_access(
+                    "Result<void>::unwrap() called on Err");
+        }
+
+        [[nodiscard]] E &unwrap_err() &
+        {
+            if (!is_err())
+                throw result_helper::
+                    bad_result_access(
+                        "Result::unwrap_err() called on Ok");
+            return std::get<E>(data);
+        }
+
+        [[nodiscard]] const E &unwrap_err() const &
+        {
+            if (!is_err())
+                throw result_helper::
+                    bad_result_access(
+                        "Result::unwrap_err() called on Ok");
+            return std::get<E>(data);
+        }
+
+        [[nodiscard]] E unwrap_err() &&
+        {
+            if (!is_err())
+                throw result_helper::
+                    bad_result_access("unwrap_err on Ok");
+            return std::move(std::get<E>(data));
+        }
+
+        [[nodiscard]] const E &unwrap_err_or(const E &err) const
+        {
+            return is_err() ? std::get<E>(data) : err;
+        }
+
+    public:
+        template <typename F>
+            requires std::invocable<F>
+        auto map(F &&f) const
+            -> Result<std::invoke_result_t<F>, E>
+        {
+            using U = std::invoke_result_t<F>;
+
+            if (is_ok())
+            {
+                if constexpr (std::is_void_v<U>)
+                {
+                    std::invoke(f);
+                    return Result<void, E>::Ok();
+                }
+                else
+                {
+                    return Result<U, E>::Ok(std::invoke(f));
+                }
+            }
+            else
+            {
+                return Result<U, E>::Err(std::get<E>(data));
+            }
+        }
+
+        template <typename F>
+            requires std::invocable<F> &&
+                     std::is_same_v<
+                         std::invoke_result_t<F>,
+                         E>
+        [[nodiscard]] E map_or(F &&f) const
+        {
+            if (is_ok())
+                return std::invoke(f);
+            else
+                return std::get<E>(data);
+        }
+
+        template <typename F>
+            requires std::invocable<F, E>
+        auto map_err(F &&f) const
+            -> Result<void, std::invoke_result_t<F, E>>
+            requires result_helper::
+                NotResult<std::invoke_result_t<F, E>>
+        {
+            using E2 = std::invoke_result_t<F, E>;
+
+            if (is_err())
+                return Result<void, E2>::Err(
+                    std::invoke(f, std::get<E>(data)));
+            else
+                return Result<void, E2>::Ok();
+        }
+
+        template <typename F>
+            requires std::invocable<F, E> &&
+                     std::is_same_v<
+                         std::invoke_result_t<F, E>,
+                         void>
+        void map_err_or(F &&f) const
+        {
+            if (is_err())
+                std::invoke(f, std::get<E>(data));
+        }
+
+    public:
+        template <typename F>
+            requires result_helper::
+                ResultType<std::invoke_result_t<F>>
+            auto and_then(F &&f) const & -> std::invoke_result_t<F>
+        {
+            using Ret = std::invoke_result_t<F>;
+
+            if (is_ok())
+                return std::invoke(f);
+            else
+                return Ret::Err(std::get<E>(data));
+        }
+
+        template <typename F>
+            requires result_helper::
+                ResultType<std::invoke_result_t<F>>
+            auto and_then(F &&f) && -> std::invoke_result_t<F>
+        {
+            using Ret = std::invoke_result_t<F>;
+            if (is_ok())
+                return std::invoke(f);
+            else
+                return Ret::Err(std::move(std::get<E>(data)));
+        }
+    };
+
     namespace result_helper
     {
         template <typename T, typename E>
