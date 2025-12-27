@@ -1,5 +1,7 @@
 #include "eunet/core/orchestrator.hpp"
 
+#include "eunet/core/event_snap_shoot.hpp"
+
 #include <algorithm>
 
 namespace core
@@ -28,8 +30,21 @@ namespace core
                     .message = "FSM missing after event commit",
                 });
 
+        auto latest_event_result = timeline.latest_event();
+        if (latest_event_result.is_err())
+            return EmitResult::Err(latest_event_result.unwrap_err());
+
+        auto latest_event = latest_event_result.unwrap();
+        EventSnapshot snap{
+            .event = latest_event,
+            .fd = e.fd,
+            .state = fsm->current_state(),
+            .ts = e.ts,
+            .has_error = fsm->has_error(),
+            .error = fsm->get_last_error()};
+
         for (auto *sink : sinks)
-            sink->on_event(e, *fsm);
+            sink->on_event(snap);
 
         return EmitResult::Ok();
     }

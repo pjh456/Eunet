@@ -7,10 +7,11 @@
 #include "eunet/util/result.hpp"
 #include "eunet/core/timeline.hpp"
 #include "eunet/core/lifecycle_fsm.hpp"
-#include "eunet/core/i_event_sink.hpp"
+#include "eunet/core/sink/sink.hpp"
 
 namespace core
 {
+
     class Orchestrator
     {
     public:
