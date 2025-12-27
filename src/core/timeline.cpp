@@ -1,6 +1,7 @@
 #include "eunet/core/timeline.hpp"
 
 #include <algorithm>
+#include <unordered_set>
 
 namespace core
 {
@@ -13,7 +14,8 @@ namespace core
         type_index.clear();
     }
 
-    Timeline::EvCnt Timeline::size() const noexcept { return events.size(); }
+    Timeline::EvCnt
+    Timeline::size() const noexcept { return events.size(); }
 
     Timeline::EvCnt
     Timeline::count_by_fd(int fd) const
@@ -59,7 +61,7 @@ namespace core
         return it_end - it_start;
     }
 
-    bool Timeline::has_type(EventType type) const
+    bool Timeline::has_type(EventType type) const noexcept
     {
         std::lock_guard lock(mtx);
         return type_index.find(type) != type_index.end();
@@ -123,18 +125,14 @@ namespace core
         return EvCntResult::Ok(count);
     }
 
-    Timeline::EvCntResult
+    Timeline::EvCnt
     Timeline::remove_by_fd(int fd)
     {
         std::lock_guard lock(mtx);
 
         auto it = fd_index.find(fd);
         if (it == fd_index.end())
-            return EvCntResult::Err(
-                Error{
-                    .code = 1,
-                    .message = "fd not found",
-                });
+            return 0UL;
 
         IdxList &idxs = it->second;
         int count = 0;
@@ -163,17 +161,17 @@ namespace core
         fd_index = std::move(new_fd_index);
         type_index = std::move(new_type_index);
 
-        return EvCntResult::Ok(count);
+        return count;
     }
 
-    Timeline::EvCntResult
+    Timeline::EvCnt
     Timeline::remove_by_type(EventType type)
     {
         std::lock_guard lock(mtx);
 
         auto it = type_index.find(type);
         if (it == type_index.end())
-            return EvCntResult::Ok(0);
+            return 0UL;
 
         IdxList &idxs = it->second;
         int count = 0;
@@ -202,10 +200,10 @@ namespace core
         fd_index = std::move(new_fd_index);
         type_index = std::move(new_type_index);
 
-        return EvCntResult::Ok(count);
+        return count;
     }
 
-    Timeline::EvCntResult
+    Timeline::EvCnt
     Timeline::remove_by_time(
         TimeStamp start,
         TimeStamp end)
@@ -213,11 +211,7 @@ namespace core
         std::lock_guard lock(mtx);
 
         if (start > end)
-            return EvCntResult::Err(
-                Error{
-                    .code = 2,
-                    .message = "Invalid time range",
-                });
+            return 0UL;
 
         EvCnt count = 0;
         std::vector<Event> new_events;
@@ -243,10 +237,10 @@ namespace core
         fd_index = std::move(new_fd_index);
         type_index = std::move(new_type_index);
 
-        return EvCntResult::Ok(count);
+        return count;
     }
 
-    Timeline::EvListResult
+    Timeline::EvList
     Timeline::replay_all() const
     {
         std::lock_guard lock(mtx);
@@ -256,16 +250,17 @@ namespace core
         for (const auto &e : events)
             result.push_back(&e);
 
-        return EvListResult::Ok(result);
+        return result;
     }
 
-    Timeline::EvListResult
+    Timeline::EvList
     Timeline::replay_by_fd(int fd) const
     {
-        return query_by_fd(fd);
+        std::lock_guard lock(mtx);
+        return query_by_fd_locked(fd);
     }
 
-    Timeline::EvListResult
+    Timeline::EvList
     Timeline::replay_since(TimeStamp ts) const
     {
         std::lock_guard lock(mtx);
@@ -280,91 +275,33 @@ namespace core
         for (auto it = it_start; it != events.end(); ++it)
             result.push_back(&(*it));
 
-        return EvListResult::Ok(result);
+        return result;
     }
 
-    const std::vector<Event> &Timeline::all_events() const
-    {
-        std::lock_guard lock(mtx);
-        return events;
-    }
-
-    Timeline::EvListResult
+    Timeline::EvList
     Timeline::query_by_fd(int fd) const
     {
         std::lock_guard lock(mtx);
-
-        auto it = fd_index.find(fd);
-        if (it == fd_index.end())
-            return EvListResult::Err(
-                Error{
-                    .code = 1,
-                    .message = "fd not found in timeline",
-                });
-
-        EvList result;
-        result.reserve(it->second.size());
-        for (auto idx : it->second)
-            if (idx < events.size())
-                result.push_back(&events[idx]);
-
-        return EvListResult::Ok(result);
+        return query_by_fd_locked(fd);
     }
 
-    Timeline::EvListResult
+    Timeline::EvList
     Timeline::query_by_type(EventType type) const
     {
         std::lock_guard lock(mtx);
-
-        auto it = type_index.find(type);
-        if (it == type_index.end())
-            return EvListResult::Err(
-                Error{
-                    .code = 2,
-                    .message = "EventType not found in timeline",
-                });
-
-        EvList result;
-        result.reserve(it->second.size());
-        for (auto idx : (*it).second)
-            if (idx < events.size())
-                result.push_back(&events[idx]);
-
-        return EvListResult::Ok(result);
+        return query_by_type_locked(type);
     }
 
-    Timeline::EvListResult
+    Timeline::EvList
     Timeline::query_by_time(
         TimeStamp start,
         TimeStamp end) const
     {
         std::lock_guard lock(mtx);
-        if (start > end)
-            return EvListResult::Err(
-                Error{
-                    .code = 3,
-                    .message = "Invalid time range: start > end",
-                });
-
-        EvList result;
-
-        auto it_start = std::lower_bound(
-            events.begin(), events.end(), start,
-            [](const Event &e, const TimeStamp &t)
-            { return e.ts < t; });
-        auto it_end = std::upper_bound(
-            events.begin(), events.end(), end,
-            [](const TimeStamp &t, const Event &e)
-            { return t < e.ts; });
-
-        result.reserve(it_end - it_start);
-        for (auto it = it_start; it != it_end; ++it)
-            result.push_back(&(*it));
-
-        return EvListResult::Ok(result);
+        return query_by_time_locked(start, end);
     }
 
-    Timeline::EvListResult
+    Timeline::EvList
     Timeline::query_errors() const
     {
         return query_by_type(EventType::ERROR);
@@ -388,37 +325,132 @@ namespace core
     Timeline::EvViewResult
     Timeline::latest_by_fd(int fd) const
     {
-        auto res = query_by_fd(fd);
-
         std::lock_guard lock(mtx);
 
-        if (res.is_err() || res.unwrap().empty())
+        auto res = query_by_fd_locked(fd);
+        if (res.empty())
             return EvViewResult::Err(
                 Error{
                     .code = 5,
                     .message = "No events of fd",
                 });
 
-        auto &list = res.unwrap();
-        return EvViewResult::Ok(list.back());
+        return EvViewResult::Ok(res.back());
     }
 
     Timeline::EvViewResult
     Timeline::latest_by_type(EventType type) const
     {
-        auto res = query_by_type(type);
-
         std::lock_guard lock(mtx);
 
-        if (res.is_err() || res.unwrap().empty())
+        auto res = query_by_type_locked(type);
+        if (res.empty())
             return EvViewResult::Err(
                 Error{
                     .code = 6,
                     .message = "No events of type",
                 });
 
-        auto &list = res.unwrap();
-        return EvViewResult::Ok(list.back());
+        return EvViewResult::Ok(res.back());
     }
 
+    Timeline::EvList
+    Timeline::query_by_fd_locked(int fd) const
+    {
+        EvList result;
+        auto it = fd_index.find(fd);
+        if (it == fd_index.end())
+            return result;
+
+        result.reserve(it->second.size());
+        for (auto idx : it->second)
+            if (idx < events.size())
+                result.push_back(&events[idx]);
+
+        return result;
+    }
+
+    Timeline::EvList
+    Timeline::query_by_type_locked(
+        EventType type) const
+    {
+        EvList result;
+        auto it = type_index.find(type);
+        if (it == type_index.end())
+            return result;
+
+        result.reserve(it->second.size());
+        for (auto idx : (*it).second)
+            if (idx < events.size())
+                result.push_back(&events[idx]);
+
+        return result;
+    }
+
+    Timeline::EvList
+    Timeline::query_by_time_locked(
+        TimeStamp start,
+        TimeStamp end) const
+    {
+        EvList result;
+        if (start > end)
+            return result;
+
+        auto it_start = std::lower_bound(
+            events.begin(), events.end(), start,
+            [](const Event &e, const TimeStamp &t)
+            { return e.ts < t; });
+        auto it_end = std::upper_bound(
+            events.begin(), events.end(), end,
+            [](const TimeStamp &t, const Event &e)
+            { return t < e.ts; });
+
+        result.reserve(it_end - it_start);
+        for (auto it = it_start; it != it_end; ++it)
+            result.push_back(&(*it));
+
+        return result;
+    }
+
+    void Timeline::rebuild_indexes_locked(const std::vector<Event> &arr)
+    {
+        fd_index.clear();
+        type_index.clear();
+
+        size_t len = arr.size();
+        for (size_t idx = 0; idx < len; ++idx)
+        {
+            auto &e = arr[idx];
+            if (e.fd >= 0)
+                fd_index[e.fd].push_back(idx);
+
+            type_index[e.type].push_back(idx);
+        }
+    }
+
+    Timeline::EvCnt
+    Timeline::remove_by_fd_locked(int fd)
+    {
+        return remove_if_locked(
+            [fd](const Event &e)
+            { return e.fd == fd; });
+    }
+
+    Timeline::EvCnt
+    Timeline::remove_by_type_locked(EventType type)
+    {
+        return remove_if_locked(
+            [type](const Event &e)
+            { return e.type == type; });
+    }
+
+    Timeline::EvCnt
+    Timeline::remove_by_time_locked(
+        TimeStamp start,
+        TimeStamp end)
+    {
+        return remove_if_locked(
+            [start, end](const Event &e)
+            { return start <= e.ts && e.ts < end; });
+    }
 }

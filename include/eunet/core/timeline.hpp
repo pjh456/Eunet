@@ -52,8 +52,8 @@ namespace core
         EvCnt count_by_type(EventType type) const;
         EvCnt count_by_time(TimeStamp start, TimeStamp end) const;
 
-    public:
-        bool has_type(EventType type) const;
+        bool has_type(EventType type) const noexcept;
+
         EvCntResult sort_by_time();
 
     public:
@@ -61,27 +61,58 @@ namespace core
         EvCntResult push(const std::vector<Event> &arr);
 
     public:
-        EvCntResult remove_by_fd(int fd);
-        EvCntResult remove_by_type(EventType type);
-        EvCntResult remove_by_time(TimeStamp start, TimeStamp end);
+        EvCnt remove_by_fd(int fd);
+        EvCnt remove_by_type(EventType type);
+        EvCnt remove_by_time(TimeStamp start, TimeStamp end);
 
     public:
-        EvListResult replay_all() const;
-        EvListResult replay_by_fd(int fd) const;
-        EvListResult replay_since(TimeStamp ts) const;
+        EvList replay_all() const;
+        EvList replay_by_fd(int fd) const;
+        EvList replay_since(TimeStamp ts) const;
 
     public:
-        const std::vector<Event> &all_events() const;
-
-        EvListResult query_by_fd(int fd) const;
-        EvListResult query_by_type(EventType type) const;
-        EvListResult query_by_time(TimeStamp start, TimeStamp end) const;
-        EvListResult query_errors() const;
+        EvList query_by_fd(int fd) const;
+        EvList query_by_type(EventType type) const;
+        EvList query_by_time(TimeStamp start, TimeStamp end) const;
+        EvList query_errors() const;
 
     public:
         EvViewResult latest_event() const;
         EvViewResult latest_by_fd(int fd) const;
         EvViewResult latest_by_type(EventType type) const;
+
+    private:
+        EvList query_by_fd_locked(int fd) const;
+        EvList query_by_type_locked(EventType type) const;
+        EvList query_by_time_locked(TimeStamp start, TimeStamp end) const;
+
+    private:
+        void rebuild_indexes_locked(const std::vector<Event> &arr);
+
+        template <typename Pred>
+        EvCnt remove_if_locked(Pred pred)
+        {
+            EvCnt removed = 0;
+
+            std::vector<Event> new_events;
+            new_events.reserve(events.size());
+
+            for (auto &e : events)
+            {
+                if (pred(e))
+                    ++removed;
+                else
+                    new_events.push_back(std::move(e));
+            }
+
+            rebuild_indexes_locked(new_events);
+            events.swap(new_events);
+            return removed;
+        }
+
+        EvCnt remove_by_fd_locked(int fd);
+        EvCnt remove_by_type_locked(EventType type);
+        EvCnt remove_by_time_locked(TimeStamp start, TimeStamp end);
     };
 }
 
