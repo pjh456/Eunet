@@ -13,12 +13,20 @@ namespace core
     class Timeline
     {
     public:
-        using EventIdx = std::size_t;
-        using IdxList = std::vector<EventIdx>;
+        using EvIdx = std::size_t;
+        using EvCnt = std::size_t;
         using EvView = const Event *;
+        using TimeStamp = platform::time::WallPoint;
+
+        using IdxList = std::vector<EvIdx>;
         using EvList = std::vector<EvView>;
         template <typename T>
         using QuerySet = std::unordered_map<T, IdxList>;
+
+        using EvIdxResult = util::Result<EvIdx, Error>;
+        using EvCntResult = util::Result<EvCnt, Error>;
+        using EvListResult = util::Result<EvList, Error>;
+        using EvViewResult = util::Result<EvView, Error>;
 
     private:
         std::vector<Event> events;
@@ -39,52 +47,41 @@ namespace core
 
     public:
         void clear();
-        size_t size() const noexcept;
-        size_t count_by_fd(int fd) const;
-        size_t count_by_type(EventType type) const;
-        size_t count_by_time(
-            platform::time::WallPoint start,
-            platform::time::WallPoint end) const;
+        EvCnt size() const noexcept;
+        EvCnt count_by_fd(int fd) const;
+        EvCnt count_by_type(EventType type) const;
+        EvCnt count_by_time(TimeStamp start, TimeStamp end) const;
 
     public:
         bool has_type(EventType type) const;
-        util::Result<size_t, Error> sort_by_time();
+        EvCntResult sort_by_time();
 
     public:
-        util::Result<EventIdx, Error> push(const Event &e);
-        util::Result<size_t, Error> push(const std::vector<Event> &arr);
+        EvIdxResult push(const Event &e);
+        EvCntResult push(const std::vector<Event> &arr);
 
     public:
-        util::Result<size_t, Error> remove_by_fd(int fd);
-        util::Result<size_t, Error> remove_by_type(EventType type);
-        util::Result<size_t, Error> remove_by_time(
-            platform::time::WallPoint start,
-            platform::time::WallPoint end);
+        EvCntResult remove_by_fd(int fd);
+        EvCntResult remove_by_type(EventType type);
+        EvCntResult remove_by_time(TimeStamp start, TimeStamp end);
 
     public:
-        util::Result<EvList, Error> replay_all() const;
-        util::Result<EvList, Error> replay_by_fd(int fd) const;
-        util::Result<EvList, Error> replay_since(
-            platform::time::WallPoint ts) const;
+        EvListResult replay_all() const;
+        EvListResult replay_by_fd(int fd) const;
+        EvListResult replay_since(TimeStamp ts) const;
 
     public:
         const std::vector<Event> &all_events() const;
 
-        util::Result<EvList, Error>
-        query_by_fd(int fd) const;
-        util::Result<EvList, Error>
-        query_by_type(EventType type) const;
-        util::Result<EvList, Error>
-        query_by_time(
-            platform::time::WallPoint start,
-            platform::time::WallPoint end) const;
-        util::Result<EvList, Error>
-        query_errors() const;
+        EvListResult query_by_fd(int fd) const;
+        EvListResult query_by_type(EventType type) const;
+        EvListResult query_by_time(TimeStamp start, TimeStamp end) const;
+        EvListResult query_errors() const;
 
     public:
-        util::Result<EvView, Error> latest_event() const;
-        util::Result<EvView, Error> latest_by_fd(int fd) const;
-        util::Result<EvView, Error> latest_by_type(EventType type) const;
+        EvViewResult latest_event() const;
+        EvViewResult latest_by_fd(int fd) const;
+        EvViewResult latest_by_type(EventType type) const;
     };
 }
 

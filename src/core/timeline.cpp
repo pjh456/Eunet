@@ -13,41 +13,48 @@ namespace core
         type_index.clear();
     }
 
-    size_t Timeline::size() const noexcept { return events.size(); }
+    Timeline::EvCnt Timeline::size() const noexcept { return events.size(); }
 
-    size_t Timeline::count_by_fd(int fd) const
+    Timeline::EvCnt
+    Timeline::count_by_fd(int fd) const
     {
         std::lock_guard lock(mtx);
         auto it = fd_index.find(fd);
-        return it != fd_index.end() ? it->second.size() : 0UL;
+        return it != fd_index.end()
+                   ? it->second.size()
+                   : 0UL;
     }
 
-    size_t Timeline::count_by_type(EventType type) const
+    Timeline::EvCnt
+    Timeline::count_by_type(EventType type) const
     {
         std::lock_guard lock(mtx);
         auto it = type_index.find(type);
-        return it != type_index.end() ? it->second.size() : 0UL;
+        return it != type_index.end()
+                   ? it->second.size()
+                   : 0UL;
     }
 
-    size_t Timeline::count_by_time(
-        platform::time::WallPoint start,
-        platform::time::WallPoint end) const
+    Timeline::EvCnt
+    Timeline::count_by_time(
+        TimeStamp start,
+        TimeStamp end) const
     {
         std::lock_guard lock(mtx);
 
         if (start > end)
             return 0UL;
 
-        auto comp = [](const Event &e, const platform::time::WallPoint &t)
+        auto comp = [](const Event &e, const TimeStamp &t)
         { return e.ts < t; };
 
         auto it_start = std::lower_bound(
             events.begin(), events.end(), start,
-            [](const Event &e, const platform::time::WallPoint &t)
+            [](const Event &e, const TimeStamp &t)
             { return e.ts < t; });
         auto it_end = std::upper_bound(
             events.begin(), events.end(), end,
-            [](const platform::time::WallPoint &t, const Event &e)
+            [](const TimeStamp &t, const Event &e)
             { return t < e.ts; });
         return it_end - it_start;
     }
@@ -58,10 +65,9 @@ namespace core
         return type_index.find(type) != type_index.end();
     }
 
-    util::Result<size_t, Error> Timeline::sort_by_time()
+    Timeline::EvCntResult
+    Timeline::sort_by_time()
     {
-        using Result = util::Result<size_t, Error>;
-
         std::lock_guard lock(mtx);
 
         std::sort(
@@ -78,14 +84,12 @@ namespace core
             type_index[events[i].type].push_back(i);
         }
 
-        return Result::Ok(events.size());
+        return EvCntResult::Ok(events.size());
     }
 
-    util::Result<Timeline::EventIdx, Error>
+    Timeline::EvIdxResult
     Timeline::push(const Event &e)
     {
-        using Result = util::Result<Timeline::EventIdx, Error>;
-
         std::lock_guard lock(mtx);
 
         events.push_back(e);
@@ -96,41 +100,37 @@ namespace core
 
         type_index[e.type].push_back(idx);
 
-        return Result::Ok(idx);
+        return EvIdxResult::Ok(idx);
     }
 
-    util::Result<size_t, Error>
+    Timeline::EvCntResult
     Timeline::push(const std::vector<Event> &arr)
     {
-        using Result = util::Result<size_t, Error>;
-
         std::lock_guard lock(mtx);
 
-        size_t count = 0;
+        EvCnt count = 0;
         events.reserve(events.size() + arr.size());
         for (const auto &e : arr)
         {
             events.push_back(e);
-            EventIdx idx = events.size() - 1;
+            EvIdx idx = events.size() - 1;
             if (e.fd >= 0)
                 fd_index[e.fd].push_back(idx);
             type_index[e.type].push_back(idx);
             ++count;
         }
 
-        return Result::Ok(count);
+        return EvCntResult::Ok(count);
     }
 
-    util::Result<size_t, Error>
+    Timeline::EvCntResult
     Timeline::remove_by_fd(int fd)
     {
-        using Result = util::Result<size_t, Error>;
-
         std::lock_guard lock(mtx);
 
         auto it = fd_index.find(fd);
         if (it == fd_index.end())
-            return Result::Err(
+            return EvCntResult::Err(
                 Error{
                     .code = 1,
                     .message = "fd not found",
@@ -163,19 +163,17 @@ namespace core
         fd_index = std::move(new_fd_index);
         type_index = std::move(new_type_index);
 
-        return Result::Ok(count);
+        return EvCntResult::Ok(count);
     }
 
-    util::Result<size_t, Error>
+    Timeline::EvCntResult
     Timeline::remove_by_type(EventType type)
     {
-        using Result = util::Result<size_t, Error>;
-
         std::lock_guard lock(mtx);
 
         auto it = type_index.find(type);
         if (it == type_index.end())
-            return Result::Ok(0);
+            return EvCntResult::Ok(0);
 
         IdxList &idxs = it->second;
         int count = 0;
@@ -204,26 +202,24 @@ namespace core
         fd_index = std::move(new_fd_index);
         type_index = std::move(new_type_index);
 
-        return Result::Ok(count);
+        return EvCntResult::Ok(count);
     }
 
-    util::Result<size_t, Error>
+    Timeline::EvCntResult
     Timeline::remove_by_time(
-        platform::time::WallPoint start,
-        platform::time::WallPoint end)
+        TimeStamp start,
+        TimeStamp end)
     {
-        using Result = util::Result<size_t, Error>;
-
         std::lock_guard lock(mtx);
 
         if (start > end)
-            return Result::Err(
+            return EvCntResult::Err(
                 Error{
                     .code = 2,
                     .message = "Invalid time range",
                 });
 
-        size_t count = 0;
+        EvCnt count = 0;
         std::vector<Event> new_events;
         QuerySet<int> new_fd_index;
         QuerySet<EventType> new_type_index;
@@ -247,14 +243,12 @@ namespace core
         fd_index = std::move(new_fd_index);
         type_index = std::move(new_type_index);
 
-        return Result::Ok(count);
+        return EvCntResult::Ok(count);
     }
 
-    util::Result<Timeline::EvList, Error>
+    Timeline::EvListResult
     Timeline::replay_all() const
     {
-        using Result = util::Result<Timeline::EvList, Error>;
-
         std::lock_guard lock(mtx);
 
         EvList result;
@@ -262,25 +256,23 @@ namespace core
         for (const auto &e : events)
             result.push_back(&e);
 
-        return Result::Ok(result);
+        return EvListResult::Ok(result);
     }
 
-    util::Result<Timeline::EvList, Error>
+    Timeline::EvListResult
     Timeline::replay_by_fd(int fd) const
     {
         return query_by_fd(fd);
     }
 
-    util::Result<Timeline::EvList, Error>
-    Timeline::replay_since(platform::time::WallPoint ts) const
+    Timeline::EvListResult
+    Timeline::replay_since(TimeStamp ts) const
     {
-        using Result = util::Result<Timeline::EvList, Error>;
-
         std::lock_guard lock(mtx);
 
         auto it_start = std::lower_bound(
             events.begin(), events.end(), ts,
-            [](const Event &e, platform::time::WallPoint t)
+            [](const Event &e, TimeStamp t)
             { return e.ts < t; });
 
         EvList result;
@@ -288,7 +280,7 @@ namespace core
         for (auto it = it_start; it != events.end(); ++it)
             result.push_back(&(*it));
 
-        return Result::Ok(result);
+        return EvListResult::Ok(result);
     }
 
     const std::vector<Event> &Timeline::all_events() const
@@ -297,16 +289,14 @@ namespace core
         return events;
     }
 
-    util::Result<Timeline::EvList, Error>
+    Timeline::EvListResult
     Timeline::query_by_fd(int fd) const
     {
-        using Result = util::Result<EvList, Error>;
-
         std::lock_guard lock(mtx);
 
         auto it = fd_index.find(fd);
         if (it == fd_index.end())
-            return Result::Err(
+            return EvListResult::Err(
                 Error{
                     .code = 1,
                     .message = "fd not found in timeline",
@@ -318,19 +308,17 @@ namespace core
             if (idx < events.size())
                 result.push_back(&events[idx]);
 
-        return Result::Ok(result);
+        return EvListResult::Ok(result);
     }
 
-    util::Result<Timeline::EvList, Error>
+    Timeline::EvListResult
     Timeline::query_by_type(EventType type) const
     {
-        using Result = util::Result<EvList, Error>;
-
         std::lock_guard lock(mtx);
 
         auto it = type_index.find(type);
         if (it == type_index.end())
-            return util::Result<EvList, Error>::Err(
+            return EvListResult::Err(
                 Error{
                     .code = 2,
                     .message = "EventType not found in timeline",
@@ -342,19 +330,17 @@ namespace core
             if (idx < events.size())
                 result.push_back(&events[idx]);
 
-        return Result::Ok(result);
+        return EvListResult::Ok(result);
     }
 
-    util::Result<Timeline::EvList, Error>
+    Timeline::EvListResult
     Timeline::query_by_time(
-        platform::time::WallPoint start,
-        platform::time::WallPoint end) const
+        TimeStamp start,
+        TimeStamp end) const
     {
-        using Result = util::Result<EvList, Error>;
-
         std::lock_guard lock(mtx);
         if (start > end)
-            return Result::Err(
+            return EvListResult::Err(
                 Error{
                     .code = 3,
                     .message = "Invalid time range: start > end",
@@ -364,79 +350,75 @@ namespace core
 
         auto it_start = std::lower_bound(
             events.begin(), events.end(), start,
-            [](const Event &e, const platform::time::WallPoint &t)
+            [](const Event &e, const TimeStamp &t)
             { return e.ts < t; });
         auto it_end = std::upper_bound(
             events.begin(), events.end(), end,
-            [](const platform::time::WallPoint &t, const Event &e)
+            [](const TimeStamp &t, const Event &e)
             { return t < e.ts; });
 
         result.reserve(it_end - it_start);
         for (auto it = it_start; it != it_end; ++it)
             result.push_back(&(*it));
 
-        return Result::Ok(result);
+        return EvListResult::Ok(result);
     }
 
-    util::Result<Timeline::EvList, Error> Timeline::query_errors() const
+    Timeline::EvListResult
+    Timeline::query_errors() const
     {
         return query_by_type(EventType::ERROR);
     }
 
-    util::Result<Timeline::EvView, Error> Timeline::latest_event() const
+    Timeline::EvViewResult
+    Timeline::latest_event() const
     {
-        using Result = util::Result<EvView, Error>;
-
         std::lock_guard lock(mtx);
 
         if (events.empty())
-            return Result::Err(
+            return EvViewResult::Err(
                 Error{
                     .code = 4,
                     .message = "No events",
                 });
 
-        return Result::Ok(&events.back());
+        return EvViewResult::Ok(&events.back());
     }
 
-    util::Result<Timeline::EvView, Error>
+    Timeline::EvViewResult
     Timeline::latest_by_fd(int fd) const
     {
-        using Result = util::Result<EvView, Error>;
-
         auto res = query_by_fd(fd);
 
         std::lock_guard lock(mtx);
 
         if (res.is_err() || res.unwrap().empty())
-            return Result::Err(
+            return EvViewResult::Err(
                 Error{
                     .code = 5,
                     .message = "No events of fd",
                 });
 
         auto &list = res.unwrap();
-        return Result::Ok(list.back());
+        return EvViewResult::Ok(list.back());
     }
 
-    util::Result<Timeline::EvView, Error>
+    Timeline::EvViewResult
     Timeline::latest_by_type(EventType type) const
     {
-        using Result = util::Result<EvView, Error>;
-
         auto res = query_by_type(type);
 
         std::lock_guard lock(mtx);
 
         if (res.is_err() || res.unwrap().empty())
-            return Result::Err(
+            return EvViewResult::Err(
                 Error{
                     .code = 6,
                     .message = "No events of type",
                 });
 
         auto &list = res.unwrap();
-        return Result::Ok(list.back());
+        return EvViewResult::Ok(list.back());
     }
 
 }
