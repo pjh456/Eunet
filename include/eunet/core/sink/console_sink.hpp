@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#include "eunet/core/sink/sink.hpp"
+#include "eunet/core/sink.hpp"
 
 namespace core::sink
 {

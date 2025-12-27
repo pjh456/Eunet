@@ -1,5 +1,5 @@
-#ifndef INCLUDE_EUNET_CORE_SINK_SINK
-#define INCLUDE_EUNET_CORE_SINK_SINK
+#ifndef INCLUDE_EUNET_CORE_SINK
+#define INCLUDE_EUNET_CORE_SINK
 
 #include "eunet/core/event_snapshot.hpp"
 
@@ -15,4 +15,4 @@ namespace core::sink
 
 }
 
-#endif // INCLUDE_EUNET_CORE_SINK_SINK
+#endif // INCLUDE_EUNET_CORE_SINK
