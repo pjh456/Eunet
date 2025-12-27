@@ -23,10 +23,10 @@ namespace core
         template <typename T>
         using QuerySet = std::unordered_map<T, IdxList>;
 
-        using EvIdxResult = util::Result<EvIdx, Error>;
-        using EvCntResult = util::Result<EvCnt, Error>;
-        using EvListResult = util::Result<EvList, Error>;
-        using EvViewResult = util::Result<EvView, Error>;
+        using EvIdxResult = util::Result<EvIdx, EventError>;
+        using EvCntResult = util::Result<EvCnt, EventError>;
+        using EvListResult = util::Result<EvList, EventError>;
+        using EvViewResult = util::Result<EvView, EventError>;
 
     private:
         std::vector<Event> events;
@@ -74,6 +74,7 @@ namespace core
         EvList query_by_fd(int fd) const;
         EvList query_by_type(EventType type) const;
         EvList query_by_time(TimeStamp start, TimeStamp end) const;
+
         EvList query_errors() const;
 
     public:

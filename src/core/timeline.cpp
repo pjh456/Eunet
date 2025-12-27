@@ -304,7 +304,14 @@ namespace core
     Timeline::EvList
     Timeline::query_errors() const
     {
-        return query_by_type(EventType::ERROR);
+        std::lock_guard lock(mtx);
+
+        EvList result;
+        for (const auto &e : events)
+            if (e.error.has_value())
+                result.push_back(&e);
+
+        return result;
     }
 
     Timeline::EvViewResult
@@ -314,9 +321,9 @@ namespace core
 
         if (events.empty())
             return EvViewResult::Err(
-                Error{
-                    .code = 4,
-                    .message = "No events",
+                EventError{
+                    .domain = "timeline",
+                    .message = "no events in timeline",
                 });
 
         return EvViewResult::Ok(&events.back());
@@ -326,13 +333,13 @@ namespace core
     Timeline::latest_by_fd(int fd) const
     {
         std::lock_guard lock(mtx);
-
         auto res = query_by_fd_locked(fd);
+
         if (res.empty())
             return EvViewResult::Err(
-                Error{
-                    .code = 5,
-                    .message = "No events of fd",
+                EventError{
+                    .domain = "timeline",
+                    .message = "no events for fd",
                 });
 
         return EvViewResult::Ok(res.back());
@@ -342,13 +349,13 @@ namespace core
     Timeline::latest_by_type(EventType type) const
     {
         std::lock_guard lock(mtx);
-
         auto res = query_by_type_locked(type);
+
         if (res.empty())
             return EvViewResult::Err(
-                Error{
-                    .code = 6,
-                    .message = "No events of type",
+                EventError{
+                    .domain = "timeline",
+                    .message = "no events for type",
                 });
 
         return EvViewResult::Ok(res.back());
