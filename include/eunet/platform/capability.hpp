@@ -114,7 +114,7 @@ namespace platform::capability
         ScopedCapability &operator=(const ScopedCapability &) = delete;
 
         ScopedCapability(ScopedCapability &&other) noexcept;
-        ScopedCapability &operator=(ScopedCapability &&other) noexcept;
+        ScopedCapability &operator=(ScopedCapability &&other) noexcept = delete;
 
         ~ScopedCapability();
 

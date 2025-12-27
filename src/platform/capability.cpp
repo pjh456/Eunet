@@ -242,18 +242,6 @@ namespace platform::capability
         ScopedCapability(ScopedCapability &&other) noexcept
         : cap(std::move(other.cap)) {}
 
-    ScopedCapability &
-    ScopedCapability::
-    operator=(ScopedCapability &&other) noexcept
-    {
-        if (this == &other)
-            return *this;
-
-        this->cap = std::move(other.cap);
-
-        return *this;
-    }
-
     ScopedCapability::~ScopedCapability()
     {
         auto &manager = CapabilityManager::instance();
