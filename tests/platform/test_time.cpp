@@ -12,6 +12,8 @@ void test_time_api()
     {
         auto t1 = monotonic_now();
         auto t2 = monotonic_now();
+        std::cout << "[monotonic]t1=" << to_string(t1) << std::endl
+                  << "[monotonic]t2=" << to_string(t2) << std::endl;
         assert(t2 >= t1);
     }
 
@@ -20,9 +22,13 @@ void test_time_api()
         auto start = monotonic_now();
         sleep_for(std::chrono::milliseconds(5));
         auto end = monotonic_now();
+        std::cout << "[monotonic]start=" << to_string(start) << std::endl
+                  << "[monotonic]end=" << to_string(end) << std::endl;
 
         auto d1 = elapsed(start, end);
         auto d2 = since(start);
+        std::cout << "[duration]elapsed(start, end)=" << d1 << std::endl
+                  << "[duration]since(start)=" << d2 << std::endl;
 
         assert(d1.count() > 0);
         assert(d2 >= d1);
@@ -31,6 +37,7 @@ void test_time_api()
     /* 3. duration 精度 */
     {
         Duration d = std::chrono::milliseconds(3);
+        std::cout << "[duration]3ms=" << d << std::endl;
         assert(d.count() == 3'000'000);
     }
 
@@ -48,6 +55,7 @@ void test_time_api()
     /* 5. sleep_until / deadline */
     {
         auto dl = deadline_after(std::chrono::milliseconds(10));
+        std::cout << "[monotonic]deadline after 10ms=" << to_string(dl) << std::endl;
         assert(!expired(dl));
 
         sleep_until(dl);
