@@ -65,10 +65,10 @@ namespace platform::capability
             return Result::Ok(value == CAP_SET);
         }
 
-        util::Result<bool, CapabilityError>
+        util::Result<void, CapabilityError>
         set_effective(cap_value_t cap, bool enable) noexcept
         {
-            using Result = util::Result<bool, CapabilityError>;
+            using Result = util::Result<void, CapabilityError>;
 
             cap_t caps = ::cap_get_proc();
             if (!caps)
@@ -109,7 +109,7 @@ namespace platform::capability
             }
 
             ::cap_free(caps);
-            return Result::Ok(1);
+            return Result::Ok();
         }
     }
 
@@ -139,10 +139,10 @@ namespace platform::capability
                 : CapabilityState::Missing);
     }
 
-    util::Result<bool, CapabilityError>
+    util::Result<void, CapabilityError>
     CapabilityManager::enable(Capability cap) noexcept
     {
-        using Result = util::Result<bool, CapabilityError>;
+        using Result = util::Result<void, CapabilityError>;
 
         cap_value_t linux_cap = helper::to_linux_cap(cap);
 
@@ -163,17 +163,17 @@ namespace platform::capability
         return helper::set_effective(linux_cap, true);
     }
 
-    util::Result<bool, CapabilityError>
+    util::Result<void, CapabilityError>
     CapabilityManager::disable(Capability cap) noexcept
     {
         return helper::set_effective(
             helper::to_linux_cap(cap), false);
     }
 
-    util::Result<bool, CapabilityError>
+    util::Result<void, CapabilityError>
     CapabilityManager::drop_all_effective() noexcept
     {
-        using Result = util::Result<bool, CapabilityError>;
+        using Result = util::Result<void, CapabilityError>;
 
         cap_t caps = ::cap_get_proc();
         if (!caps)
@@ -213,7 +213,7 @@ namespace platform::capability
         }
 
         ::cap_free(caps);
-        return Result::Ok(1);
+        return Result::Ok();
     }
 
     ScopedCapability::ScopedCapability(Capability cap) noexcept
