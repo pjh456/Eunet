@@ -9,11 +9,13 @@ namespace platform::time
     using MonoClock = std::chrono::steady_clock;
     using MonoPoint = MonoClock::time_point;
     MonoPoint monotonic_now();
+    std::string to_string(MonoPoint tp);
 
     // 现实时间（系统时间）
     using WallClock = std::chrono::system_clock;
     using WallPoint = WallClock::time_point;
     WallPoint wall_now();
+    std::string to_string(WallPoint tp);
 
     // 时间间隔
     using Duration = std::chrono::nanoseconds;
@@ -30,6 +32,7 @@ namespace platform::time
 
     void sleep_for(Duration d);
     void sleep_until(MonoPoint tp);
+
 }
 
 #endif // INCLUDE_EUNET_PLATFORM_TIME
