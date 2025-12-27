@@ -7,7 +7,7 @@
 #include "eunet/util/result.hpp"
 #include "eunet/core/timeline.hpp"
 #include "eunet/core/lifecycle_fsm.hpp"
-#include "eunet/core/sink/sink.hpp"
+#include "eunet/core/sink.hpp"
 
 namespace core
 {
