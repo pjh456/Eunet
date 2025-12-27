@@ -1,47 +1,77 @@
 #include <iostream>
 #include <cassert>
 #include <string>
+#include <any>
+
 #include "eunet/core/event.hpp"
+
+using namespace core;
 
 void test_event()
 {
-    using namespace core;
-
     std::cout << "=== Event Unit Test Start ===\n";
 
-    // 1. 创建简单事件
-    auto e1 = Event::create(EventType::DNS_START);
+    // 1. info 事件（最简单）
+    auto e1 = Event::info(EventType::DNS_START, "");
     assert(e1.type == EventType::DNS_START);
     assert(e1.fd == -1);
-    assert(e1.msg.is_ok());
-    assert(e1.msg.unwrap() == "");
+    assert(e1.is_ok());
+    assert(!e1.is_error());
+    assert(e1.msg.empty());
+    assert(!e1.error.has_value());
     std::cout << "e1: " << e1.to_string() << "\n";
 
-    // 2. 创建带消息事件
-    auto e2 = Event::create(EventType::REQUEST_SENT, Event::MsgResult::Ok("HTTP GET"));
+    // 2. info 事件（带消息）
+    auto e2 = Event::info(EventType::REQUEST_SENT, "HTTP GET");
     assert(e2.type == EventType::REQUEST_SENT);
-    assert(e2.msg.is_ok() && e2.msg.unwrap() == "HTTP GET");
+    assert(e2.is_ok());
+    assert(e2.msg == "HTTP GET");
     std::cout << "e2: " << e2.to_string() << "\n";
 
-    // 3. 创建带错误事件
-    Error err{404, "Not Found"};
-    auto e3 = Event::create(EventType::ERROR, Event::MsgResult::Err(err));
-    assert(e3.type == EventType::ERROR);
-    assert(!e3.msg.is_ok());
-    assert(e3.msg.unwrap_err().code == 404);
+    // 3. failure 事件
+    EventError err{
+        .domain = "http",
+        .message = "404 Not Found"};
+
+    auto e3 = Event::failure(EventType::REQUEST_RECEIVED, err);
+    assert(e3.type == EventType::REQUEST_RECEIVED);
+    assert(e3.is_error());
+    assert(!e3.is_ok());
+    assert(e3.error.has_value());
+    assert(e3.error->domain == "http");
+    assert(e3.error->message == "404 Not Found");
     std::cout << "e3: " << e3.to_string() << "\n";
 
-    // 4. 创建带 fd 和 data 的事件
+    // 4. 带 fd 与 data 的 info 事件
     int fd_test = 10;
     std::string payload = "Response body";
-    auto e4 = Event::create(EventType::REQUEST_RECEIVED, Event::MsgResult::Ok("OK"), fd_test, payload);
+
+    auto e4 = Event::info(
+        EventType::REQUEST_RECEIVED,
+        "OK",
+        fd_test,
+        payload);
+
     assert(e4.fd == fd_test);
+    assert(e4.is_ok());
     assert(std::any_cast<std::string>(e4.data) == payload);
     std::cout << "e4: " << e4.to_string() << "\n";
 
-    // 5. 时间戳检查（非严格，确保非零即可）
+    // 5. 带 fd 与 data 的 failure 事件
+    auto e5 = Event::failure(
+        EventType::TCP_CONNECT,
+        EventError{"net", "connection refused"},
+        fd_test,
+        12345);
+
+    assert(e5.is_error());
+    assert(e5.fd == fd_test);
+    assert(std::any_cast<int>(e5.data) == 12345);
+    std::cout << "e5: " << e5.to_string() << "\n";
+
+    // 6. 时间戳存在性检查（非 0 即可）
     assert(e1.ts.time_since_epoch().count() > 0);
-    assert(e2.ts.time_since_epoch().count() > 0);
+    assert(e3.ts.time_since_epoch().count() > 0);
 
     std::cout << "=== Event Unit Test Passed ===\n";
 }
