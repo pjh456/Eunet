@@ -4,6 +4,7 @@
 #include <vector>
 #include <mutex>
 
+#include "eunet/util/result.hpp"
 #include "eunet/core/timeline.hpp"
 #include "eunet/core/lifecycle_fsm.hpp"
 #include "eunet/core/i_event_sink.hpp"
@@ -12,6 +13,9 @@ namespace core
 {
     class Orchestrator
     {
+    public:
+        using EmitResult = util::Result<bool, EventError>;
+
     private:
         Timeline timeline;
         FsmManager fsm_manager;
@@ -28,7 +32,7 @@ namespace core
         const LifecycleFSM *get_fsm(int fd) const;
 
     public:
-        void emit(Event e);
+        EmitResult emit(Event e);
 
         void attach(sink::IEventSink *sink);
         void detach(sink::IEventSink *sink);
