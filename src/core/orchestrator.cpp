@@ -9,17 +9,29 @@ namespace core
     const LifecycleFSM *
     Orchestrator::get_fsm(int fd) const { return fsm_manager.get(fd); }
 
-    void Orchestrator::emit(Event e)
+    Orchestrator::EmitResult
+    Orchestrator::emit(Event e)
     {
         std::lock_guard lock(mtx);
 
-        timeline.push(e);
+        auto idx_res = timeline.push(e);
+        if (!idx_res.is_ok())
+            return EmitResult::Err(idx_res.unwrap_err());
+
         fsm_manager.on_event(e);
 
         const auto *fsm = fsm_manager.get(e.fd);
+        if (!fsm)
+            return EmitResult::Err(
+                EventError{
+                    .domain = "orchestrator",
+                    .message = "FSM missing after event commit",
+                });
 
         for (auto *sink : sinks)
             sink->on_event(e, *fsm);
+
+        return EmitResult::Ok(true);
     }
 
     void Orchestrator::attach(sink::IEventSink *sink)
