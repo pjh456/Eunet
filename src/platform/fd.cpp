@@ -11,7 +11,7 @@ namespace platform::fd
 
     Fd::~Fd() noexcept { reset(-1); }
 
-    Fd::Fd(Fd &&other) noexcept : fd(other.fd) { other.reset(-1); }
+    Fd::Fd(Fd &&other) noexcept : fd(other.fd) { other.release(); }
 
     Fd &Fd::operator=(Fd &&other) noexcept
     {
@@ -19,7 +19,7 @@ namespace platform::fd
             return *this;
         reset(-1);
         fd = other.fd;
-        other.reset(-1);
+        other.release();
         return *this;
     }
 
