@@ -1,6 +1,7 @@
 #include <cassert>
 #include <thread>
 #include <chrono>
+#include <string>
 
 #include "eunet/core/timeline.hpp"
 
@@ -13,21 +14,24 @@ void test_timeline()
     // 1. 创建事件
     auto now = platform::time::wall_now();
 
-    Event e1 = Event::create(
+    Event e1 = Event::info(
         EventType::DNS_START,
-        Event::MsgResult::Ok("DNS lookup start"),
+        "DNS lookup start",
         3);
-    Event e2 = Event::create(
+
+    Event e2 = Event::info(
         EventType::TCP_CONNECT,
-        Event::MsgResult::Ok("TCP connecting"),
+        "TCP connecting",
         3);
-    Event e3 = Event::create(
+
+    Event e3 = Event::info(
         EventType::REQUEST_SENT,
-        Event::MsgResult::Ok("Request sent"),
+        "Request sent",
         4);
-    Event e4 = Event::create(
-        EventType::ERROR,
-        Event::MsgResult::Err(Error{100, "Timeout"}),
+
+    Event e4 = Event::failure(
+        EventType::REQUEST_RECEIVED,
+        EventError{"net", "timeout"},
         3);
 
     // 2. push 单个
@@ -47,7 +51,10 @@ void test_timeline()
     // 4. count / has
     assert(tl.count_by_fd(3) == 3);
     assert(tl.count_by_fd(4) == 1);
-    assert(tl.count_by_type(EventType::ERROR) == 1);
+
+    assert(tl.count_by_type(EventType::DNS_START) == 1);
+    assert(tl.count_by_type(EventType::TCP_CONNECT) == 1);
+
     assert(tl.has_type(EventType::TCP_CONNECT));
     assert(!tl.has_type(EventType::TCP_ESTABLISHED));
 
@@ -61,12 +68,20 @@ void test_timeline()
 
     // 6. query_by_type
     {
-        auto list = tl.query_by_type(EventType::ERROR);
+        auto list = tl.query_by_type(EventType::REQUEST_RECEIVED);
         assert(list.size() == 1);
-        assert(list.front()->type == EventType::ERROR);
+        assert(list.front()->error.has_value());
     }
 
-    // 7. query_by_time
+    // 7. query_errors
+    {
+        auto errs = tl.query_errors();
+        assert(errs.size() == 1);
+        assert(errs.front()->error.has_value());
+        assert(errs.front()->error->domain == "net");
+    }
+
+    // 8. query_by_time
     {
         auto start = now - std::chrono::seconds(1);
         auto end = now + std::chrono::seconds(10);
@@ -75,28 +90,27 @@ void test_timeline()
         assert(list.size() == tl.size());
     }
 
-    // 8. latest_event
+    // 9. latest_event
     {
         auto latest = tl.latest_event();
         assert(latest.is_ok());
-        assert(latest.unwrap()->type == EventType::ERROR);
+        assert(latest.unwrap()->error.has_value());
     }
 
-    // 9. latest_by_fd
+    // 10. latest_by_fd
     {
         auto latest = tl.latest_by_fd(3);
         assert(latest.is_ok());
         assert(latest.unwrap()->fd == 3);
-        assert(latest.unwrap()->type == EventType::ERROR);
     }
 
-    // 10. replay_all
+    // 11. replay_all
     {
         auto list = tl.replay_all();
         assert(list.size() == tl.size());
     }
 
-    // 11. replay_by_fd
+    // 12. replay_by_fd
     {
         auto list = tl.replay_by_fd(3);
         assert(list.size() == 3);
@@ -104,14 +118,13 @@ void test_timeline()
             assert(ev->fd == 3);
     }
 
-    // 12. replay_since
+    // 13. replay_since
     {
         auto list = tl.replay_since(now);
-        // 所有事件都 >= now（create 时）
         assert(list.size() == tl.size());
     }
 
-    // 13. remove_by_fd
+    // 14. remove_by_fd
     {
         auto removed = tl.remove_by_fd(4);
         assert(removed == 1);
@@ -119,15 +132,15 @@ void test_timeline()
         assert(tl.size() == 3);
     }
 
-    // 14. remove_by_type
+    // 15. remove_by_type
     {
-        auto removed = tl.remove_by_type(EventType::ERROR);
+        auto removed = tl.remove_by_type(EventType::REQUEST_RECEIVED);
         assert(removed == 1);
-        assert(!tl.has_type(EventType::ERROR));
+        assert(tl.query_errors().empty());
         assert(tl.size() == 2);
     }
 
-    // 15. remove_by_time（空区间 → 0）
+    // 16. remove_by_time（非法区间 → 0）
     {
         auto start = now + std::chrono::seconds(10);
         auto end = now - std::chrono::seconds(10);
@@ -137,26 +150,29 @@ void test_timeline()
         assert(tl.size() == 2);
     }
 
-    // 16. clear
+    // 17. clear
     {
         tl.clear();
         assert(tl.size() == 0);
     }
 
-    // 17. 无序事件 + sort_by_time
+    // 18. 无序事件 + sort_by_time
     {
-        Event e5 = Event::create(
+        Event e5 = Event::info(
             EventType::TCP_ESTABLISHED,
-            Event::MsgResult::Ok("Conn established"),
+            "Conn established",
             5);
-        Event e6 = Event::create(
+
+        Event e6 = Event::info(
             EventType::REQUEST_RECEIVED,
-            Event::MsgResult::Ok("Request received"),
+            "Request received",
             5);
+
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        Event e7 = Event::create(
+
+        Event e7 = Event::info(
             EventType::REQUEST_SENT,
-            Event::MsgResult::Ok("Request sent later"),
+            "Request sent later",
             5);
 
         auto res = tl.push({e7, e5, e6}); // 故意乱序
