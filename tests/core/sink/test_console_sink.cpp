@@ -4,7 +4,7 @@
 
 #include "eunet/core/event.hpp"
 #include "eunet/core/lifecycle_fsm.hpp"
-#include "eunet/core/event_snap_shoot.hpp"
+#include "eunet/core/event_snapshot.hpp"
 #include "eunet/core/sink/console_sink.hpp"
 
 using namespace core;

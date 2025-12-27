@@ -1,6 +1,6 @@
 #include "eunet/core/orchestrator.hpp"
 
-#include "eunet/core/event_snap_shoot.hpp"
+#include "eunet/core/event_snapshot.hpp"
 
 #include <algorithm>
 

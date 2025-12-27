@@ -3,7 +3,7 @@
 
 #include <atomic>
 
-#include "eunet/core/event_snap_shoot.hpp"
+#include "eunet/core/event_snapshot.hpp"
 #include "eunet/core/sink/sink.hpp"
 
 namespace core::sink
