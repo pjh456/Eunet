@@ -19,6 +19,7 @@ namespace core
         TCP_ESTABLISHED,
         REQUEST_SENT,
         REQUEST_RECEIVED,
+        CLOSED,
     };
 
     struct EventError
