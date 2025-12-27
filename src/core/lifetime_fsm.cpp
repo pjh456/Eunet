@@ -60,7 +60,8 @@ namespace core
 
         case LifeState::Sending:
             if (e.type == EventType::REQUEST_RECEIVED)
-                transit(LifeState::Receiving);
+                // transit(LifeState::Receiving);
+                transit(LifeState::Finished);
             break;
 
         case LifeState::Receiving:
