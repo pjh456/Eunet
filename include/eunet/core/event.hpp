@@ -19,34 +19,37 @@ namespace core
         TCP_ESTABLISHED,
         REQUEST_SENT,
         REQUEST_RECEIVED,
-        ERROR
     };
 
-    struct Error
+    struct EventError
     {
-        int code = 0;
-        std::string message;
+        std::string domain;  // 来源模块
+        std::string message; // 已 format 的错误
     };
 
     struct Event
     {
     public:
-        using MsgResult = util::Result<std::string, Error>;
-
-    public:
         EventType type;
         platform::time::WallPoint ts;
-        MsgResult msg;
-        int fd;
-        std::any data;
+        int fd{-1};
+
+        std::string msg;
+        std::optional<EventError> error{std::nullopt};
+        std::any data{};
 
     public:
-        static Event create(
+        static Event info(
             EventType type,
-            util::Result<std::string, Error>
-                msg = MsgResult::Ok(""),
+            std::string message,
             int fd = -1,
-            std::any data = {});
+            std::any data = {}) noexcept;
+
+        static Event failure(
+            EventType type,
+            EventError error,
+            int fd = -1,
+            std::any data = {}) noexcept;
 
     private:
         Event();
@@ -55,6 +58,9 @@ namespace core
         ~Event() = default;
 
     public:
+        bool is_ok() const noexcept;
+        bool is_error() const noexcept;
+
         std::string to_string() const;
     };
 }

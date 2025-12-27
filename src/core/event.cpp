@@ -4,32 +4,52 @@
 
 namespace core
 {
-    Event Event::create(
+
+    Event Event::info(
         EventType type,
-        util::Result<std::string, Error> msg,
-        int fd, std::any data)
+        std::string message,
+        int fd,
+        std::any data) noexcept
     {
         Event e;
         e.type = type;
-        e.ts = platform::time::wall_now();
-        e.msg = std::move(msg);
         e.fd = fd;
-        e.data = std::move(data);
+
+        e.msg = message;
+        e.data = data;
         return e;
     }
 
-    Event::Event()
-        : type(EventType::ERROR),
-          msg(MsgResult::Err(Error{0, "Unknown Error"})) {}
+    Event Event::failure(
+        EventType type,
+        EventError error,
+        int fd,
+        std::any data) noexcept
+    {
+        Event e;
+        e.type = type;
+        e.fd = fd;
+
+        e.error = error;
+        e.data = data;
+        return e;
+    }
+
+    Event::Event() : ts(platform::time::wall_now()) {}
+
+    bool Event::is_ok() const noexcept { return !error.has_value(); }
+    bool Event::is_error() const noexcept { return error.has_value(); }
 
     std::string Event::to_string() const
     {
         std::stringstream ss;
         ss << " [" << static_cast<int>(type) << "] ";
-        if (msg.is_ok())
-            ss << msg.unwrap();
+
+        if (is_ok())
+            ss << msg;
         else
-            ss << "ERROR(" << msg.unwrap_err().code << "): " << msg.unwrap_err().message;
+            ss << "ERROR[" << error->domain << "]: " << error->message;
+
         if (fd != -1)
             ss << " fd=" << fd;
         return ss.str();
