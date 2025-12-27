@@ -11,23 +11,12 @@ using namespace core;
 
 struct FakeSink : sink::IEventSink
 {
-    struct Record
-    {
-        EventType type;
-        int fd;
-        LifeState state;
-    };
 
-    std::vector<Record> records;
+    std::vector<EventSnapshot> records;
 
-    void on_event(
-        const Event &e,
-        const LifecycleFSM &fsm) override
+    void on_event(const EventSnapshot &snap) override
     {
-        records.push_back(
-            {e.type,
-             e.fd,
-             fsm.current_state()});
+        records.push_back(snap);
     }
 };
 
