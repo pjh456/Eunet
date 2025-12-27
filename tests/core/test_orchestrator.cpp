@@ -42,12 +42,18 @@ int main()
 
     const int fd = 3;
 
-    orch.emit(Event::info(EventType::DNS_START, "dns start", fd));
-    orch.emit(Event::info(EventType::DNS_DONE, "dns done", fd));
-    orch.emit(Event::info(EventType::TCP_CONNECT, "connect", fd));
-    orch.emit(Event::info(EventType::TCP_ESTABLISHED, "established", fd));
-    orch.emit(Event::info(EventType::REQUEST_SENT, "send", fd));
-    orch.emit(Event::info(EventType::REQUEST_RECEIVED, "recv", fd));
+    auto dns_start = orch.emit(Event::info(EventType::DNS_START, "dns start", fd));
+    assert(dns_start.is_ok());
+    auto dns_done = orch.emit(Event::info(EventType::DNS_DONE, "dns done", fd));
+    assert(dns_done.is_ok());
+    auto connect = orch.emit(Event::info(EventType::TCP_CONNECT, "connect", fd));
+    assert(connect.is_ok());
+    auto established = orch.emit(Event::info(EventType::TCP_ESTABLISHED, "established", fd));
+    assert(established.is_ok());
+    auto send = orch.emit(Event::info(EventType::REQUEST_SENT, "send", fd));
+    assert(send.is_ok());
+    auto recv = orch.emit(Event::info(EventType::REQUEST_RECEIVED, "recv", fd));
+    assert(recv.is_ok());
 
     // ---------- Sink call count ----------
     assert(sink.records.size() == 6);
