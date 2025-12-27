@@ -31,7 +31,7 @@ namespace core
         for (auto *sink : sinks)
             sink->on_event(e, *fsm);
 
-        return EmitResult::Ok(true);
+        return EmitResult::Ok();
     }
 
     void Orchestrator::attach(sink::IEventSink *sink)
