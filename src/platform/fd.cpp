@@ -46,26 +46,29 @@ namespace platform::fd
         fd = new_fd;
     }
 
-    Fd Fd::socket(
+    SysResult<Fd> Fd::socket(
         int domain,
         int type,
         int protocol) noexcept
     {
         int fd = ::socket(domain, type | SOCK_CLOEXEC, protocol);
-        return Fd(fd);
+        if (fd < 0)
+            return SysResult<Fd>::Err(SysError::from_errno(errno));
+
+        return SysResult<Fd>::Ok(Fd(fd));
     }
 
-    Pipe Fd::pipe() noexcept
+    SysResult<Pipe> Fd::pipe() noexcept
     {
         int fds[2];
         Pipe pipe;
 
-        if (::pipe2(fds, O_CLOEXEC) == 0)
-        {
-            pipe.read.reset(fds[0]);
-            pipe.write.reset(fds[1]);
-        }
+        if (::pipe2(fds, O_CLOEXEC) != 0)
+            return SysResult<Pipe>::Err(SysError::from_errno(errno));
 
-        return pipe;
+        pipe.read.reset(fds[0]);
+        pipe.write.reset(fds[1]);
+
+        return SysResult<Pipe>::Ok(std::move(pipe));
     }
 }
