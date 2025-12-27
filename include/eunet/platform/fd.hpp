@@ -1,6 +1,9 @@
 #ifndef INCLUDE_EUNET_PLATFORM_FD
 #define INCLUDE_EUNET_PLATFORM_FD
 
+#include "eunet/util/result.hpp"
+#include "eunet/platform/sys_error.hpp"
+
 namespace platform::fd
 {
     class Fd;
@@ -8,6 +11,10 @@ namespace platform::fd
 
     class Fd
     {
+    public:
+        using FdResult = util::Result<Fd, platform::SysError>;
+        using PipeResult = util::Result<Pipe, platform::SysError>;
+
     private:
         int fd;
 
@@ -27,12 +34,13 @@ namespace platform::fd
         explicit operator bool() const noexcept;
 
     public:
-        static Fd socket(
+        static SysResult<Fd>
+        socket(
             int domain,
             int type,
             int protocol) noexcept;
 
-        static Pipe pipe() noexcept;
+        static SysResult<Pipe> pipe() noexcept;
 
     public:
         int release() noexcept;
