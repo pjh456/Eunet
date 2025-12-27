@@ -9,7 +9,12 @@ namespace platform::fd
 {
     Fd::Fd(int fd) noexcept : fd(fd) {}
 
-    Fd::~Fd() noexcept { reset(-1); }
+    Fd::~Fd() noexcept
+    {
+        if (fd >= 0)
+            while (::close(fd) && errno == EINTR)
+                ;
+    }
 
     Fd::Fd(Fd &&other) noexcept : fd(other.fd) { other.release(); }
 
