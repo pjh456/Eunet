@@ -1,5 +1,5 @@
-#ifndef INCLUDE_EUNET_CORE_EVENT_SNAP_SHOOT
-#define INCLUDE_EUNET_CORE_EVENT_SNAP_SHOOT
+#ifndef INCLUDE_EUNET_CORE_EVENT_SNAPSHOT
+#define INCLUDE_EUNET_CORE_EVENT_SNAPSHOT
 
 #include "eunet/core/event.hpp"
 #include "eunet/core/lifecycle_fsm.hpp"
@@ -20,4 +20,4 @@ namespace core
 
 }
 
-#endif // INCLUDE_EUNET_CORE_EVENT_SNAP_SHOOT
+#endif // INCLUDE_EUNET_CORE_EVENT_SNAPSHOT
