@@ -6,24 +6,18 @@
 
 namespace platform::poller
 {
-    util::Result<Poller, PollerError>
-    Poller::create()
+    SysResult<Poller> Poller::create()
     {
-        using Result = util::Result<Poller, PollerError>;
         Poller p;
         if (!p.epoll_fd.valid())
-        {
-            return Result::Err(
-                PollerError{
-                    .code = PollerErrorCode::SystemError,
-                    .sys_errno = errno,
-                    .message = "epoll_create1 failed",
-                });
-        }
-        return Result::Ok(std::move(p));
+            return SysResult<Poller>::Err(
+                SysError::from_errno(errno));
+
+        return SysResult<Poller>::Ok(std::move(p));
     }
 
-    Poller::Poller() : epoll_fd(::epoll_create1(EPOLL_CLOEXEC)) {}
+    Poller::Poller()
+        : epoll_fd(::epoll_create1(EPOLL_CLOEXEC)) {}
 
     Poller::Poller(Poller &&other) noexcept
         : epoll_fd(std::move(other.epoll_fd)) {}
@@ -52,20 +46,16 @@ namespace platform::poller
             return Result::Err(
                 PollerError{
                     .code = PollerErrorCode::NotInitialized,
-                    .sys_errno = 0,
-                    .message = "Poller not initialized",
+                    .cause = SysError{},
                 });
         }
 
         if (fd < 0)
-        {
             return Result::Err(
                 PollerError{
                     .code = PollerErrorCode::InvalidFd,
-                    .sys_errno = 0,
-                    .message = "Invalid file descriptor",
+                    .cause = SysError{},
                 });
-        }
 
         epoll_event ev{};
         ev.events = events;
@@ -77,36 +67,18 @@ namespace platform::poller
                 fd, &ev) == 0)
             return Result::Ok(true);
 
-        PollerErrorCode code = PollerErrorCode::SystemError;
-        std::string hint;
-        switch (errno)
-        {
-        case EEXIST:
+        const SysError sys = SysError::from_errno(errno);
+
+        PollerErrorCode code = PollerErrorCode::InvalidFd;
+        if (errno == EEXIST)
             code = PollerErrorCode::AlreadyExists;
-            hint = "Use modify() to update events for this fd";
-            break;
-        case EBADF:
-            code = PollerErrorCode::InvalidFd;
-            hint = "Ensure fd is valid and not closed";
-            break;
-        case EPERM:
-            code = PollerErrorCode::PermissionDenied;
-            hint = "You might need elevated privileges";
-            break;
-        case ENOENT:
+        else if (errno == ENOENT)
             code = PollerErrorCode::NotFound;
-            hint = "Use add() first to register fd";
-            break;
-        default:
-            hint = "Check system errno for details";
-        }
 
         return Result::Err(
             PollerError{
                 .code = code,
-                .sys_errno = errno,
-                .message = "epoll_ctl ADD failed",
-                .hint = hint,
+                .cause = sys,
             });
     }
 
@@ -118,17 +90,15 @@ namespace platform::poller
         if (!valid())
             return Result::Err(
                 PollerError{
-                    .code = PollerErrorCode::NotInitialized,
-                    .sys_errno = 0,
-                    .message = "Poller not initialized",
+                    PollerErrorCode::NotInitialized,
+                    SysError{},
                 });
 
         if (fd < 0)
             return Result::Err(
                 PollerError{
-                    .code = PollerErrorCode::InvalidFd,
-                    .sys_errno = 0,
-                    .message = "Invalid file descriptor",
+                    PollerErrorCode::InvalidFd,
+                    SysError{},
                 });
 
         epoll_event ev{};
@@ -141,95 +111,65 @@ namespace platform::poller
                 fd, &ev) == 0)
             return Result::Ok(true);
 
-        PollerErrorCode code = PollerErrorCode::SystemError;
-        std::string hint;
-        switch (errno)
-        {
-        case EEXIST:
-            code = PollerErrorCode::AlreadyExists;
-            hint = "Use modify() to update events for this fd";
-            break;
-        case EBADF:
-            code = PollerErrorCode::InvalidFd;
-            hint = "Ensure fd is valid and not closed";
-            break;
-        case EPERM:
-            code = PollerErrorCode::PermissionDenied;
-            hint = "You might need elevated privileges";
-            break;
-        case ENOENT:
+        SysError sys = SysError::from_errno(errno);
+
+        PollerErrorCode code = PollerErrorCode::InvalidFd;
+        if (errno == ENOENT)
             code = PollerErrorCode::NotFound;
-            hint = "Use add() first to register fd";
-            break;
-        default:
-            hint = "Check system errno for details";
-        }
 
         return Result::Err(
             PollerError{
-                .code = code,
-                .sys_errno = errno,
-                .message = "epoll_ctl MOD failed",
-                .hint = hint,
+                code,
+                sys,
             });
     }
 
-    util::Result<int, PollerError>
+    util::Result<bool, PollerError>
     Poller::remove(int fd) noexcept
     {
-        using Result = util::Result<int, PollerError>;
+        using Result = util::Result<bool, PollerError>;
 
         if (!valid())
             return Result::Err(
                 PollerError{
-                    .code = PollerErrorCode::NotInitialized,
-                    .sys_errno = 0,
-                    .message = "Poller not initialized",
+                    PollerErrorCode::NotInitialized,
+                    SysError{},
                 });
 
         if (fd < 0)
             return Result::Err(
                 PollerError{
-                    .code = PollerErrorCode::InvalidFd,
-                    .sys_errno = 0,
-                    .message = "Invalid file descriptor",
+                    PollerErrorCode::InvalidFd,
+                    SysError{},
                 });
 
         if (::epoll_ctl(
-                epoll_fd.get(), EPOLL_CTL_DEL, fd, nullptr) == 0)
-            return Result::Ok(0);
+                epoll_fd.get(),
+                EPOLL_CTL_DEL,
+                fd, nullptr) == 0)
+            return Result::Ok(true);
 
-        PollerErrorCode code = PollerErrorCode::SystemError;
-        std::string hint;
-        if (errno == ENOENT)
-        {
-            code = PollerErrorCode::NotFound;
-            hint = "FD was not registered or already removed";
-        }
-        else
-            hint = "System error, check errno";
+        SysError sys = SysError::from_errno(errno);
+
+        PollerErrorCode code =
+            (errno == ENOENT)
+                ? PollerErrorCode::NotFound
+                : PollerErrorCode::InvalidFd;
 
         return Result::Err(
             PollerError{
-                .code = code,
-                .sys_errno = errno,
-                .message = "epoll_ctl DEL failed",
-                .hint = hint,
+                code,
+                sys,
             });
     }
 
-    util::Result<std::vector<PollEvent>, PollerError>
-    Poller::wait(int timeout_ms)
+    util::Result<std::vector<PollEvent>, SysError>
+    Poller::wait(int timeout_ms) noexcept
     {
-        using Result = util::Result<std::vector<PollEvent>, PollerError>;
+        using Result = util::Result<std::vector<PollEvent>, SysError>;
 
         if (!valid())
-            return Result::Err(
-                PollerError{
-                    .code = PollerErrorCode::NotInitialized,
-                    .sys_errno = 0,
-                    .message = "Poller not initialized",
-                });
+            return Result::Err(SysError::from_errno(EBADF));
 
         epoll_event events[MAX_EVENTS];
         int n;
@@ -237,27 +177,14 @@ namespace platform::poller
         do
         {
             n = ::epoll_wait(
-                epoll_fd.get(), events, MAX_EVENTS, timeout_ms);
+                epoll_fd.get(),
+                events,
+                MAX_EVENTS,
+                timeout_ms);
         } while (n < 0 && errno == EINTR);
 
         if (n < 0)
-        {
-            std::string hint;
-            if (errno == EBADF)
-                hint = "epoll fd invalid, maybe closed?";
-            else if (errno == EINVAL)
-                hint = "Bad arguments or max events exceeded";
-            else
-                hint = "Check system errno";
-
-            return Result::Err(
-                PollerError{
-                    .code = PollerErrorCode::SystemError,
-                    .sys_errno = errno,
-                    .message = "epoll_wait failed",
-                    .hint = hint,
-                });
-        }
+            return Result::Err(SysError::from_errno(errno));
 
         std::vector<PollEvent> result;
         result.reserve(static_cast<size_t>(n));
@@ -265,13 +192,45 @@ namespace platform::poller
         for (size_t i = 0; i < n; ++i)
         {
             result.push_back(
-                PollEvent{
-                    .fd = events[i].data.fd,
-                    .events = events[i].events,
+                {
+                    events[i].data.fd,
+                    events[i].events,
                 });
         }
 
         return Result::Ok(std::move(result));
     }
 
+}
+
+const char *to_string(const platform::poller::PollerErrorCode &code)
+{
+    using namespace platform::poller;
+    switch (code)
+    {
+    case PollerErrorCode::NotInitialized:
+        return "not initialized";
+    case PollerErrorCode::InvalidFd:
+        return "invalid fd";
+    case PollerErrorCode::AlreadyExists:
+        return "already exists";
+    case PollerErrorCode::NotFound:
+        return "not found";
+    default:
+        return "unknown";
+    }
+}
+
+std::string format_error(const platform::poller::PollerError &e)
+{
+    std::string out = "[poller] ";
+    out += to_string(e.code);
+
+    if (!e.cause.is_ok())
+    {
+        out += " | ";
+        out += format_error(e.cause);
+    }
+
+    return out;
 }

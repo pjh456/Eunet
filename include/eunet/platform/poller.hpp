@@ -6,6 +6,7 @@
 #include <string>
 
 #include "eunet/util/result.hpp"
+#include "eunet/platform/sys_error.hpp"
 #include "eunet/platform/fd.hpp"
 
 namespace platform::poller
@@ -17,16 +18,12 @@ namespace platform::poller
         InvalidFd,
         AlreadyExists,
         NotFound,
-        PermissionDenied,
-        SystemError,
     };
 
     struct PollerError
     {
         PollerErrorCode code;
-        int sys_errno;
-        std::string message;
-        std::string hint;
+        SysError cause;
     };
 
     struct PollEvent
@@ -44,7 +41,7 @@ namespace platform::poller
         platform::fd::Fd epoll_fd;
 
     public:
-        static util::Result<Poller, PollerError> create();
+        static SysResult<Poller> create();
 
     private:
         Poller();
@@ -67,13 +64,17 @@ namespace platform::poller
         add(int fd, std::uint32_t events) noexcept;
         util::Result<bool, PollerError>
         modify(int fd, std::uint32_t events) noexcept;
-        util::Result<int, PollerError>
+        util::Result<bool, PollerError>
         remove(int fd) noexcept;
 
     public:
-        util::Result<std::vector<PollEvent>, PollerError>
-        wait(int timeout_ms);
+        util::Result<std::vector<PollEvent>, SysError>
+        wait(int timeout_ms) noexcept;
     };
 }
+
+const char *to_string(const platform::poller::PollerErrorCode &code);
+
+std::string format_error(const platform::poller::PollerError &e);
 
 #endif // INCLUDE_EUNET_PLATFORM_POLLER
