@@ -19,7 +19,9 @@ void test_poller_basic()
     Poller poller = std::move(poller_res.unwrap());
 
     // 2. 创建 pipe
-    auto [read_fd, write_fd] = Fd::pipe();
+    auto pipe_res = Fd::pipe();
+    assert(pipe_res.is_ok());
+    auto [read_fd, write_fd] = std::move(pipe_res.unwrap());
     assert(read_fd.valid());
     assert(write_fd.valid());
 
