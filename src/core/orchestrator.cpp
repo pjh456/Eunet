@@ -22,13 +22,11 @@ namespace core
 
         fsm_manager.on_event(e);
 
-        const auto *fsm = fsm_manager.get(e.fd);
+        const auto *fsm = fsm_manager.get(e.fd.fd);
         if (!fsm)
             return EmitResult::Err(
-                EventError{
-                    .domain = "orchestrator",
-                    .message = "FSM missing after event commit",
-                });
+                util::Error::internal(
+                    "FSM missing after event commit"));
 
         auto latest_event_result = timeline.latest_event();
         if (latest_event_result.is_err())
@@ -37,7 +35,7 @@ namespace core
         auto latest_event = latest_event_result.unwrap();
         EventSnapshot snap{
             .event = latest_event,
-            .fd = e.fd,
+            .fd = e.fd.fd,
             .state = fsm->current_state(),
             .ts = e.ts,
             .has_error = fsm->has_error(),

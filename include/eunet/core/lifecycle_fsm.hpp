@@ -35,7 +35,7 @@ namespace core
         TimeStamp start_ts{};
         TimeStamp last_ts{};
 
-        std::optional<EventError> last_error;
+        util::Error last_error;
 
     public:
         explicit LifecycleFSM(int fd = -1);
@@ -48,7 +48,7 @@ namespace core
         TimeStamp last_timestamp() const noexcept;
 
         bool has_error() const noexcept;
-        const EventError *get_last_error() const noexcept;
+        util::Error get_last_error() const noexcept;
 
     public:
         void on_event(const Event &e);

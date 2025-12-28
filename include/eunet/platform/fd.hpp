@@ -1,8 +1,11 @@
 #ifndef INCLUDE_EUNET_PLATFORM_FD
 #define INCLUDE_EUNET_PLATFORM_FD
 
+#include <ostream>
+
 #include "eunet/util/result.hpp"
-#include "eunet/platform/sys_error.hpp"
+#include "eunet/util/error.hpp"
+// #include "eunet/platform/sys_error.hpp"
 
 namespace platform::fd
 {
@@ -13,8 +16,8 @@ namespace platform::fd
     class Fd
     {
     public:
-        using FdResult = util::Result<Fd, platform::SysError>;
-        using PipeResult = util::Result<Pipe, platform::SysError>;
+        using FdResult = util::ResultV<Fd>;
+        using PipeResult = util::ResultV<Pipe>;
 
     private:
         int fd;
@@ -36,7 +39,7 @@ namespace platform::fd
         bool operator!() const noexcept;
 
     public:
-        static SysResult<Fd>
+        static FdResult
         socket(
             int domain,
             int type,
@@ -44,7 +47,7 @@ namespace platform::fd
 
         FdView view() const noexcept;
 
-        static SysResult<Pipe> pipe() noexcept;
+        static PipeResult pipe() noexcept;
 
     public:
         int release() noexcept;
@@ -55,6 +58,9 @@ namespace platform::fd
     {
         int fd;
         static FdView from_owner(const Fd &owner);
+        explicit operator bool() const noexcept;
+
+        bool operator==(const FdView &other) const noexcept;
     };
 
     struct Pipe
@@ -63,5 +69,9 @@ namespace platform::fd
         Fd write;
     };
 }
+
+std::ostream &operator<<(
+    std::ostream &os,
+    const platform::fd::FdView fd);
 
 #endif // INCLUDE_EUNET_PLATFORM_FD

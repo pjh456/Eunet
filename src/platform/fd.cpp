@@ -36,32 +36,32 @@ namespace platform::fd
 
     bool Fd::operator!() const noexcept { return !valid(); }
 
-    SysResult<Fd> Fd::socket(
+    Fd::FdResult Fd::socket(
         int domain,
         int type,
         int protocol) noexcept
     {
         int fd = ::socket(domain, type | SOCK_CLOEXEC, protocol);
         if (fd < 0)
-            return SysResult<Fd>::Err(SysError::from_errno(errno));
+            return FdResult::Err(util::Error::from_errno(errno));
 
-        return SysResult<Fd>::Ok(Fd(fd));
+        return FdResult::Ok(Fd(fd));
     }
 
     FdView Fd::view() const noexcept { return FdView{get()}; }
 
-    SysResult<Pipe> Fd::pipe() noexcept
+    Fd::PipeResult Fd::pipe() noexcept
     {
         int fds[2];
         Pipe pipe;
 
         if (::pipe2(fds, O_CLOEXEC) != 0)
-            return SysResult<Pipe>::Err(SysError::from_errno(errno));
+            return PipeResult::Err(util::Error::from_errno(errno));
 
         pipe.read.reset(fds[0]);
         pipe.write.reset(fds[1]);
 
-        return SysResult<Pipe>::Ok(std::move(pipe));
+        return PipeResult::Ok(std::move(pipe));
     }
 
     int Fd::release() noexcept
@@ -85,4 +85,16 @@ namespace platform::fd
     {
         return FdView{owner.get()};
     }
+
+    FdView::operator bool() const noexcept { return fd >= 0; }
+
+    bool FdView::operator==(const FdView &other) const noexcept { return (*this) && other && fd == other.fd; }
+}
+
+std::ostream &operator<<(
+    std::ostream &os,
+    const platform::fd::FdView fd)
+{
+    os << fd.fd;
+    return os;
 }

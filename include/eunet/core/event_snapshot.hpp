@@ -1,6 +1,7 @@
 #ifndef INCLUDE_EUNET_CORE_EVENT_SNAPSHOT
 #define INCLUDE_EUNET_CORE_EVENT_SNAPSHOT
 
+#include "eunet/util/error.hpp"
 #include "eunet/core/event.hpp"
 #include "eunet/core/lifecycle_fsm.hpp"
 
@@ -15,7 +16,7 @@ namespace core
         platform::time::WallPoint ts; // 事件时间
 
         bool has_error;
-        const EventError *error; // 可空
+        util::Error error;
     };
 
 }
