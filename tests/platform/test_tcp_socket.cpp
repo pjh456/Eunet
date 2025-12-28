@@ -6,7 +6,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#include "eunet/platform/tcp_socket.hpp"
+#include "eunet/platform/socket/tcp_socket.hpp"
 #include "eunet/platform/address.hpp"
 
 using namespace platform::net;

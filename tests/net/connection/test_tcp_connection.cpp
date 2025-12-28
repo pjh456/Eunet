@@ -3,7 +3,7 @@
 #include <vector>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include "eunet/platform/tcp_socket.hpp"
+#include "eunet/platform/socket/tcp_socket.hpp"
 #include "eunet/net/connection/tcp_connection.hpp"
 
 #include <iostream>
