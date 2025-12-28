@@ -16,7 +16,7 @@ namespace platform::time
     WallPoint wall_now();
 
     // 时间间隔
-    using Duration = std::chrono::nanoseconds;
+    using Duration = std::chrono::milliseconds;
     Duration elapsed(MonoPoint start, MonoPoint end);
     Duration since(MonoPoint start);
 

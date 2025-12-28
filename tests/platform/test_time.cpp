@@ -36,9 +36,9 @@ void test_time_api()
 
     /* 3. duration 精度 */
     {
-        Duration d = std::chrono::milliseconds(3);
-        std::cout << "[duration]3ms=" << d << std::endl;
-        assert(d.count() == 3'000'000);
+        Duration d = std::chrono::seconds(3);
+        std::cout << "[duration]3s=" << d << std::endl;
+        assert(d.count() == 3000);
     }
 
     /* 4. unix <-> wall */
