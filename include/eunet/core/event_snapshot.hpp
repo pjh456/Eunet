@@ -9,13 +9,10 @@ namespace core
 {
     struct EventSnapshot
     {
-        const Event *event; // 发生的事件（只读）
+        Event event;
         int fd;
-
-        LifeState state;              // FSM 当前状态
-        platform::time::WallPoint ts; // 事件时间
-
-        bool has_error;
+        LifeState state;
+        platform::time::WallPoint ts;
         util::Error error;
     };
 

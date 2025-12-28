@@ -248,7 +248,7 @@ namespace core
         EvList result;
         result.reserve(events.size());
         for (const auto &e : events)
-            result.push_back(&e);
+            result.push_back(e);
 
         return result;
     }
@@ -273,7 +273,7 @@ namespace core
         EvList result;
         result.reserve(events.end() - it_start);
         for (auto it = it_start; it != events.end(); ++it)
-            result.push_back(&(*it));
+            result.push_back(*it);
 
         return result;
     }
@@ -309,50 +309,50 @@ namespace core
         EvList result;
         for (const auto &e : events)
             if (e.error)
-                result.push_back(&e);
+                result.push_back(e);
 
         return result;
     }
 
-    Timeline::EvViewResult
+    Timeline::EvResult
     Timeline::latest_event() const
     {
         std::lock_guard lock(mtx);
 
         if (events.empty())
-            return EvViewResult::Err(
+            return EvResult::Err(
                 util::Error::internal(
                     "no events in timeline"));
 
-        return EvViewResult::Ok(&events.back());
+        return EvResult::Ok(events.back());
     }
 
-    Timeline::EvViewResult
+    Timeline::EvResult
     Timeline::latest_by_fd(int fd) const
     {
         std::lock_guard lock(mtx);
         auto res = query_by_fd_locked(fd);
 
         if (res.empty())
-            return EvViewResult::Err(
+            return EvResult::Err(
                 util::Error::internal(
                     "no events for fd"));
 
-        return EvViewResult::Ok(res.back());
+        return EvResult::Ok(res.back());
     }
 
-    Timeline::EvViewResult
+    Timeline::EvResult
     Timeline::latest_by_type(EventType type) const
     {
         std::lock_guard lock(mtx);
         auto res = query_by_type_locked(type);
 
         if (res.empty())
-            return EvViewResult::Err(
+            return EvResult::Err(
                 util::Error::internal(
                     "no events for type"));
 
-        return EvViewResult::Ok(res.back());
+        return EvResult::Ok(res.back());
     }
 
     Timeline::EvList
@@ -366,7 +366,7 @@ namespace core
         result.reserve(it->second.size());
         for (auto idx : it->second)
             if (idx < events.size())
-                result.push_back(&events[idx]);
+                result.push_back(events[idx]);
 
         return result;
     }
@@ -383,7 +383,7 @@ namespace core
         result.reserve(it->second.size());
         for (auto idx : (*it).second)
             if (idx < events.size())
-                result.push_back(&events[idx]);
+                result.push_back(events[idx]);
 
         return result;
     }
@@ -408,7 +408,7 @@ namespace core
 
         result.reserve(it_end - it_start);
         for (auto it = it_start; it != it_end; ++it)
-            result.push_back(&(*it));
+            result.push_back(*it);
 
         return result;
     }

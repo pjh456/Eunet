@@ -16,18 +16,17 @@ namespace core
     public:
         using EvIdx = std::size_t;
         using EvCnt = std::size_t;
-        using EvView = const Event *;
         using TimeStamp = platform::time::WallPoint;
 
         using IdxList = std::vector<EvIdx>;
-        using EvList = std::vector<EvView>;
+        using EvList = std::vector<Event>;
         template <typename T>
         using QuerySet = std::unordered_map<T, IdxList>;
 
         using EvIdxResult = util::ResultV<EvIdx>;
         using EvCntResult = util::ResultV<EvCnt>;
         using EvListResult = util::ResultV<EvList>;
-        using EvViewResult = util::ResultV<EvView>;
+        using EvResult = util::ResultV<Event>;
 
     private:
         std::vector<Event> events;
@@ -79,9 +78,9 @@ namespace core
         EvList query_errors() const;
 
     public:
-        EvViewResult latest_event() const;
-        EvViewResult latest_by_fd(int fd) const;
-        EvViewResult latest_by_type(EventType type) const;
+        EvResult latest_event() const;
+        EvResult latest_by_fd(int fd) const;
+        EvResult latest_by_type(EventType type) const;
 
     private:
         EvList query_by_fd_locked(int fd) const;

@@ -102,12 +102,13 @@ namespace ui
             for (int i = 0; i < event_logs_.size(); ++i)
             {
                 auto &snap = event_logs_[i];
-                Color state_color = snap.has_error ? Color::Red : Color::Green;
+                Color state_color = snap.error ? Color::Red : Color::Green;
 
-                items.push_back(hbox({text(fmt::format("[{:>3}ms] ", i * 10 /* 示例时间 */)) | dim,
-                                      text(to_string(snap.state)) | color(state_color) | size(WIDTH, EQUAL, 12),
-                                      separatorLight(),
-                                      text(" " + snap.event->msg)}));
+                items.push_back(hbox(
+                    {text(fmt::format("[{:>3}ms] ", i * 10 /* 示例时间 */)) | dim,
+                     text(to_string(snap.state)) | color(state_color) | size(WIDTH, EQUAL, 12),
+                     separatorLight(),
+                     text(" " + snap.event.msg)}));
             }
             return vbox(std::move(items)) | vscroll_indicator | frame;
         }
@@ -122,8 +123,9 @@ namespace ui
                          separator(),
                          window(text("FSM State"), text(to_string(last.state))),
                          window(text("FD Info"), text(fmt::format("Handle: {}", last.fd))),
-                         last.has_error ? window(text("Error"), text(last.error.format()) | color(Color::Red))
-                                        : emptyElement()});
+                         last.error
+                             ? window(text("Error"), text(last.error.format()) | color(Color::Red))
+                             : emptyElement()});
         }
 
         Element render_status_bar()

@@ -22,7 +22,7 @@ namespace core::sink
         void on_event(const EventSnapshot &s) override
         {
             ++m.total_events;
-            if (s.has_error)
+            if (s.error)
                 ++m.errors;
         }
 
