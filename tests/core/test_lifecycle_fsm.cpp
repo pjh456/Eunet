@@ -17,7 +17,7 @@ static Event make_ok(
     EventType type,
     int fd)
 {
-    return Event::info(type, "ok", fd);
+    return Event::info(type, "ok", {fd});
 }
 
 static Event make_error(
@@ -27,8 +27,8 @@ static Event make_error(
 {
     return Event::failure(
         type,
-        EventError{"test", msg},
-        fd);
+        util::Error::internal(msg),
+        {fd});
 }
 
 /* -------------------------------------------------
@@ -84,10 +84,10 @@ void test_fsm_error_interrupt()
     assert(fsm.current_state() == LifeState::Error);
     assert(fsm.has_error());
 
-    const EventError *err = fsm.get_last_error();
+    auto err = fsm.get_last_error();
     assert(err);
-    assert(err->domain == "test");
-    assert(err->message == "dns failed");
+    assert(err.get_domain() == util::ErrorDomain::Internal);
+    assert(err.get_message() == "dns failed");
 }
 
 void test_fsm_error_is_terminal()

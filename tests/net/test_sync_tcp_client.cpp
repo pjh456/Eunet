@@ -15,7 +15,7 @@ void print_timeline(const core::Timeline &tl)
     {
         std::cout
             << "Event: " << static_cast<int>(e->type)
-            << " | " << e->to_string() << "\n";
+            << " | " << to_string(*e) << "\n";
     }
 }
 
@@ -28,7 +28,7 @@ int main()
     auto res = client.connect("example.com", 80);
     if (res.is_err())
     {
-        std::cerr << "Connect failed: " << res.unwrap_err().message() << "\n";
+        std::cerr << "Connect failed: " << res.unwrap_err().get_message() << "\n";
         return 1;
     }
 
@@ -40,7 +40,7 @@ int main()
     auto send_res = client.send(data);
     if (send_res.is_err())
     {
-        std::cerr << "Send failed: " << send_res.unwrap_err().message() << "\n";
+        std::cerr << "Send failed: " << send_res.unwrap_err().get_message() << "\n";
         return 1;
     }
     std::cout << "Sent " << send_res.unwrap() << " bytes\n";
@@ -50,7 +50,7 @@ int main()
     auto recv_res = client.recv(buffer, 4096); // 读最多 4KB
     if (recv_res.is_err())
     {
-        std::cerr << "Recv failed: " << recv_res.unwrap_err().message() << "\n";
+        std::cerr << "Recv failed: " << recv_res.unwrap_err().get_message() << "\n";
         return 1;
     }
 

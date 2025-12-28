@@ -17,22 +17,22 @@ void test_timeline()
     Event e1 = Event::info(
         EventType::DNS_RESOLVE_START,
         "DNS lookup start",
-        3);
+        {3});
 
     Event e2 = Event::info(
         EventType::TCP_CONNECT_START,
         "TCP connecting",
-        3);
+        {3});
 
     Event e3 = Event::info(
         EventType::HTTP_SENT,
         "Request sent",
-        4);
+        {4});
 
     Event e4 = Event::failure(
         EventType::HTTP_RECEIVED,
-        EventError{"net", "timeout"},
-        3);
+        util::Error::from_gai(0, "timeout"),
+        {3});
 
     // 2. push 单个
     {
@@ -63,22 +63,22 @@ void test_timeline()
         auto list = tl.query_by_fd(3);
         assert(list.size() == 3);
         for (auto ev : list)
-            assert(ev->fd == 3);
+            assert(ev->fd.fd == 3);
     }
 
     // 6. query_by_type
     {
         auto list = tl.query_by_type(EventType::HTTP_RECEIVED);
         assert(list.size() == 1);
-        assert(list.front()->error.has_value());
+        assert(list.front()->error);
     }
 
     // 7. query_errors
     {
         auto errs = tl.query_errors();
         assert(errs.size() == 1);
-        assert(errs.front()->error.has_value());
-        assert(errs.front()->error->domain == "net");
+        assert(errs.front()->error);
+        assert(errs.front()->error.get_domain() == util::ErrorDomain::Network);
     }
 
     // 8. query_by_time
@@ -94,14 +94,14 @@ void test_timeline()
     {
         auto latest = tl.latest_event();
         assert(latest.is_ok());
-        assert(latest.unwrap()->error.has_value());
+        assert(latest.unwrap()->error);
     }
 
     // 10. latest_by_fd
     {
         auto latest = tl.latest_by_fd(3);
         assert(latest.is_ok());
-        assert(latest.unwrap()->fd == 3);
+        assert(latest.unwrap()->fd.fd == 3);
     }
 
     // 11. replay_all
@@ -115,7 +115,7 @@ void test_timeline()
         auto list = tl.replay_by_fd(3);
         assert(list.size() == 3);
         for (auto ev : list)
-            assert(ev->fd == 3);
+            assert(ev->fd.fd == 3);
     }
 
     // 13. replay_since
@@ -161,19 +161,19 @@ void test_timeline()
         Event e5 = Event::info(
             EventType::TCP_CONNECT_SUCCESS,
             "Conn established",
-            5);
+            {5});
 
         Event e6 = Event::info(
             EventType::HTTP_RECEIVED,
             "Request received",
-            5);
+            {5});
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         Event e7 = Event::info(
             EventType::HTTP_SENT,
             "Request sent later",
-            5);
+            {5});
 
         auto res = tl.push({e7, e5, e6}); // 故意乱序
         assert(res.is_ok());
