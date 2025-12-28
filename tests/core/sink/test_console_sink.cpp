@@ -29,11 +29,10 @@ static EventSnapshot make_snapshot(
     static LifecycleFSM dummy_fsm(fd);
 
     return EventSnapshot{
-        .event = &e,
+        .event = e,
         .fd = fd,
         .state = state,
         .ts = e.ts,
-        .has_error = error,
         .error = e.error,
     };
 }

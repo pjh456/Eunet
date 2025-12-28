@@ -14,8 +14,8 @@ void print_timeline(const core::Timeline &tl)
     for (const auto &e : tl.replay_all())
     {
         std::cout
-            << "Event: " << static_cast<int>(e->type)
-            << " | " << to_string(*e) << "\n";
+            << "Event: " << static_cast<int>(e.type)
+            << " | " << to_string(e) << "\n";
     }
 }
 
