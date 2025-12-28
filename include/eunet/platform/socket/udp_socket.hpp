@@ -11,26 +11,21 @@ namespace platform::net
     class UDPSocket final : public SocketBase
     {
     public:
-        static util::ResultV<UDPSocket> create();
+        static util::ResultV<UDPSocket>
+        create(AddressFamily af = AddressFamily::IPv4);
 
     public:
-        explicit UDPSocket(fd::Fd fd);
+        explicit UDPSocket(fd::Fd &&fd) noexcept;
 
     public:
         util::ResultV<void>
         connect(const SocketAddress &peer);
 
         util::ResultV<size_t>
-        send(
-            const std::byte *data,
-            size_t len,
-            time::Duration timeout);
+        send(const std::byte *data, size_t len);
 
         util::ResultV<size_t>
-        recv(
-            std::byte *buf,
-            size_t len,
-            time::Duration timeout);
+        recv(std::byte *buf, size_t len);
     };
 }
 

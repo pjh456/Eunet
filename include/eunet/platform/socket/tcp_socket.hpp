@@ -10,10 +10,11 @@ namespace platform::net
     class TCPSocket final : public SocketBase
     {
     public:
-        static util::ResultV<TCPSocket> create();
+        static util::ResultV<TCPSocket>
+        create(AddressFamily af = AddressFamily::IPv4);
 
     public:
-        explicit TCPSocket(fd::Fd fd);
+        explicit TCPSocket(fd::Fd &&fd) noexcept;
 
     public:
         util::ResultV<void>
@@ -22,13 +23,13 @@ namespace platform::net
             time::Duration timeout);
 
         util::ResultV<size_t>
-        send(
+        send_all(
             const std::byte *data,
             size_t len,
             time::Duration timeout);
 
         util::ResultV<size_t>
-        recv(
+        recv_some(
             std::byte *buf,
             size_t len,
             time::Duration timeout);

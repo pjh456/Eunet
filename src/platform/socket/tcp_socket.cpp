@@ -1,29 +1,34 @@
 #include "eunet/platform/socket/tcp_socket.hpp"
+#include "eunet/platform/poller.hpp"
+#include "eunet/platform/time.hpp"
 
 #include <sys/socket.h>
 #include <sys/epoll.h>
-#include <unistd.h>
 #include <cerrno>
-
-#include "eunet/platform/poller.hpp"
 
 namespace platform::net
 {
     util::ResultV<TCPSocket>
-    TCPSocket::create()
+    TCPSocket::create(AddressFamily af)
     {
         using Result = util::ResultV<TCPSocket>;
 
-        int sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
-        if (sockfd < 0)
-            return Result::Err(
-                util::Error::from_errno(
-                    errno, "Failed to create TCP socket"));
+        int domain = (af == AddressFamily::IPv6) ? AF_INET6 : AF_INET;
 
-        return Result::Ok(TCPSocket(fd::Fd(sockfd)));
+        auto fd_res =
+            fd::Fd::socket(
+                domain,
+                SOCK_STREAM,
+                0);
+
+        if (fd_res.is_err())
+            return Result::Err(fd_res.unwrap_err());
+
+        return Result::Ok(
+            TCPSocket(std::move(fd_res.unwrap())));
     }
 
-    TCPSocket::TCPSocket(fd::Fd fd)
+    TCPSocket::TCPSocket(fd::Fd &&fd) noexcept
         : SocketBase(std::move(fd)) {}
 
     util::ResultV<void>
@@ -33,188 +38,165 @@ namespace platform::net
     {
         using Result = util::ResultV<void>;
 
-        set_nonblocking(true);
+        NonBlockingGuard guard(view());
 
         int ret = ::connect(
-            m_fd.view().fd,
+            view().fd,
             addr.as_sockaddr(),
             addr.length());
 
         if (ret == 0)
-        {
-            set_nonblocking(false);
             return Result::Ok();
-        }
 
         if (errno != EINPROGRESS)
             return Result::Err(
                 util::Error::from_errno(
-                    errno, "TCP connect failed"));
+                    errno, "connect failed"));
 
         auto poller_res = platform::poller::Poller::create();
         if (poller_res.is_err())
-            return Result::Err(
-                util::Error::internal(
-                    "Failed to create poller: " +
-                    poller_res.unwrap_err().message()));
+            return Result::Err(poller_res.unwrap_err());
 
         auto poller = std::move(poller_res.unwrap());
-        if (auto res = poller.add(m_fd, EPOLLOUT); res.is_err())
-            return Result::Err(res.unwrap_err());
+        poller.add(m_fd, EPOLLOUT).unwrap();
 
-        int timeout_ms =
-            static_cast<int>(
-                std::chrono::duration_cast<
-                    std::chrono::milliseconds>(timeout)
-                    .count());
+        auto deadline = time::deadline_after(timeout);
 
-        auto events_res = poller.wait(timeout_ms);
-        if (events_res.is_err())
-            return Result::Err(events_res.unwrap_err());
+        while (true)
+        {
+            auto now = time::monotonic_now();
+            if (time::expired(deadline))
+                return Result::Err(
+                    util::Error::internal(
+                        "TCP connect timeout"));
 
-        if (events_res.unwrap().empty())
-            return Result::Err(
-                util::Error::internal("TCP connect timeout"));
+            int ms = std::chrono::duration_cast<
+                         std::chrono::milliseconds>(
+                         deadline - now)
+                         .count();
+
+            auto ev = poller.wait(ms).unwrap();
+            if (!ev.empty())
+                break;
+        }
 
         int so_error = 0;
         socklen_t len = sizeof(so_error);
-        if (::getsockopt(
-                m_fd.view().fd,
-                SOL_SOCKET,
-                SO_ERROR,
-                &so_error,
-                &len) < 0)
-            return Result::Err(
-                util::Error::from_errno(
-                    errno, "getsockopt(SO_ERROR) failed"));
+        ::getsockopt(
+            view().fd,
+            SOL_SOCKET,
+            SO_ERROR,
+            &so_error,
+            &len);
 
         if (so_error != 0)
             return Result::Err(
                 util::Error::from_errno(
-                    so_error, "TCP connect failed"));
+                    so_error, "connect failed"));
 
-        set_nonblocking(false);
         return Result::Ok();
     }
 
     util::ResultV<size_t>
-    TCPSocket::send(
+    TCPSocket::send_all(
         const std::byte *data,
         size_t len,
         time::Duration timeout)
     {
         using Result = util::ResultV<size_t>;
 
-        set_nonblocking(true);
+        NonBlockingGuard guard(view());
 
-        size_t total_sent = 0;
         auto poller_res = platform::poller::Poller::create();
         if (poller_res.is_err())
             return Result::Err(poller_res.unwrap_err());
 
         auto poller = std::move(poller_res.unwrap());
+        poller.add(m_fd, EPOLLOUT).unwrap();
 
-        while (total_sent < len)
+        size_t sent = 0;
+        auto deadline = time::deadline_after(timeout);
+
+        while (sent < len)
         {
-            if (auto res = poller.add(m_fd, EPOLLOUT); res.is_err())
-                return Result::Err(res.unwrap_err());
-
-            int timeout_ms =
-                static_cast<int>(
-                    std::chrono::duration_cast<
-                        std::chrono::milliseconds>(timeout)
-                        .count());
-
-            auto events_res = poller.wait(timeout_ms);
-            if (events_res.is_err())
-                return Result::Err(events_res.unwrap_err());
-
-            if (events_res.unwrap().empty())
-                return Result::Err(
-                    util::Error::internal("TCP send timeout"));
-
             ssize_t n = ::send(
-                m_fd.view().fd,
-                data + total_sent,
-                len - total_sent,
+                view().fd,
+                data + sent,
+                len - sent,
                 0);
 
-            if (n < 0)
+            if (n > 0)
             {
-                if (errno == EAGAIN || errno == EWOULDBLOCK)
-                    continue;
-
-                return Result::Err(
-                    util::Error::from_errno(
-                        errno, "TCP send failed"));
+                sent += static_cast<size_t>(n);
+                continue;
             }
 
-            total_sent += static_cast<size_t>(n);
+            if (errno != EAGAIN && errno != EWOULDBLOCK)
+                return Result::Err(
+                    util::Error::from_errno(
+                        errno, "send failed"));
+
+            auto now = time::monotonic_now();
+            if (time::expired(deadline))
+                return Result::Err(
+                    util::Error::internal(
+                        "TCP send timeout"));
+
+            int ms =
+                std::chrono::duration_cast<
+                    std::chrono::milliseconds>(
+                    deadline - now)
+                    .count();
+            poller.wait(ms).unwrap();
         }
 
-        set_nonblocking(false);
-        return Result::Ok(total_sent);
+        return Result::Ok(sent);
     }
 
     util::ResultV<size_t>
-    TCPSocket::recv(
+    TCPSocket::recv_some(
         std::byte *buf,
         size_t len,
         time::Duration timeout)
     {
         using Result = util::ResultV<size_t>;
 
-        set_nonblocking(true);
+        NonBlockingGuard guard(m_fd.view());
 
-        size_t total_recv = 0;
         auto poller_res = platform::poller::Poller::create();
         if (poller_res.is_err())
             return Result::Err(poller_res.unwrap_err());
 
         auto poller = std::move(poller_res.unwrap());
+        poller.add(m_fd, EPOLLIN).unwrap();
 
-        while (total_recv < len)
+        auto deadline = time::deadline_after(timeout);
+
+        while (true)
         {
-            if (auto res = poller.add(m_fd, EPOLLIN); res.is_err())
-                return Result::Err(res.unwrap_err());
+            ssize_t n = ::recv(view().fd, buf, len, 0);
 
-            int timeout_ms =
-                static_cast<int>(
-                    std::chrono::duration_cast<
-                        std::chrono::milliseconds>(timeout)
-                        .count());
+            if (n >= 0)
+                return util::ResultV<size_t>::Ok(
+                    static_cast<size_t>(n));
 
-            auto events_res = poller.wait(timeout_ms);
-            if (events_res.is_err())
-                return Result::Err(events_res.unwrap_err());
-
-            if (events_res.unwrap().empty())
-                return Result::Err(
-                    util::Error::internal("TCP recv timeout"));
-
-            ssize_t n = ::recv(
-                m_fd.view().fd,
-                buf + total_recv,
-                len - total_recv,
-                0);
-
-            if (n < 0)
-            {
-                if (errno == EAGAIN || errno == EWOULDBLOCK)
-                    continue;
-
-                return Result::Err(
+            if (errno != EAGAIN && errno != EWOULDBLOCK)
+                return util::ResultV<size_t>::Err(
                     util::Error::from_errno(
-                        errno, "TCP recv failed"));
-            }
+                        errno, "recv failed"));
 
-            if (n == 0)
-                break; // peer closed
+            auto now = time::monotonic_now();
+            if (time::expired(deadline))
+                return Result::Err(
+                    util::Error::internal(
+                        "TCP recv timeout"));
 
-            total_recv += static_cast<size_t>(n);
+            int ms =
+                std::chrono::duration_cast<
+                    std::chrono::milliseconds>(
+                    deadline - now)
+                    .count();
+            poller.wait(ms).unwrap();
         }
-
-        set_nonblocking(false);
-        return Result::Ok(total_recv);
     }
 }

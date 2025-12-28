@@ -6,31 +6,45 @@
 namespace platform::net
 {
     util::ResultV<UDPSocket>
-    UDPSocket::create()
+    UDPSocket::create(AddressFamily af)
     {
         using Result = util::ResultV<UDPSocket>;
 
-        int fd = ::socket(AF_INET, SOCK_DGRAM, 0);
-        if (fd < 0)
-            return Result::Err(
-                util::Error::from_errno(errno, "UDP socket create failed"));
+        int domain =
+            (af == AddressFamily::IPv6)
+                ? AF_INET6
+                : AF_INET;
 
-        return Result::Ok(UDPSocket(fd::Fd(fd)));
+        auto fd_res =
+            fd::Fd::socket(
+                domain,
+                SOCK_DGRAM,
+                0);
+
+        if (fd_res.is_err())
+            return util::ResultV<UDPSocket>::Err(fd_res.unwrap_err());
+
+        return util::ResultV<UDPSocket>::Ok(
+            UDPSocket(
+                std::move(fd_res.unwrap())));
     }
 
-    UDPSocket::UDPSocket(fd::Fd fd)
+    UDPSocket::UDPSocket(fd::Fd &&fd) noexcept
         : SocketBase(std::move(fd)) {}
 
     util::ResultV<void>
-    UDPSocket::connect(const SocketAddress &peer)
+    UDPSocket::connect(
+        const SocketAddress &peer)
     {
         using Result = util::ResultV<void>;
 
         if (::connect(
-                m_fd.view().fd,
+                view().fd,
                 peer.as_sockaddr(),
                 peer.length()) < 0)
-            return Result::Err(util::Error::from_errno(errno, "UDP connect failed"));
+            return Result::Err(
+                util::Error::from_errno(
+                    errno, "UDP connect failed"));
 
         return Result::Ok();
     }
@@ -38,14 +52,11 @@ namespace platform::net
     util::ResultV<size_t>
     UDPSocket::send(
         const std::byte *data,
-        size_t len,
-        time::Duration)
+        size_t len)
     {
         using Result = util::ResultV<size_t>;
 
-        ssize_t n = ::send(
-            m_fd.view().fd, data, len, 0);
-
+        ssize_t n = ::send(view().fd, data, len, 0);
         if (n < 0)
             return Result::Err(
                 util::Error::from_errno(
@@ -57,14 +68,11 @@ namespace platform::net
     util::ResultV<size_t>
     UDPSocket::recv(
         std::byte *buf,
-        size_t len,
-        time::Duration)
+        size_t len)
     {
         using Result = util::ResultV<size_t>;
 
-        ssize_t n = ::recv(
-            m_fd.view().fd, buf, len, 0);
-
+        ssize_t n = ::recv(view().fd, buf, len, 0);
         if (n < 0)
             return Result::Err(
                 util::Error::from_errno(
