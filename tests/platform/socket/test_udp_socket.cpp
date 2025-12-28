@@ -92,8 +92,7 @@ int main()
     // send
     auto send_res = sock.send(
         reinterpret_cast<const std::byte *>(msg),
-        msg_len,
-        Duration(100));
+        msg_len);
     assert(send_res.is_ok());
     assert(send_res.unwrap() == msg_len);
 
@@ -101,8 +100,7 @@ int main()
     std::byte buf[128];
     auto recv_res = sock.recv(
         buf,
-        sizeof(buf),
-        Duration(100));
+        sizeof(buf));
     assert(recv_res.is_ok());
     assert(recv_res.unwrap() == msg_len);
 
