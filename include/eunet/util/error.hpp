@@ -12,43 +12,65 @@ namespace util
     enum class ErrorDomain
     {
         None = 0,
-        System,   // OS 错误 (errno)
-        Network,  // DNS (gai_error), TCP 协议栈
-        Platform, // Poller, Capability 等平台组件
-        Internal, // 内部逻辑错误
-        User      // 用户输入或配置错误
+        System,    // 底层 OS 错误 (errno)
+        Network,   // 名字解析 (DNS/GAI)
+        Transport, // 协议栈错误 (TCP/UDP)
+        Platform,  // 平台组件 (Poller/Epoll)
+        Resource,  // 资源枯竭 (FD 不足, 内存溢出)
+        Internal,  // 框架内部逻辑
+        User       // 校验/配置错误
+    };
+
+    class ErrorImpl
+    {
+    public:
+        virtual ~ErrorImpl() = default;
+        virtual ErrorDomain domain() const = 0;
+        virtual int code() const = 0;
+        virtual std::string message() const = 0;
+        virtual std::string format() const; // 默认格式化逻辑
     };
 
     class Error
     {
     private:
-        ErrorDomain domain{ErrorDomain::None};
-        int code{0};
-        std::string message;
-        std::shared_ptr<Error> cause; // 用于错误链
+        std::shared_ptr<const ErrorImpl> m_impl;
+        std::shared_ptr<Error> m_cause; // 错误链
 
     public:
-        static Error from_errno(int err_no, std::string_view context = "");
-        static Error from_gai(int gai_code, std::string_view context = "");
-        static Error internal(std::string_view msg);
+        static Error from_errno(int err_no, std::string_view syscall = "");
+        static Error from_gai(int gai_code, std::string_view host = "");
+        static Error internal(std::string msg);
+        static Error user(std::string msg);
+        static Error platform(std::string msg, int code = -1);
 
     public:
         Error() = default;
-        Error(ErrorDomain d, int c, std::string msg);
+        explicit Error(std::shared_ptr<const ErrorImpl> impl)
+            : m_impl(std::move(impl)) {}
 
     public:
-        ErrorDomain get_domain() const noexcept;
-        int get_code() const noexcept;
-        std::string_view get_message() const noexcept;
-        std::shared_ptr<Error> get_cause() const noexcept;
+        Error &wrap(Error cause)
+        {
+            m_cause = std::make_shared<Error>(std::move(cause));
+            return *this;
+        }
 
     public:
-        bool is_ok() const noexcept;
-        explicit operator bool() const noexcept;
+        bool is_ok() const noexcept { return m_impl == nullptr; }
+        explicit operator bool() const noexcept { return !is_ok(); }
 
     public:
-        // [System] Connection refused (errno: 111) | context: connect to 127.0.0.1
+        ErrorDomain domain() const noexcept;
+        int code() const noexcept;
+        std::string message() const noexcept;
+        const Error *cause() const noexcept;
+
         std::string format() const;
+
+    public:
+        template <typename T>
+        const T *as() const { return dynamic_cast<const T *>(m_impl.get()); }
     };
 
     template <typename T>
