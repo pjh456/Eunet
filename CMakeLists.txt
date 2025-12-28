@@ -8,9 +8,6 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_library(eunet STATIC)
-add_subdirectory(src)
-
 # libcap-devel checker
 find_library(LIBCAP cap)
 
@@ -21,6 +18,13 @@ endif()
 # fmt-devel checker
 find_package(fmt REQUIRED)
 
+# ftxui checker
+add_subdirectory(include/FTXUI)
+
+add_library(eunet STATIC)
+add_subdirectory(src)
+
+target_link_libraries(eunet PUBLIC ftxui::screen ftxui::dom ftxui::component)
 target_link_libraries(eunet PRIVATE cap)
 target_link_libraries(eunet PRIVATE fmt::fmt)
 
