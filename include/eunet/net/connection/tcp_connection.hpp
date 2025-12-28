@@ -2,7 +2,7 @@
 #define INCLUDE_EUNET_NET_CONNECTION_TCP_CONNECTION
 
 #include "eunet/platform/time.hpp"
-#include "eunet/platform/tcp_socket.hpp"
+#include "eunet/platform/socket/tcp_socket.hpp"
 #include "eunet/net/io_buffer.hpp"
 #include "eunet/net/connection.hpp"
 
