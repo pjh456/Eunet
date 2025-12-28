@@ -9,4 +9,5 @@ target_sources(eunet PRIVATE ${EUNET_SOURCES})
 target_include_directories(eunet
     PUBLIC
     ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include/FTXUI/include
 )
