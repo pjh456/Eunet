@@ -38,7 +38,6 @@ namespace core
             .fd = e.fd.fd,
             .state = fsm->current_state(),
             .ts = e.ts,
-            .has_error = fsm->has_error(),
             .error = fsm->get_last_error()};
 
         for (auto *sink : sinks)
