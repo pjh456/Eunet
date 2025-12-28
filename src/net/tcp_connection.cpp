@@ -1,6 +1,8 @@
-#include "eunet/net/tcp_connection.hpp"
+#include "eunet/net/connection/tcp_connection.hpp"
 
 #include <utility>
+#include <algorithm>
+#include <string.h>
 
 namespace net::tcp
 {
@@ -33,65 +35,19 @@ namespace net::tcp
         platform::net::TCPSocket &&sock)
         : sock(std::move(sock)) {}
 
-    IOBuffer &
-    TCPConnection::in_buffer() { return m_in_buffer; }
-
-    IOBuffer &
-    TCPConnection::out_buffer() { return m_out_buffer; }
-
     platform::fd::FdView
     TCPConnection::fd() const noexcept { return sock.view(); }
 
-    void
-    TCPConnection::set_nonblocking(bool enable)
-    {
-        sock.set_nonblocking(enable);
-    }
+    void TCPConnection::close() noexcept { sock.close(); }
+
+    bool TCPConnection::is_open() const noexcept { return (bool)sock.view(); }
 
     bool TCPConnection::has_pending_output()
-        const { return m_out_buffer.readable_bytes() > 0; }
-
-    void TCPConnection::close() { sock.close(); }
+        const noexcept { return m_out_buffer.readable_bytes() > 0; }
 
     util::ResultV<void>
-    TCPConnection::send(
-        const std::byte *data,
-        size_t len,
-        platform::time::Duration timeout)
+    TCPConnection::flush()
     {
-        // 1. 如果当前发送缓冲区没东西，尝试直接通过 Socket 发送，避免内存拷贝
-        size_t written = 0;
-        if (m_out_buffer.readable_bytes() == 0)
-        {
-            auto res = sock.send(data, len, timeout);
-            if (res.is_ok())
-                written = res.unwrap();
-            else if (
-                res.unwrap_err().code() != EAGAIN &&
-                res.unwrap_err().code() != EWOULDBLOCK)
-                return util::ResultV<void>::Err(res.unwrap_err());
-        }
-
-        // 2. 如果没发完（Socket 满了），把剩下的存进输出缓冲区
-        if (written < len)
-        {
-            m_out_buffer.append(data + written, len - written);
-        }
-
-        return util::ResultV<void>::Ok();
-    }
-
-    util::ResultV<void>
-    TCPConnection::send(
-        const std::vector<std::byte> &data,
-        platform::time::Duration timeout)
-    {
-        return send(data.data(), data.size(), timeout);
-    }
-
-    util::ResultV<void> TCPConnection::flush()
-    {
-        // 只要输出缓冲区里有数据，就不断尝试通过 Socket 发送
         while (m_out_buffer.readable_bytes() > 0)
         {
             platform::time::Duration timeout(50);
@@ -104,12 +60,11 @@ namespace net::tcp
             {
                 size_t n = res.unwrap();
                 if (n == 0)
-                    break; // Socket 暂时写不进去了
+                    break;
                 m_out_buffer.retrieve(n);
             }
             else
             {
-                // 如果是缓冲区满，停止发送，等待下次机会；否则返回错误
                 if (res.unwrap_err().code() == EAGAIN ||
                     res.unwrap_err().code() == EWOULDBLOCK)
                     break;
@@ -119,7 +74,64 @@ namespace net::tcp
         return util::ResultV<void>::Ok();
     }
 
-    util::ResultV<size_t> TCPConnection::read_available()
+    util::ResultV<size_t>
+    TCPConnection::write(
+        const std::byte *data,
+        size_t len,
+        platform::time::Duration timeout)
+    {
+        size_t written = 0;
+
+        // 1. 优先直写 socket
+        if (m_out_buffer.readable_bytes() == 0)
+        {
+            auto res = sock.send(data, len, timeout);
+            if (res.is_ok())
+                written = res.unwrap();
+            else if (
+                res.unwrap_err().code() != EAGAIN &&
+                res.unwrap_err().code() != EWOULDBLOCK)
+                return util::ResultV<size_t>::Err(res.unwrap_err());
+        }
+
+        // 2. 剩余进入 buffer
+        if (written < len)
+            m_out_buffer.append(data + written, len - written);
+
+        return util::ResultV<size_t>::Ok(len);
+    }
+
+    util::ResultV<size_t>
+    TCPConnection::read(
+        std::byte *buf,
+        size_t len,
+        platform::time::Duration timeout)
+    {
+        // 1. buffer 有数据，优先读 buffer
+        if (m_in_buffer.readable_bytes() > 0)
+        {
+            size_t n = std::min(len, m_in_buffer.readable_bytes());
+            memcpy(buf, m_in_buffer.peek(), n);
+            m_in_buffer.retrieve(n);
+            return util::ResultV<size_t>::Ok(n);
+        }
+
+        // 2. 直接从 socket 读
+        auto res = sock.recv(buf, len, timeout);
+        if (res.is_ok())
+            return util::ResultV<size_t>::Ok(res.unwrap());
+
+        return util::ResultV<size_t>::Err(res.unwrap_err());
+    }
+
+    IOBuffer &
+    TCPConnection::in_buffer() { return m_in_buffer; }
+
+    IOBuffer &
+    TCPConnection::out_buffer() { return m_out_buffer; }
+
+    util::ResultV<size_t>
+    TCPConnection::read_available()
     {
         size_t total_read = 0;
         while (true)
