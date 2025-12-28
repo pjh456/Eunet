@@ -234,7 +234,7 @@ namespace platform::net
         return Result::Ok(total_received);
     }
 
-    void TCPSocket::set_nonblocking(bool enable)
+    void TCPSocket::set_nonblocking(bool enable) noexcept
     {
         int flags = fcntl(fd.view().fd, F_GETFL, 0);
         if (flags < 0)
@@ -246,7 +246,7 @@ namespace platform::net
         fcntl(fd.view().fd, F_SETFL, flags);
     }
 
-    fd::FdView TCPSocket::view() const { return fd.view(); }
+    fd::FdView TCPSocket::view() const noexcept { return fd.view(); }
 
-    void TCPSocket::close() { fd.reset(-1); }
+    void TCPSocket::close() noexcept { fd.reset(-1); }
 }
