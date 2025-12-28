@@ -45,4 +45,4 @@ namespace platform::net
         void close();
     };
 }
-#endif
+#endif // INCLUDE_EUNET_PLATFORM_TCP_SOCKET

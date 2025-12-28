@@ -1,9 +1,57 @@
 #include "eunet/net/tcp_connection.hpp"
 
+#include <utility>
+
 namespace net::tcp
 {
-    TCPConnection::TCPConnection(platform::net::TCPSocket sock)
+    util::ResultV<TCPConnection>
+    TCPConnection::connect(
+        const platform::net::SocketAddress &addr,
+        platform::time::Duration timeout)
+    {
+        using Result = util::ResultV<TCPConnection>;
+
+        auto sock = platform::net::TCPSocket::create();
+        if (sock.is_err())
+            return Result::Err(sock.unwrap_err());
+
+        auto res = sock.unwrap().connect(addr, timeout);
+        if (res.is_err())
+            return Result::Err(res.unwrap_err());
+
+        return Result::Ok(TCPConnection(std::move(sock.unwrap())));
+    }
+
+    TCPConnection
+    TCPConnection::from_accepted_socket(
+        platform::net::TCPSocket &&sock)
+    {
+        return TCPConnection(std::move(sock));
+    }
+
+    TCPConnection::TCPConnection(
+        platform::net::TCPSocket &&sock)
         : sock(std::move(sock)) {}
+
+    IOBuffer &
+    TCPConnection::in_buffer() { return m_in_buffer; }
+
+    IOBuffer &
+    TCPConnection::out_buffer() { return m_out_buffer; }
+
+    platform::fd::FdView
+    TCPConnection::fd() const noexcept { return sock.view(); }
+
+    void
+    TCPConnection::set_nonblocking(bool enable)
+    {
+        sock.set_nonblocking(enable);
+    }
+
+    bool TCPConnection::has_pending_output()
+        const { return m_out_buffer.readable_bytes() > 0; }
+
+    void TCPConnection::close() { sock.close(); }
 
     util::ResultV<void>
     TCPConnection::send(
@@ -105,6 +153,4 @@ namespace net::tcp
         }
         return util::ResultV<size_t>::Ok(total_read);
     }
-
-    void TCPConnection::close() { sock.close(); }
 }
