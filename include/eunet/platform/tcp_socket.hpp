@@ -38,11 +38,11 @@ namespace platform::net
             time::Duration timeout);
 
     public:
-        void set_nonblocking(bool enable);
+        void set_nonblocking(bool enable) noexcept;
 
-        fd::FdView view() const;
+        fd::FdView view() const noexcept;
 
-        void close();
+        void close() noexcept;
     };
 }
 #endif // INCLUDE_EUNET_PLATFORM_TCP_SOCKET
