@@ -8,7 +8,6 @@
 #include <unistd.h>
 
 #include "eunet/util/result.hpp"
-#include "eunet/platform/sys_error.hpp"
 
 namespace platform::capability
 {
@@ -44,22 +43,15 @@ namespace platform::capability
         InvalidCapability, // 未映射的 Capability
     };
 
-    struct CapabilityError
-    {
-        CapabilityErrorCode code;
-        Capability capability;
-        SysError cause;
-    };
-
     namespace helper
     {
         cap_value_t to_linux_cap(Capability cap) noexcept;
         Capability linux_to_cap(cap_value_t cap) noexcept;
 
-        util::Result<bool, CapabilityError>
+        util::Result<bool, CapabilityErrorCode>
         has_permitted(cap_value_t cap) noexcept;
 
-        util::Result<void, CapabilityError>
+        util::Result<void, CapabilityErrorCode>
         set_effective(cap_value_t cap, bool enable) noexcept;
     }
 
@@ -80,15 +72,15 @@ namespace platform::capability
         CapabilityManager &operator=(CapabilityManager &&) noexcept = delete;
 
     public:
-        util::Result<CapabilityState, CapabilityError>
+        util::Result<CapabilityState, CapabilityErrorCode>
         state(Capability cap) const noexcept;
-        util::Result<void, CapabilityError>
+        util::Result<void, CapabilityErrorCode>
         enable(Capability cap) noexcept;
-        util::Result<void, CapabilityError>
+        util::Result<void, CapabilityErrorCode>
         disable(Capability cap) noexcept;
 
     public:
-        util::Result<void, CapabilityError>
+        util::Result<void, CapabilityErrorCode>
         drop_all_effective() noexcept;
     };
 
@@ -110,11 +102,9 @@ namespace platform::capability
         ~ScopedCapability();
 
     public:
-        static util::Result<ScopedCapability, CapabilityError>
+        static util::Result<ScopedCapability, CapabilityErrorCode>
         acquire(Capability cap) noexcept;
     };
 }
-
-std::string to_string(platform::capability::CapabilityErrorCode code);
 
 #endif // INCLUDE_EUNET_PLATFORM_CAPABILITY

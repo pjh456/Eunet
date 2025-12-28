@@ -15,7 +15,6 @@
 #include "eunet/util/error.hpp"
 #include "eunet/platform/time.hpp"
 #include "eunet/platform/fd.hpp"
-#include "eunet/platform/sys_error.hpp"
 #include "eunet/core/timeline.hpp"
 #include "eunet/core/orchestrator.hpp"
 

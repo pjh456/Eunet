@@ -31,81 +31,50 @@ namespace platform::capability
             }
         }
 
-        util::Result<bool, CapabilityError>
+        util::Result<bool, CapabilityErrorCode>
         has_permitted(cap_value_t cap) noexcept
         {
-            using Result = util::Result<bool, CapabilityError>;
+            using Result = util::Result<bool, CapabilityErrorCode>;
 
             cap_t caps = ::cap_get_proc();
             if (!caps)
-            {
                 return Result::Err(
-                    CapabilityError{
-                        CapabilityErrorCode::GetProcCapsFailed,
-                        linux_to_cap(cap),
-                        SysError::from_errno(errno),
-                    });
-            }
+                    CapabilityErrorCode::GetProcCapsFailed);
 
             cap_flag_value_t value{};
             if (::cap_get_flag(caps, cap, CAP_PERMITTED, &value) != 0)
             {
-                SysError err = SysError::from_errno(errno);
                 ::cap_free(caps);
 
-                return Result::Err(
-                    CapabilityError{
-                        CapabilityErrorCode::GetFlagFailed,
-                        linux_to_cap(cap),
-                        err,
-                    });
+                return Result::Err(CapabilityErrorCode::GetFlagFailed);
             }
 
             ::cap_free(caps);
             return Result::Ok(value == CAP_SET);
         }
 
-        util::Result<void, CapabilityError>
+        util::Result<void, CapabilityErrorCode>
         set_effective(cap_value_t cap, bool enable) noexcept
         {
-            using Result = util::Result<void, CapabilityError>;
+            using Result = util::Result<void, CapabilityErrorCode>;
 
             cap_t caps = ::cap_get_proc();
             if (!caps)
-            {
-                return Result::Err(
-                    CapabilityError{
-                        CapabilityErrorCode::GetProcCapsFailed,
-                        linux_to_cap(cap),
-                        SysError::from_errno(errno),
-                    });
-            }
+                return Result::Err(CapabilityErrorCode::GetProcCapsFailed);
 
             cap_flag_value_t flag = enable ? CAP_SET : CAP_CLEAR;
             if (::cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap, flag) != 0)
             {
-                SysError err = SysError::from_errno(errno);
                 ::cap_free(caps);
 
-                return Result::Err(
-                    CapabilityError{
-                        CapabilityErrorCode::SetFlagFailed,
-                        linux_to_cap(cap),
-                        err,
-                    });
+                return Result::Err(CapabilityErrorCode::SetFlagFailed);
             }
 
             if (::cap_set_proc(caps) != 0)
             {
-                SysError err = SysError::from_errno(errno);
                 ::cap_free(caps);
 
-                return Result::Err(
-                    CapabilityError{
-                        CapabilityErrorCode::SetProcFailed,
-                        linux_to_cap(cap),
-                        err,
-                    });
+                return Result::Err(CapabilityErrorCode::SetProcFailed);
             }
 
             ::cap_free(caps);
@@ -124,10 +93,10 @@ namespace platform::capability
         (void)drop_all_effective();
     }
 
-    util::Result<CapabilityState, CapabilityError>
+    util::Result<CapabilityState, CapabilityErrorCode>
     CapabilityManager::state(Capability cap) const noexcept
     {
-        using Result = util::Result<CapabilityState, CapabilityError>;
+        using Result = util::Result<CapabilityState, CapabilityErrorCode>;
 
         auto res = helper::has_permitted(helper::to_linux_cap(cap));
         if (res.is_err())
@@ -139,10 +108,10 @@ namespace platform::capability
                 : CapabilityState::Missing);
     }
 
-    util::Result<void, CapabilityError>
+    util::Result<void, CapabilityErrorCode>
     CapabilityManager::enable(Capability cap) noexcept
     {
-        using Result = util::Result<void, CapabilityError>;
+        using Result = util::Result<void, CapabilityErrorCode>;
 
         cap_value_t linux_cap = helper::to_linux_cap(cap);
 
@@ -151,65 +120,39 @@ namespace platform::capability
             return Result::Err(permitted.unwrap_err());
 
         if (!permitted.unwrap())
-        {
-            return Result::Err(
-                CapabilityError{
-                    CapabilityErrorCode::NotPermitted,
-                    cap,
-                    SysError{},
-                });
-        }
+            return Result::Err(CapabilityErrorCode::NotPermitted);
 
         return helper::set_effective(linux_cap, true);
     }
 
-    util::Result<void, CapabilityError>
+    util::Result<void, CapabilityErrorCode>
     CapabilityManager::disable(Capability cap) noexcept
     {
         return helper::set_effective(
             helper::to_linux_cap(cap), false);
     }
 
-    util::Result<void, CapabilityError>
+    util::Result<void, CapabilityErrorCode>
     CapabilityManager::drop_all_effective() noexcept
     {
-        using Result = util::Result<void, CapabilityError>;
+        using Result = util::Result<void, CapabilityErrorCode>;
 
         cap_t caps = ::cap_get_proc();
         if (!caps)
-        {
-            return Result::Err(
-                CapabilityError{
-                    CapabilityErrorCode::GetProcCapsFailed,
-                    Capability::_Process,
-                    SysError::from_errno(errno),
-                });
-        }
+            return Result::Err(CapabilityErrorCode::GetProcCapsFailed);
 
         if (::cap_clear_flag(caps, CAP_EFFECTIVE) != 0)
         {
-            SysError err = SysError::from_errno(errno);
             ::cap_free(caps);
 
-            return Result::Err(
-                CapabilityError{
-                    CapabilityErrorCode::SetFlagFailed,
-                    Capability::_Process,
-                    err,
-                });
+            return Result::Err(CapabilityErrorCode::SetFlagFailed);
         }
 
         if (::cap_set_proc(caps) != 0)
         {
-            SysError err = SysError::from_errno(errno);
             ::cap_free(caps);
 
-            return Result::Err(
-                CapabilityError{
-                    CapabilityErrorCode::SetProcFailed,
-                    Capability::_Process,
-                    err,
-                });
+            return Result::Err(CapabilityErrorCode::SetProcFailed);
         }
 
         ::cap_free(caps);
@@ -228,10 +171,10 @@ namespace platform::capability
         (void)CapabilityManager::instance().disable(cap);
     }
 
-    util::Result<ScopedCapability, CapabilityError>
+    util::Result<ScopedCapability, CapabilityErrorCode>
     ScopedCapability::acquire(Capability cap) noexcept
     {
-        using Result = util::Result<ScopedCapability, CapabilityError>;
+        using Result = util::Result<ScopedCapability, CapabilityErrorCode>;
 
         auto res = CapabilityManager::instance().enable(cap);
         if (res.is_err())
@@ -239,45 +182,4 @@ namespace platform::capability
 
         return Result::Ok(ScopedCapability(cap));
     }
-}
-
-std::string to_string(platform::capability::CapabilityErrorCode code)
-{
-    using namespace platform::capability;
-    switch (code)
-    {
-    case CapabilityErrorCode::NotPermitted:
-        return "not permitted";
-    case CapabilityErrorCode::NotInBoundingSet:
-        return "not in bounding set";
-
-    case CapabilityErrorCode::GetProcCapsFailed:
-        return "get proc caps failed";
-    case CapabilityErrorCode::GetFlagFailed:
-        return "get flag failed";
-    case CapabilityErrorCode::SetFlagFailed:
-        return "set flag failed";
-    case CapabilityErrorCode::SetProcFailed:
-        return "set proc failed";
-
-    case CapabilityErrorCode::InvalidCapability:
-        return "invalid capability";
-
-    default:
-        return "unknown";
-    }
-}
-
-std::string format_error(const platform::capability::CapabilityError &e)
-{
-    std::string out = "[capability] ";
-    out += to_string(e.code);
-
-    if (!e.cause.is_ok())
-    {
-        out += " | ";
-        out += format_error(e.cause);
-    }
-
-    return out;
 }

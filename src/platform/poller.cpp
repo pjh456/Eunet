@@ -6,14 +6,14 @@
 
 namespace platform::poller
 {
-    SysResult<Poller> Poller::create()
+    util::ResultV<Poller> Poller::create()
     {
         Poller p;
         if (!p.epoll_fd.valid())
-            return SysResult<Poller>::Err(
-                SysError::from_errno(errno));
+            return util::ResultV<Poller>::Err(
+                util::Error::from_errno(errno));
 
-        return SysResult<Poller>::Ok(std::move(p));
+        return util::ResultV<Poller>::Ok(std::move(p));
     }
 
     Poller::Poller()
@@ -36,26 +36,15 @@ namespace platform::poller
     platform::fd::Fd &Poller::get_fd() noexcept { return epoll_fd; }
     const platform::fd::Fd &Poller::get_fd() const noexcept { return epoll_fd; }
 
-    Poller::PollerResult
+    util::ResultV<void>
     Poller::add(
         const platform::fd::Fd &fd,
         std::uint32_t events) noexcept
     {
         if (!valid())
-        {
-            return PollerResult::Err(
-                PollerError{
-                    .code = PollerErrorCode::NotInitialized,
-                    .cause = SysError{},
-                });
-        }
-
-        if (!fd)
-            return PollerResult::Err(
-                PollerError{
-                    .code = PollerErrorCode::InvalidFd,
-                    .cause = SysError{},
-                });
+            return util::ResultV<void>::Err(
+                util::Error::internal(
+                    "Invalid epoll fd"));
 
         epoll_event ev{};
         ev.events = events;
@@ -65,41 +54,21 @@ namespace platform::poller
                 epoll_fd.get(),
                 EPOLL_CTL_ADD,
                 fd.get(), &ev) == 0)
-            return PollerResult::Ok();
+            return util::ResultV<void>::Ok();
 
-        const SysError sys = SysError::from_errno(errno);
-
-        PollerErrorCode code = PollerErrorCode::InvalidFd;
-        if (errno == EEXIST)
-            code = PollerErrorCode::AlreadyExists;
-        else if (errno == ENOENT)
-            code = PollerErrorCode::NotFound;
-
-        return PollerResult::Err(
-            PollerError{
-                .code = code,
-                .cause = sys,
-            });
+        return util::ResultV<void>::Err(
+            util::Error::from_errno(errno));
     }
 
-    Poller::PollerResult
+    util::ResultV<void>
     Poller::modify(
         const platform::fd::Fd &fd,
         std::uint32_t events) noexcept
     {
         if (!valid())
-            return PollerResult::Err(
-                PollerError{
-                    PollerErrorCode::NotInitialized,
-                    SysError{},
-                });
-
-        if (!fd)
-            return PollerResult::Err(
-                PollerError{
-                    PollerErrorCode::InvalidFd,
-                    SysError{},
-                });
+            return util::ResultV<void>::Err(
+                util::Error::internal(
+                    "Invalid epoll fd"));
 
         epoll_event ev{};
         ev.events = events;
@@ -109,65 +78,37 @@ namespace platform::poller
                 epoll_fd.get(),
                 EPOLL_CTL_MOD,
                 fd.get(), &ev) == 0)
-            return PollerResult::Ok();
+            return util::ResultV<void>::Ok();
 
-        SysError sys = SysError::from_errno(errno);
-
-        PollerErrorCode code = PollerErrorCode::InvalidFd;
-        if (errno == ENOENT)
-            code = PollerErrorCode::NotFound;
-
-        return PollerResult::Err(
-            PollerError{
-                code,
-                sys,
-            });
+        return util::ResultV<void>::Err(
+            util::Error::from_errno(errno));
     }
 
-    Poller::PollerResult
+    util::ResultV<void>
     Poller::remove(const platform::fd::Fd &fd) noexcept
     {
         if (!valid())
-            return PollerResult::Err(
-                PollerError{
-                    PollerErrorCode::NotInitialized,
-                    SysError{},
-                });
-
-        if (!fd)
-            return PollerResult::Err(
-                PollerError{
-                    PollerErrorCode::InvalidFd,
-                    SysError{},
-                });
+            return util::ResultV<void>::Err(
+                util::Error::internal(
+                    "Invalid epoll fd"));
 
         if (::epoll_ctl(
                 epoll_fd.get(),
                 EPOLL_CTL_DEL,
                 fd.get(), nullptr) == 0)
-            return PollerResult::Ok();
+            return util::ResultV<void>::Ok();
 
-        SysError sys = SysError::from_errno(errno);
-
-        PollerErrorCode code =
-            (errno == ENOENT)
-                ? PollerErrorCode::NotFound
-                : PollerErrorCode::InvalidFd;
-
-        return PollerResult::Err(
-            PollerError{
-                code,
-                sys,
-            });
+        return util::ResultV<void>::Err(
+            util::Error::from_errno(errno));
     }
 
-    SysResult<std::vector<PollEvent>>
+    util::ResultV<std::vector<PollEvent>>
     Poller::wait(int timeout_ms) noexcept
     {
-        using Result = SysResult<std::vector<PollEvent>>;
+        using Result = util::ResultV<std::vector<PollEvent>>;
 
         if (!valid())
-            return Result::Err(SysError::from_errno(EBADF));
+            return Result::Err(util::Error::from_errno(EBADF));
 
         epoll_event events[MAX_EVENTS];
         int n;
@@ -182,7 +123,7 @@ namespace platform::poller
         } while (n < 0 && errno == EINTR);
 
         if (n < 0)
-            return Result::Err(SysError::from_errno(errno));
+            return Result::Err(util::Error::from_errno(errno));
 
         std::vector<PollEvent> result;
         result.reserve(static_cast<size_t>(n));
@@ -199,36 +140,4 @@ namespace platform::poller
         return Result::Ok(std::move(result));
     }
 
-}
-
-const char *to_string(const platform::poller::PollerErrorCode &code)
-{
-    using namespace platform::poller;
-    switch (code)
-    {
-    case PollerErrorCode::NotInitialized:
-        return "not initialized";
-    case PollerErrorCode::InvalidFd:
-        return "invalid fd";
-    case PollerErrorCode::AlreadyExists:
-        return "already exists";
-    case PollerErrorCode::NotFound:
-        return "not found";
-    default:
-        return "unknown";
-    }
-}
-
-std::string format_error(const platform::poller::PollerError &e)
-{
-    std::string out = "[poller] ";
-    out += to_string(e.code);
-
-    if (!e.cause.is_ok())
-    {
-        out += " | ";
-        out += format_error(e.cause);
-    }
-
-    return out;
 }
