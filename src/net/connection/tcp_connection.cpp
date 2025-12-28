@@ -38,6 +38,9 @@ namespace net::tcp
     platform::fd::FdView
     TCPConnection::fd() const noexcept { return sock.view(); }
 
+    void
+    TCPConnection::set_nonblocking(bool enable) { sock.set_nonblocking(enable); }
+
     void TCPConnection::close() noexcept { sock.close(); }
 
     bool TCPConnection::is_open() const noexcept { return (bool)sock.view(); }
