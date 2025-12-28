@@ -6,6 +6,7 @@
 #include <mutex>
 
 #include "eunet/util/result.hpp"
+#include "eunet/util/error.hpp"
 #include "eunet/core/event.hpp"
 
 namespace core
@@ -23,10 +24,10 @@ namespace core
         template <typename T>
         using QuerySet = std::unordered_map<T, IdxList>;
 
-        using EvIdxResult = util::Result<EvIdx, EventError>;
-        using EvCntResult = util::Result<EvCnt, EventError>;
-        using EvListResult = util::Result<EvList, EventError>;
-        using EvViewResult = util::Result<EvView, EventError>;
+        using EvIdxResult = util::ResultV<EvIdx>;
+        using EvCntResult = util::ResultV<EvCnt>;
+        using EvListResult = util::ResultV<EvList>;
+        using EvViewResult = util::ResultV<EvView>;
 
     private:
         std::vector<Event> events;
@@ -111,7 +112,7 @@ namespace core
             return removed;
         }
 
-        EvCnt remove_by_fd_locked(int fd);
+        EvCnt remove_by_fd_locked(platform::fd::FdView fd);
         EvCnt remove_by_type_locked(EventType type);
         EvCnt remove_by_time_locked(TimeStamp start, TimeStamp end);
     };

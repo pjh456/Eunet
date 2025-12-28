@@ -12,14 +12,16 @@ namespace net::tcp
         close();
     }
 
-    util::Result<void, core::EventError>
+    util::ResultV<void>
     SyncTCPClient::emit_event(const core::Event &event)
     {
         return orch.emit(event);
     }
 
-    util::Result<void, platform::SysError>
-    SyncTCPClient::resolve_host(const std::string &host, sockaddr_in &out_addr)
+    util::ResultV<void>
+    SyncTCPClient::resolve_host(
+        const std::string &host,
+        sockaddr_in &out_addr)
     {
         auto resolve_host_res =
             emit_event(core::Event::info(
@@ -37,10 +39,9 @@ namespace net::tcp
             auto dns_failed_res =
                 emit_event(core::Event::failure(
                     core::EventType::DNS_RESOLVE_START,
-                    {"net",
-                     "DNS lookup failed: " + std::string(gai_strerror(err))}));
-            return util::Result<void, platform::SysError>::Err(
-                platform::SysError::from_errno(err));
+                    util::Error::from_gai(err, "DNS lookup failed")));
+            return util::ResultV<void>::Err(
+                util::Error::from_errno(err));
         }
 
         if (!res)
@@ -48,8 +49,8 @@ namespace net::tcp
             auto dns_empty_res =
                 emit_event(core::Event::failure(
                     core::EventType::DNS_RESOLVE_DONE,
-                    {"net", "DNS lookup returned empty result"}));
-            return util::Result<void, platform::SysError>::Err(platform::SysError::from_errno(EAI_NONAME));
+                    util::Error::internal("DNS lookup returned empty result")));
+            return util::ResultV<void>::Err(util::Error::from_errno(EAI_NONAME));
         }
 
         out_addr.sin_family = AF_INET;
@@ -60,97 +61,115 @@ namespace net::tcp
         auto dns_done_res = emit_event(core::Event::info(
             core::EventType::DNS_RESOLVE_DONE,
             "Host resolved"));
-        return util::Result<void, platform::SysError>::Ok();
+        return util::ResultV<void>::Ok();
     }
 
-    util::Result<void, platform::SysError> SyncTCPClient::connect(const std::string &host, uint16_t port)
+    util::ResultV<void> SyncTCPClient::connect(const std::string &host, uint16_t port)
     {
         sockaddr_in addr{};
         auto res = resolve_host(host, addr);
         if (res.is_err())
-            return util::Result<void, platform::SysError>::Err(res.unwrap_err());
+            return util::ResultV<void>::Err(res.unwrap_err());
 
         addr.sin_port = htons(port);
 
         auto sock_res = platform::fd::Fd::socket(AF_INET, SOCK_STREAM, 0);
         if (sock_res.is_err())
         {
-            emit_event(core::Event::failure(
-                core::EventType::DNS_RESOLVE_DONE,
-                {"net", "Socket creation failed"}));
-            return util::Result<void, platform::SysError>::Err(sock_res.unwrap_err());
+            auto socket_creation_failed_res =
+                emit_event(core::Event::failure(
+                    core::EventType::DNS_RESOLVE_DONE,
+                    util::Error::internal("Socket creation failed")));
+
+            return util::ResultV<void>::Err(sock_res.unwrap_err());
         }
 
         sock = std::move(sock_res.unwrap());
-        emit_event(core::Event::info(
-            core::EventType::TCP_CONNECT_START,
-            "Connecting to " + host + ":" + std::to_string(port)));
+
+        auto connect_host_res =
+            emit_event(core::Event::info(
+                core::EventType::TCP_CONNECT_START,
+                "Connecting to " + host + ":" + std::to_string(port)));
+        if (connect_host_res.is_err())
+            return util::ResultV<void>::Err(connect_host_res.unwrap_err());
 
         if (::connect(sock.get(), (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {
-            emit_event(core::Event::failure(
-                core::EventType::TCP_CONNECT_START,
-                {"net", "Connect failed: " + std::string(strerror(errno))}));
-            return util::Result<void, platform::SysError>::Err(platform::SysError::from_errno(errno));
+            auto connect_failed_res =
+                emit_event(core::Event::failure(
+                    core::EventType::TCP_CONNECT_START,
+                    util::Error::from_errno(errno, "Connect failed")));
+            return util::ResultV<void>::Err(util::Error::from_errno(errno));
         }
 
-        emit_event(core::Event::info(
-            core::EventType::TCP_CONNECT_SUCCESS,
-            "Connection established"));
-        return util::Result<void, platform::SysError>::Ok();
+        auto connect_success_res =
+            emit_event(core::Event::info(
+                core::EventType::TCP_CONNECT_SUCCESS,
+                "Connection established"));
+        return util::ResultV<void>::Ok();
     }
 
-    util::Result<size_t, platform::SysError>
+    util::ResultV<size_t>
     SyncTCPClient::send(const std::vector<std::byte> &data)
     {
         if (!sock)
-            return util::Result<size_t, platform::SysError>::Err(platform::SysError::from_errno(EBADF));
+            return util::ResultV<size_t>::Err(util::Error::from_errno(EBADF));
 
-        emit_event(core::Event::info(
-            core::EventType::HTTP_SENT,
-            "Sending " + std::to_string(data.size()) + " bytes"));
+        auto http_send_res =
+            emit_event(core::Event::info(
+                core::EventType::HTTP_SENT,
+                "Sending " + std::to_string(data.size()) + " bytes"));
+        if (http_send_res.is_err())
+            return util::ResultV<size_t>::Err(http_send_res.unwrap_err());
+
         ssize_t n = ::send(sock.get(), data.data(), data.size(), 0);
+
         if (n < 0)
         {
-            emit_event(core::Event::failure(
+            auto send_failed_res = emit_event(core::Event::failure(
                 core::EventType::HTTP_SENT,
-                {"net", "Send failed: " + std::string(strerror(errno))}));
-            return util::Result<size_t, platform::SysError>::Err(platform::SysError::from_errno(errno));
+                util::Error::from_errno(errno, "Send failed")));
+            return util::ResultV<size_t>::Err(util::Error::from_errno(errno));
         }
 
-        return util::Result<size_t, platform::SysError>::Ok(static_cast<size_t>(n));
+        return util::ResultV<size_t>::Ok(static_cast<size_t>(n));
     }
 
-    util::Result<size_t, platform::SysError> SyncTCPClient::recv(std::vector<std::byte> &buffer, size_t size)
+    util::ResultV<size_t> SyncTCPClient::recv(std::vector<std::byte> &buffer, size_t size)
     {
         if (!sock)
-            return util::Result<size_t, platform::SysError>::Err(platform::SysError::from_errno(EBADF));
+            return util::ResultV<size_t>::Err(util::Error::from_errno(EBADF));
 
         buffer.resize(size);
-        emit_event(core::Event::info(
-            core::EventType::HTTP_RECEIVED,
-            "Receiving up to " + std::to_string(size) + " bytes"));
+        auto http_receive_res =
+            emit_event(core::Event::info(
+                core::EventType::HTTP_RECEIVED,
+                "Receiving up to " + std::to_string(size) + " bytes"));
+        if (http_receive_res.is_err())
+            return util::ResultV<size_t>::Err(http_receive_res.unwrap_err());
 
         ssize_t n = ::recv(sock.get(), buffer.data(), size, 0);
         if (n < 0)
         {
-            emit_event(core::Event::failure(
-                core::EventType::HTTP_RECEIVED,
-                {"net", "Recv failed: " + std::string(strerror(errno))}));
-            return util::Result<size_t, platform::SysError>::Err(platform::SysError::from_errno(errno));
+            auto recv_failed_res =
+                emit_event(core::Event::failure(
+                    core::EventType::HTTP_RECEIVED,
+                    util::Error::from_errno(errno, "Recv failed")));
+            return util::ResultV<size_t>::Err(util::Error::from_errno(errno));
         }
 
         buffer.resize(static_cast<size_t>(n));
-        return util::Result<size_t, platform::SysError>::Ok(static_cast<size_t>(n));
+        return util::ResultV<size_t>::Ok(static_cast<size_t>(n));
     }
 
     void SyncTCPClient::close() noexcept
     {
         if (sock)
         {
-            emit_event(core::Event::info(
-                core::EventType::CONNECTION_CLOSED,
-                "Closing socket"));
+            auto close_socket_res =
+                emit_event(core::Event::info(
+                    core::EventType::CONNECTION_CLOSED,
+                    "Closing socket"));
             sock.reset(-1);
         }
     }

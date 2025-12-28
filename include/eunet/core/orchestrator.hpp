@@ -5,6 +5,7 @@
 #include <mutex>
 
 #include "eunet/util/result.hpp"
+#include "eunet/util/error.hpp"
 #include "eunet/core/timeline.hpp"
 #include "eunet/core/lifecycle_fsm.hpp"
 #include "eunet/core/sink.hpp"
@@ -15,7 +16,7 @@ namespace core
     class Orchestrator
     {
     public:
-        using EmitResult = util::Result<void, EventError>;
+        using EmitResult = util::ResultV<void>;
 
     private:
         Timeline timeline;

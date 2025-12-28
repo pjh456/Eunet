@@ -12,13 +12,14 @@ namespace core
     LifecycleFSM::TimeStamp
     LifecycleFSM::last_timestamp() const noexcept { return last_ts; }
 
-    bool LifecycleFSM::has_error() const noexcept { return last_error.has_value(); }
-    const EventError *LifecycleFSM::get_last_error() const noexcept { return last_error ? &(*last_error) : nullptr; }
+    bool LifecycleFSM::has_error() const noexcept { return !last_error.is_ok(); }
+    util::Error
+    LifecycleFSM::get_last_error() const noexcept { return last_error; }
 
     void LifecycleFSM::on_event(const Event &e)
     {
         if (fd < 0)
-            fd = e.fd;
+            fd = e.fd.fd;
 
         last_ts = e.ts;
         if (state == LifeState::Init)
@@ -26,10 +27,7 @@ namespace core
 
         if (e.is_error())
         {
-            last_error =
-                e.error
-                    ? e.error
-                    : EventError{"unknown", "unknown error"};
+            last_error = e.error;
             transit(LifeState::Error);
             return;
         }
@@ -98,14 +96,15 @@ namespace core
 
     void FsmManager::on_event(const Event &e)
     {
-        if (e.fd < 0)
-            return;
+        // if (!e.fd)
+        //     return;
+        // 允许存在无关联 fd 的事件
 
         std::lock_guard<std::mutex> lock(mtx);
 
-        auto it = fsms.find(e.fd);
+        auto it = fsms.find(e.fd.fd);
         if (it == fsms.end())
-            it = fsms.emplace(e.fd, LifecycleFSM{e.fd}).first;
+            it = fsms.emplace(e.fd.fd, LifecycleFSM{e.fd.fd}).first;
 
         it->second.on_event(e);
     }

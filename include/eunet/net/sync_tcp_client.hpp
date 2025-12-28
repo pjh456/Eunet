@@ -12,6 +12,7 @@
 #include <cstring>
 
 #include "eunet/util/result.hpp"
+#include "eunet/util/error.hpp"
 #include "eunet/platform/time.hpp"
 #include "eunet/platform/fd.hpp"
 #include "eunet/platform/sys_error.hpp"
@@ -27,7 +28,6 @@ namespace net::tcp
 
     class SyncTCPClient
     {
-    public:
     private:
         platform::fd::Fd sock;
         core::Orchestrator &orch;
@@ -38,17 +38,17 @@ namespace net::tcp
         ~SyncTCPClient() noexcept;
 
         // 阶段化接口
-        util::Result<void, platform::SysError> connect(const std::string &host, uint16_t port);
-        util::Result<size_t, platform::SysError> send(const std::vector<std::byte> &data);
-        util::Result<size_t, platform::SysError> recv(std::vector<std::byte> &buffer, size_t size);
+        util::ResultV<void> connect(const std::string &host, uint16_t port);
+        util::ResultV<size_t> send(const std::vector<std::byte> &data);
+
+        util::ResultV<size_t> recv(std::vector<std::byte> &buffer, size_t size);
 
         void close() noexcept;
 
     private:
-        util::Result<void, platform::SysError>
-        resolve_host(const std::string &host, sockaddr_in &out_addr);
-        util::Result<void, core::EventError>
-        emit_event(const core::Event &event);
+        util::ResultV<void> resolve_host(const std::string &host, sockaddr_in &out_addr);
+
+        util::ResultV<void> emit_event(const core::Event &event);
     };
 }
 

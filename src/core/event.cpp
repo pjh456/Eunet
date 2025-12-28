@@ -8,50 +8,52 @@ namespace core
     Event Event::info(
         EventType type,
         std::string message,
-        int fd,
-        Event::EventData data) noexcept
+        platform::fd::FdView fd) noexcept
     {
         Event e;
         e.type = type;
         e.fd = fd;
 
         e.msg = message;
-        e.data = data;
         return e;
     }
 
     Event Event::failure(
         EventType type,
-        EventError error,
-        int fd,
-        Event::EventData data) noexcept
+        util::Error error,
+        platform::fd::FdView fd) noexcept
     {
         Event e;
         e.type = type;
         e.fd = fd;
 
         e.error = error;
-        e.data = data;
         return e;
     }
 
     Event::Event() : ts(platform::time::wall_now()) {}
 
-    bool Event::is_ok() const noexcept { return !error.has_value(); }
-    bool Event::is_error() const noexcept { return error.has_value(); }
+    bool Event::is_ok() const noexcept { return !error; }
+    bool Event::is_error() const noexcept { return (bool)error; }
 
-    std::string Event::to_string() const
+}
+
+std::string to_string(const core::Event &event)
+{
+    std::stringstream ss;
+    ss << " [" << static_cast<int>(event.type) << "] ";
+
+    if (event.is_ok())
+        ss << event.msg;
+    else
     {
-        std::stringstream ss;
-        ss << " [" << static_cast<int>(type) << "] ";
-
-        if (is_ok())
-            ss << msg;
-        else
-            ss << "ERROR[" << error->domain << "]: " << error->message;
-
-        if (fd != -1)
-            ss << " fd=" << fd;
-        return ss.str();
+        ss << "ERROR[";
+        if (event.error)
+            ss << to_string(event.error.get_domain());
+        ss << "]: " << event.error.get_message();
     }
+
+    if (event.fd)
+        ss << " fd=" << event.fd;
+    return ss.str();
 }

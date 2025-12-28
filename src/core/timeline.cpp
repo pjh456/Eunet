@@ -81,8 +81,8 @@ namespace core
         type_index.clear();
         for (size_t i = 0; i < events.size(); ++i)
         {
-            if (events[i].fd >= 0)
-                fd_index[events[i].fd].push_back(i);
+            if (events[i].fd)
+                fd_index[events[i].fd.fd].push_back(i);
             type_index[events[i].type].push_back(i);
         }
 
@@ -97,8 +97,8 @@ namespace core
         events.push_back(e);
         size_t idx = events.size() - 1;
 
-        if (e.fd >= 0)
-            fd_index[e.fd].push_back(idx);
+        if (e.fd)
+            fd_index[e.fd.fd].push_back(idx);
 
         type_index[e.type].push_back(idx);
 
@@ -116,8 +116,8 @@ namespace core
         {
             events.push_back(e);
             EvIdx idx = events.size() - 1;
-            if (e.fd >= 0)
-                fd_index[e.fd].push_back(idx);
+            if (e.fd)
+                fd_index[e.fd.fd].push_back(idx);
             type_index[e.type].push_back(idx);
             ++count;
         }
@@ -151,8 +151,8 @@ namespace core
                 size_t new_idx = new_events.size();
                 new_events.push_back(e);
 
-                if (e.fd >= 0)
-                    new_fd_index[e.fd].push_back(new_idx);
+                if (e.fd)
+                    new_fd_index[e.fd.fd].push_back(new_idx);
                 new_type_index[e.type].push_back(new_idx);
             }
         }
@@ -190,8 +190,8 @@ namespace core
                 size_t new_idx = new_events.size();
                 new_events.push_back(e);
 
-                if (e.fd >= 0)
-                    new_fd_index[e.fd].push_back(new_idx);
+                if (e.fd)
+                    new_fd_index[e.fd.fd].push_back(new_idx);
                 new_type_index[e.type].push_back(new_idx);
             }
         }
@@ -227,8 +227,8 @@ namespace core
             {
                 size_t new_idx = new_events.size();
                 new_events.push_back(e);
-                if (e.fd >= 0)
-                    new_fd_index[e.fd].push_back(new_idx);
+                if (e.fd)
+                    new_fd_index[e.fd.fd].push_back(new_idx);
                 new_type_index[e.type].push_back(new_idx);
             }
         }
@@ -308,7 +308,7 @@ namespace core
 
         EvList result;
         for (const auto &e : events)
-            if (e.error.has_value())
+            if (e.error)
                 result.push_back(&e);
 
         return result;
@@ -321,10 +321,8 @@ namespace core
 
         if (events.empty())
             return EvViewResult::Err(
-                EventError{
-                    .domain = "timeline",
-                    .message = "no events in timeline",
-                });
+                util::Error::internal(
+                    "no events in timeline"));
 
         return EvViewResult::Ok(&events.back());
     }
@@ -337,10 +335,8 @@ namespace core
 
         if (res.empty())
             return EvViewResult::Err(
-                EventError{
-                    .domain = "timeline",
-                    .message = "no events for fd",
-                });
+                util::Error::internal(
+                    "no events for fd"));
 
         return EvViewResult::Ok(res.back());
     }
@@ -353,10 +349,8 @@ namespace core
 
         if (res.empty())
             return EvViewResult::Err(
-                EventError{
-                    .domain = "timeline",
-                    .message = "no events for type",
-                });
+                util::Error::internal(
+                    "no events for type"));
 
         return EvViewResult::Ok(res.back());
     }
@@ -428,15 +422,15 @@ namespace core
         for (size_t idx = 0; idx < len; ++idx)
         {
             auto &e = arr[idx];
-            if (e.fd >= 0)
-                fd_index[e.fd].push_back(idx);
+            if (e.fd)
+                fd_index[e.fd.fd].push_back(idx);
 
             type_index[e.type].push_back(idx);
         }
     }
 
     Timeline::EvCnt
-    Timeline::remove_by_fd_locked(int fd)
+    Timeline::remove_by_fd_locked(platform::fd::FdView fd)
     {
         return remove_if_locked(
             [fd](const Event &e)
