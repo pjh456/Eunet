@@ -13,15 +13,17 @@ namespace net::tcp
     {
         using Result = util::ResultV<TCPConnection>;
 
-        auto sock = platform::net::TCPSocket::create();
-        if (sock.is_err())
-            return Result::Err(sock.unwrap_err());
+        auto sock_res = platform::net::TCPSocket::create();
+        if (sock_res.is_err())
+            return Result::Err(sock_res.unwrap_err());
 
-        auto res = sock.unwrap().connect(addr, timeout);
-        if (res.is_err())
-            return Result::Err(res.unwrap_err());
+        auto sock = std::move(sock_res.unwrap());
 
-        return Result::Ok(TCPConnection(std::move(sock.unwrap())));
+        auto conn_res = sock.connect(addr, timeout);
+        if (conn_res.is_err())
+            return Result::Err(conn_res.unwrap_err());
+
+        return Result::Ok(TCPConnection(std::move(sock)));
     }
 
     TCPConnection
@@ -38,9 +40,6 @@ namespace net::tcp
     platform::fd::FdView
     TCPConnection::fd() const noexcept { return sock.view(); }
 
-    void
-    TCPConnection::set_nonblocking(bool enable) { sock.set_nonblocking(enable); }
-
     void TCPConnection::close() noexcept { sock.close(); }
 
     bool TCPConnection::is_open() const noexcept { return (bool)sock.view(); }
@@ -53,25 +52,21 @@ namespace net::tcp
     {
         while (m_out_buffer.readable_bytes() > 0)
         {
-            platform::time::Duration timeout(50);
-            auto res = sock.send(
+            platform::time::Duration timeout(0);
+            auto res = sock.send_all(
                 m_out_buffer.peek(),
                 m_out_buffer.readable_bytes(),
                 timeout);
 
             if (res.is_ok())
-            {
-                size_t n = res.unwrap();
-                if (n == 0)
-                    break;
-                m_out_buffer.retrieve(n);
-            }
+                m_out_buffer.retrieve(res.unwrap());
             else
             {
-                if (res.unwrap_err().code() == EAGAIN ||
-                    res.unwrap_err().code() == EWOULDBLOCK)
+                auto err = res.unwrap_err();
+                if (err.code() == EAGAIN ||
+                    err.code() == EWOULDBLOCK)
                     break;
-                return util::ResultV<void>::Err(res.unwrap_err());
+                return util::ResultV<void>::Err(err);
             }
         }
         return util::ResultV<void>::Ok();
@@ -88,13 +83,16 @@ namespace net::tcp
         // 1. 优先直写 socket
         if (m_out_buffer.readable_bytes() == 0)
         {
-            auto res = sock.send(data, len, timeout);
+            auto res = sock.send_all(data, len, timeout);
             if (res.is_ok())
                 written = res.unwrap();
-            else if (
-                res.unwrap_err().code() != EAGAIN &&
-                res.unwrap_err().code() != EWOULDBLOCK)
-                return util::ResultV<size_t>::Err(res.unwrap_err());
+            else
+            {
+                auto err = res.unwrap_err();
+                if (err.code() != EAGAIN &&
+                    err.code() != EWOULDBLOCK)
+                    return util::ResultV<size_t>::Err(err);
+            }
         }
 
         // 2. 剩余进入 buffer
@@ -120,7 +118,7 @@ namespace net::tcp
         }
 
         // 2. 直接从 socket 读
-        auto res = sock.recv(buf, len, timeout);
+        auto res = sock.recv_some(buf, len, timeout);
         if (res.is_ok())
             return util::ResultV<size_t>::Ok(res.unwrap());
 
@@ -136,6 +134,8 @@ namespace net::tcp
     util::ResultV<size_t>
     TCPConnection::read_available()
     {
+        platform::net::NonBlockingGuard guard(sock.view());
+
         size_t total_read = 0;
         while (true)
         {
@@ -143,27 +143,26 @@ namespace net::tcp
             m_in_buffer.ensure_writable(4096);
 
             // 直接让 Socket 把数据写进 IOBuffer 的写空闲区
-            platform::time::Duration timeout(50);
-            auto res = sock.recv(
+            auto res = sock.recv_some(
                 m_in_buffer.begin_write(),
                 m_in_buffer.writable_bytes(),
-                timeout);
+                platform::time::Duration(0));
 
             if (res.is_ok())
             {
                 size_t n = res.unwrap();
                 if (n == 0)
-                    break; // 对端关闭或当前没数据了
-
+                    break; // 对端关闭
                 m_in_buffer.has_written(n);
                 total_read += n;
             }
             else
             {
-                // 非阻塞下读完了
-                if (res.unwrap_err().code() == EAGAIN || res.unwrap_err().code() == EWOULDBLOCK)
+                auto err = res.unwrap_err();
+                if (err.code() == EAGAIN ||
+                    err.code() == EWOULDBLOCK)
                     break;
-                return util::ResultV<size_t>::Err(res.unwrap_err());
+                return util::ResultV<size_t>::Err(err);
             }
         }
         return util::ResultV<size_t>::Ok(total_read);

@@ -18,7 +18,6 @@ namespace net
 
     public:
         virtual platform::fd::FdView fd() const noexcept = 0;
-        virtual void set_nonblocking(bool enable) = 0;
         virtual void close() noexcept = 0;
         virtual bool is_open() const noexcept = 0;
 
