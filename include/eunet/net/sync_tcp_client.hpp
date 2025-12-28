@@ -48,6 +48,20 @@ namespace net::tcp
         util::ResultV<void> resolve_host(const std::string &host, sockaddr_in &out_addr);
 
         util::ResultV<void> emit_event(const core::Event &event);
+
+        void handle_telemetry(const util::ResultV<void> &emit_res) const;
+
+    private:
+        static util::ResultV<void>
+        emit_info(
+            SyncTCPClient &client,
+            core::EventType type,
+            const std::string &msg);
+        static util::ResultV<void>
+        emit_failure(
+            SyncTCPClient &client,
+            core::EventType type,
+            const util::Error &err);
     };
 }
 
