@@ -4,7 +4,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include "eunet/platform/tcp_socket.hpp"
-#include "eunet/net/tcp_connection.hpp"
+#include "eunet/net/connection/tcp_connection.hpp"
 
 #include <iostream>
 
@@ -51,7 +51,7 @@ void test_tcp_connection()
 
             // 发送数据
             std::vector<std::byte> data = {std::byte(1), std::byte(2), std::byte(3)};
-            auto send_res = conn.send(data, milliseconds(500));
+            auto send_res = conn.write(data.data(), data.size(), milliseconds(500));
             assert(send_res.is_ok());
             (void)conn.flush();
 
