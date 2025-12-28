@@ -12,8 +12,8 @@ void test_event()
     std::cout << "=== Event Unit Test Start ===\n";
 
     // 1. info 事件（最简单）
-    auto e1 = Event::info(EventType::DNS_START, "");
-    assert(e1.type == EventType::DNS_START);
+    auto e1 = Event::info(EventType::DNS_RESOLVE_START, "");
+    assert(e1.type == EventType::DNS_RESOLVE_START);
     assert(e1.fd == -1);
     assert(e1.is_ok());
     assert(!e1.is_error());
@@ -22,8 +22,8 @@ void test_event()
     std::cout << "e1: " << e1.to_string() << "\n";
 
     // 2. info 事件（带消息）
-    auto e2 = Event::info(EventType::REQUEST_SENT, "HTTP GET");
-    assert(e2.type == EventType::REQUEST_SENT);
+    auto e2 = Event::info(EventType::HTTP_SENT, "HTTP GET");
+    assert(e2.type == EventType::HTTP_SENT);
     assert(e2.is_ok());
     assert(e2.msg == "HTTP GET");
     std::cout << "e2: " << e2.to_string() << "\n";
@@ -33,8 +33,8 @@ void test_event()
         .domain = "http",
         .message = "404 Not Found"};
 
-    auto e3 = Event::failure(EventType::REQUEST_RECEIVED, err);
-    assert(e3.type == EventType::REQUEST_RECEIVED);
+    auto e3 = Event::failure(EventType::HTTP_RECEIVED, err);
+    assert(e3.type == EventType::HTTP_RECEIVED);
     assert(e3.is_error());
     assert(!e3.is_ok());
     assert(e3.error.has_value());
@@ -47,7 +47,7 @@ void test_event()
     std::string payload = "Response body";
 
     auto e4 = Event::info(
-        EventType::REQUEST_RECEIVED,
+        EventType::HTTP_RECEIVED,
         "OK",
         fd_test,
         payload);
@@ -59,7 +59,7 @@ void test_event()
 
     // 5. 带 fd 与 data 的 failure 事件
     auto e5 = Event::failure(
-        EventType::TCP_CONNECT,
+        EventType::TCP_CONNECT_START,
         EventError{"net", "connection refused"},
         fd_test,
         12345);

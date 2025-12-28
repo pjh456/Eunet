@@ -18,11 +18,11 @@ static EventSnapshot make_snapshot(
     Event e =
         error
             ? Event::failure(
-                  EventType::REQUEST_SENT,
+                  EventType::HTTP_SENT,
                   EventError{"net", "send failed"},
                   fd)
             : Event::info(
-                  EventType::REQUEST_SENT,
+                  EventType::HTTP_SENT,
                   "send ok",
                   fd);
 

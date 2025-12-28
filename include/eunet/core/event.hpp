@@ -3,6 +3,7 @@
 
 #include <string>
 #include <optional>
+#include <variant>
 #include <any>
 
 #include "eunet/util/result.hpp"
@@ -13,13 +14,22 @@ namespace core
 {
     enum class EventType
     {
-        DNS_START,
-        DNS_DONE,
-        TCP_CONNECT,
-        TCP_ESTABLISHED,
-        REQUEST_SENT,
-        REQUEST_RECEIVED,
-        CLOSED,
+        // DNS
+        DNS_RESOLVE_START,
+        DNS_RESOLVE_DONE,
+        // TCP
+        TCP_CONNECT_START,
+        TCP_CONNECT_SUCCESS,
+        TCP_CONNECT_TIMEOUT,
+        // TLS
+        TLS_HANDSHAKE_START,
+        TLS_HANDSHAKE_DONE,
+        // Data
+        HTTP_SENT,
+        HTTP_RECEIVED,
+        // Lifecycle
+        CONNECTION_IDLE, // 连接闲置中
+        CONNECTION_CLOSED
     };
 
     struct EventError
@@ -31,26 +41,35 @@ namespace core
     struct Event
     {
     public:
+        using EventData = std::any;
+        // using EventData = std::variant<
+        //     std::monostate>;
+        // DnsResult,
+        // TcpInfo,
+        // TlsCipherSuite,
+        // HttpHeaderMap>;
+
+    public:
         EventType type;
         platform::time::WallPoint ts;
         int fd{-1};
 
         std::string msg;
         std::optional<EventError> error{std::nullopt};
-        std::any data{};
+        EventData data{};
 
     public:
         static Event info(
             EventType type,
             std::string message,
             int fd = -1,
-            std::any data = {}) noexcept;
+            EventData data = {}) noexcept;
 
         static Event failure(
             EventType type,
             EventError error,
             int fd = -1,
-            std::any data = {}) noexcept;
+            EventData data = {}) noexcept;
 
     private:
         Event();

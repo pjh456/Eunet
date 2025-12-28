@@ -9,7 +9,7 @@ namespace core
         EventType type,
         std::string message,
         int fd,
-        std::any data) noexcept
+        Event::EventData data) noexcept
     {
         Event e;
         e.type = type;
@@ -24,7 +24,7 @@ namespace core
         EventType type,
         EventError error,
         int fd,
-        std::any data) noexcept
+        Event::EventData data) noexcept
     {
         Event e;
         e.type = type;

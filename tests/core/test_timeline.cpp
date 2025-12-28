@@ -15,22 +15,22 @@ void test_timeline()
     auto now = platform::time::wall_now();
 
     Event e1 = Event::info(
-        EventType::DNS_START,
+        EventType::DNS_RESOLVE_START,
         "DNS lookup start",
         3);
 
     Event e2 = Event::info(
-        EventType::TCP_CONNECT,
+        EventType::TCP_CONNECT_START,
         "TCP connecting",
         3);
 
     Event e3 = Event::info(
-        EventType::REQUEST_SENT,
+        EventType::HTTP_SENT,
         "Request sent",
         4);
 
     Event e4 = Event::failure(
-        EventType::REQUEST_RECEIVED,
+        EventType::HTTP_RECEIVED,
         EventError{"net", "timeout"},
         3);
 
@@ -52,11 +52,11 @@ void test_timeline()
     assert(tl.count_by_fd(3) == 3);
     assert(tl.count_by_fd(4) == 1);
 
-    assert(tl.count_by_type(EventType::DNS_START) == 1);
-    assert(tl.count_by_type(EventType::TCP_CONNECT) == 1);
+    assert(tl.count_by_type(EventType::DNS_RESOLVE_START) == 1);
+    assert(tl.count_by_type(EventType::TCP_CONNECT_START) == 1);
 
-    assert(tl.has_type(EventType::TCP_CONNECT));
-    assert(!tl.has_type(EventType::TCP_ESTABLISHED));
+    assert(tl.has_type(EventType::TCP_CONNECT_START));
+    assert(!tl.has_type(EventType::TCP_CONNECT_SUCCESS));
 
     // 5. query_by_fd
     {
@@ -68,7 +68,7 @@ void test_timeline()
 
     // 6. query_by_type
     {
-        auto list = tl.query_by_type(EventType::REQUEST_RECEIVED);
+        auto list = tl.query_by_type(EventType::HTTP_RECEIVED);
         assert(list.size() == 1);
         assert(list.front()->error.has_value());
     }
@@ -134,7 +134,7 @@ void test_timeline()
 
     // 15. remove_by_type
     {
-        auto removed = tl.remove_by_type(EventType::REQUEST_RECEIVED);
+        auto removed = tl.remove_by_type(EventType::HTTP_RECEIVED);
         assert(removed == 1);
         assert(tl.query_errors().empty());
         assert(tl.size() == 2);
@@ -159,19 +159,19 @@ void test_timeline()
     // 18. 无序事件 + sort_by_time
     {
         Event e5 = Event::info(
-            EventType::TCP_ESTABLISHED,
+            EventType::TCP_CONNECT_SUCCESS,
             "Conn established",
             5);
 
         Event e6 = Event::info(
-            EventType::REQUEST_RECEIVED,
+            EventType::HTTP_RECEIVED,
             "Request received",
             5);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         Event e7 = Event::info(
-            EventType::REQUEST_SENT,
+            EventType::HTTP_SENT,
             "Request sent later",
             5);
 

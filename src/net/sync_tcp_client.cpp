@@ -2,8 +2,8 @@
 
 namespace net::tcp
 {
-    SyncTCPClient::SyncTCPClient(core::Timeline &tl, Options o)
-        : timeline(tl), opts(o)
+    SyncTCPClient::SyncTCPClient(core::Orchestrator &orch, Options o)
+        : orch(orch), opts(o)
     {
     }
 
@@ -12,17 +12,19 @@ namespace net::tcp
         close();
     }
 
-    void SyncTCPClient::emit_event(const core::Event &event)
+    util::Result<void, core::EventError>
+    SyncTCPClient::emit_event(const core::Event &event)
     {
-        (void)timeline.push(event);
+        return orch.emit(event);
     }
 
     util::Result<void, platform::SysError>
     SyncTCPClient::resolve_host(const std::string &host, sockaddr_in &out_addr)
     {
-        emit_event(core::Event::info(
-            core::EventType::DNS_START,
-            "Resolving host: " + host));
+        auto resolve_host_res =
+            emit_event(core::Event::info(
+                core::EventType::DNS_RESOLVE_START,
+                "Resolving host: " + host));
 
         addrinfo hints{};
         hints.ai_family = AF_INET;
@@ -32,19 +34,21 @@ namespace net::tcp
         int err = ::getaddrinfo(host.c_str(), nullptr, &hints, &res);
         if (err != 0)
         {
-            emit_event(core::Event::failure(
-                core::EventType::DNS_START,
-                {"net",
-                 "DNS lookup failed: " + std::string(gai_strerror(err))}));
+            auto dns_failed_res =
+                emit_event(core::Event::failure(
+                    core::EventType::DNS_RESOLVE_START,
+                    {"net",
+                     "DNS lookup failed: " + std::string(gai_strerror(err))}));
             return util::Result<void, platform::SysError>::Err(
                 platform::SysError::from_errno(err));
         }
 
         if (!res)
         {
-            emit_event(core::Event::failure(
-                core::EventType::DNS_DONE,
-                {"net", "DNS lookup returned empty result"}));
+            auto dns_empty_res =
+                emit_event(core::Event::failure(
+                    core::EventType::DNS_RESOLVE_DONE,
+                    {"net", "DNS lookup returned empty result"}));
             return util::Result<void, platform::SysError>::Err(platform::SysError::from_errno(EAI_NONAME));
         }
 
@@ -53,7 +57,9 @@ namespace net::tcp
         out_addr.sin_addr = ((sockaddr_in *)res->ai_addr)->sin_addr;
 
         ::freeaddrinfo(res);
-        emit_event(core::Event::info(core::EventType::DNS_DONE, "Host resolved"));
+        auto dns_done_res = emit_event(core::Event::info(
+            core::EventType::DNS_RESOLVE_DONE,
+            "Host resolved"));
         return util::Result<void, platform::SysError>::Ok();
     }
 
@@ -70,26 +76,26 @@ namespace net::tcp
         if (sock_res.is_err())
         {
             emit_event(core::Event::failure(
-                core::EventType::DNS_DONE,
+                core::EventType::DNS_RESOLVE_DONE,
                 {"net", "Socket creation failed"}));
             return util::Result<void, platform::SysError>::Err(sock_res.unwrap_err());
         }
 
         sock = std::move(sock_res.unwrap());
         emit_event(core::Event::info(
-            core::EventType::TCP_CONNECT,
+            core::EventType::TCP_CONNECT_START,
             "Connecting to " + host + ":" + std::to_string(port)));
 
         if (::connect(sock.get(), (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {
             emit_event(core::Event::failure(
-                core::EventType::TCP_CONNECT,
+                core::EventType::TCP_CONNECT_START,
                 {"net", "Connect failed: " + std::string(strerror(errno))}));
             return util::Result<void, platform::SysError>::Err(platform::SysError::from_errno(errno));
         }
 
         emit_event(core::Event::info(
-            core::EventType::TCP_ESTABLISHED,
+            core::EventType::TCP_CONNECT_SUCCESS,
             "Connection established"));
         return util::Result<void, platform::SysError>::Ok();
     }
@@ -101,13 +107,13 @@ namespace net::tcp
             return util::Result<size_t, platform::SysError>::Err(platform::SysError::from_errno(EBADF));
 
         emit_event(core::Event::info(
-            core::EventType::REQUEST_SENT,
+            core::EventType::HTTP_SENT,
             "Sending " + std::to_string(data.size()) + " bytes"));
         ssize_t n = ::send(sock.get(), data.data(), data.size(), 0);
         if (n < 0)
         {
             emit_event(core::Event::failure(
-                core::EventType::REQUEST_SENT,
+                core::EventType::HTTP_SENT,
                 {"net", "Send failed: " + std::string(strerror(errno))}));
             return util::Result<size_t, platform::SysError>::Err(platform::SysError::from_errno(errno));
         }
@@ -122,14 +128,14 @@ namespace net::tcp
 
         buffer.resize(size);
         emit_event(core::Event::info(
-            core::EventType::REQUEST_RECEIVED,
+            core::EventType::HTTP_RECEIVED,
             "Receiving up to " + std::to_string(size) + " bytes"));
 
         ssize_t n = ::recv(sock.get(), buffer.data(), size, 0);
         if (n < 0)
         {
             emit_event(core::Event::failure(
-                core::EventType::REQUEST_RECEIVED,
+                core::EventType::HTTP_RECEIVED,
                 {"net", "Recv failed: " + std::string(strerror(errno))}));
             return util::Result<size_t, platform::SysError>::Err(platform::SysError::from_errno(errno));
         }
@@ -143,7 +149,7 @@ namespace net::tcp
         if (sock)
         {
             emit_event(core::Event::info(
-                core::EventType::CLOSED,
+                core::EventType::CONNECTION_CLOSED,
                 "Closing socket"));
             sock.reset(-1);
         }

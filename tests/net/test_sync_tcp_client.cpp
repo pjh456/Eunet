@@ -6,6 +6,7 @@
 
 #include "eunet/net/sync_tcp_client.hpp"
 #include "eunet/core/event.hpp"
+#include "eunet/core/orchestrator.hpp"
 
 // 简单打印 Timeline
 void print_timeline(const core::Timeline &tl)
@@ -20,8 +21,8 @@ void print_timeline(const core::Timeline &tl)
 
 int main()
 {
-    core::Timeline timeline;
-    net::tcp::SyncTCPClient client(timeline);
+    core::Orchestrator orch;
+    net::tcp::SyncTCPClient client(orch);
 
     // 连接 example.com:80
     auto res = client.connect("example.com", 80);
@@ -62,7 +63,7 @@ int main()
     client.close();
 
     // 打印事件
-    print_timeline(timeline);
+    print_timeline(orch.get_timeline());
 
     return 0;
 }

@@ -16,6 +16,7 @@
 #include "eunet/platform/fd.hpp"
 #include "eunet/platform/sys_error.hpp"
 #include "eunet/core/timeline.hpp"
+#include "eunet/core/orchestrator.hpp"
 
 namespace net::tcp
 {
@@ -29,11 +30,11 @@ namespace net::tcp
     public:
     private:
         platform::fd::Fd sock;
-        core::Timeline &timeline;
+        core::Orchestrator &orch;
         Options opts;
 
     public:
-        explicit SyncTCPClient(core::Timeline &timeline, Options opts = {});
+        explicit SyncTCPClient(core::Orchestrator &orch, Options opts = {});
         ~SyncTCPClient() noexcept;
 
         // 阶段化接口
@@ -46,7 +47,8 @@ namespace net::tcp
     private:
         util::Result<void, platform::SysError>
         resolve_host(const std::string &host, sockaddr_in &out_addr);
-        void emit_event(const core::Event &event);
+        util::Result<void, core::EventError>
+        emit_event(const core::Event &event);
     };
 }
 
