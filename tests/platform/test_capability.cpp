@@ -47,8 +47,8 @@ void test_has_permitted()
     else
     {
         const auto &err = res.unwrap_err();
-        TEST_ASSERT(err.code == CapabilityErrorCode::GetProcCapsFailed ||
-                    err.code == CapabilityErrorCode::GetFlagFailed);
+        TEST_ASSERT(err == CapabilityErrorCode::GetProcCapsFailed ||
+                    err == CapabilityErrorCode::GetFlagFailed);
     }
 }
 
@@ -64,8 +64,8 @@ void test_state()
     }
     else
     {
-        TEST_ASSERT(res.unwrap_err().code == CapabilityErrorCode::GetProcCapsFailed ||
-                    res.unwrap_err().code == CapabilityErrorCode::GetFlagFailed);
+        TEST_ASSERT(res.unwrap_err() == CapabilityErrorCode::GetProcCapsFailed ||
+                    res.unwrap_err() == CapabilityErrorCode::GetFlagFailed);
     }
 }
 
@@ -81,7 +81,7 @@ void test_enable_disable()
     {
         auto res = mgr.enable(Capability::RawSocket);
         TEST_ASSERT(res.is_err());
-        TEST_ASSERT(res.unwrap_err().code == CapabilityErrorCode::NotPermitted);
+        TEST_ASSERT(res.unwrap_err() == CapabilityErrorCode::NotPermitted);
         return;
     }
 
@@ -108,9 +108,9 @@ void test_drop_all_effective()
     }
     else
     {
-        TEST_ASSERT(res.unwrap_err().code == CapabilityErrorCode::GetProcCapsFailed ||
-                    res.unwrap_err().code == CapabilityErrorCode::SetFlagFailed ||
-                    res.unwrap_err().code == CapabilityErrorCode::SetProcFailed);
+        TEST_ASSERT(res.unwrap_err() == CapabilityErrorCode::GetProcCapsFailed ||
+                    res.unwrap_err() == CapabilityErrorCode::SetFlagFailed ||
+                    res.unwrap_err() == CapabilityErrorCode::SetProcFailed);
     }
 }
 
@@ -124,7 +124,7 @@ void test_scoped_capability()
     }
     else
     {
-        TEST_EXPECT(res.unwrap_err().code == CapabilityErrorCode::NotPermitted);
+        TEST_EXPECT(res.unwrap_err() == CapabilityErrorCode::NotPermitted);
     }
 }
 
