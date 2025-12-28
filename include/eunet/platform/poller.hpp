@@ -28,7 +28,7 @@ namespace platform::poller
 
     struct PollEvent
     {
-        int fd;
+        platform::fd::FdView fd;
         std::uint32_t events;
     };
 
@@ -63,9 +63,9 @@ namespace platform::poller
         const platform::fd::Fd &get_fd() const noexcept;
 
     public:
-        PollerResult add(int fd, std::uint32_t events) noexcept;
-        PollerResult modify(int fd, std::uint32_t events) noexcept;
-        PollerResult remove(int fd) noexcept;
+        PollerResult add(const platform::fd::Fd &fd, std::uint32_t events) noexcept;
+        PollerResult modify(const platform::fd::Fd &fd, std::uint32_t events) noexcept;
+        PollerResult remove(const platform::fd::Fd &fd) noexcept;
 
     public:
         SysResult<std::vector<PollEvent>>

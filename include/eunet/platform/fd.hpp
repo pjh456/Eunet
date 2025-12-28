@@ -7,6 +7,7 @@
 namespace platform::fd
 {
     class Fd;
+    struct FdView;
     struct Pipe;
 
     class Fd
@@ -32,6 +33,7 @@ namespace platform::fd
         int get() const noexcept;
         bool valid() const noexcept;
         explicit operator bool() const noexcept;
+        bool operator!() const noexcept;
 
     public:
         static SysResult<Fd>
@@ -40,11 +42,19 @@ namespace platform::fd
             int type,
             int protocol) noexcept;
 
+        FdView view() const noexcept;
+
         static SysResult<Pipe> pipe() noexcept;
 
     public:
         int release() noexcept;
         void reset(int new_fd) noexcept;
+    };
+
+    struct FdView
+    {
+        int fd;
+        static FdView from_owner(const Fd &owner);
     };
 
     struct Pipe
