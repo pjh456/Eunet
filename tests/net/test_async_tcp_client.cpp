@@ -22,7 +22,7 @@ public:
                             .count();
 
         // 格式化输出：[时间][状态] 消息 (FD)
-        std::string status_color = snap.has_error ? "\033[31m" : "\033[32m";
+        std::string status_color = snap.error ? "\033[31m" : "\033[32m";
         std::string reset = "\033[0m";
 
         std::cout
@@ -30,11 +30,11 @@ public:
                    "[{:>4}ms] [{}{:<12}{}] {:<30} (fd: {})",
                    duration,
                    status_color, to_string(snap.state), reset,
-                   snap.event->msg,
+                   snap.event.msg,
                    snap.fd)
             << std::endl;
 
-        if (snap.has_error)
+        if (snap.error)
         {
             std::cout << "  └─ \033[31mError:\033[0m " << snap.error.format() << std::endl;
         }

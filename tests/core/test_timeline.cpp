@@ -63,22 +63,22 @@ void test_timeline()
         auto list = tl.query_by_fd(3);
         assert(list.size() == 3);
         for (auto ev : list)
-            assert(ev->fd.fd == 3);
+            assert(ev.fd.fd == 3);
     }
 
     // 6. query_by_type
     {
         auto list = tl.query_by_type(EventType::HTTP_RECEIVED);
         assert(list.size() == 1);
-        assert(list.front()->error);
+        assert(list.front().error);
     }
 
     // 7. query_errors
     {
         auto errs = tl.query_errors();
         assert(errs.size() == 1);
-        assert(errs.front()->error);
-        assert(errs.front()->error.domain() == util::ErrorDomain::Network);
+        assert(errs.front().error);
+        assert(errs.front().error.domain() == util::ErrorDomain::Network);
     }
 
     // 8. query_by_time
@@ -94,14 +94,14 @@ void test_timeline()
     {
         auto latest = tl.latest_event();
         assert(latest.is_ok());
-        assert(latest.unwrap()->error);
+        assert(latest.unwrap().error);
     }
 
     // 10. latest_by_fd
     {
         auto latest = tl.latest_by_fd(3);
         assert(latest.is_ok());
-        assert(latest.unwrap()->fd.fd == 3);
+        assert(latest.unwrap().fd.fd == 3);
     }
 
     // 11. replay_all
@@ -115,7 +115,7 @@ void test_timeline()
         auto list = tl.replay_by_fd(3);
         assert(list.size() == 3);
         for (auto ev : list)
-            assert(ev->fd.fd == 3);
+            assert(ev.fd.fd == 3);
     }
 
     // 13. replay_since
@@ -184,7 +184,7 @@ void test_timeline()
 
         auto all = tl.replay_all();
         for (size_t i = 1; i < all.size(); ++i)
-            assert(all[i - 1]->ts <= all[i]->ts);
+            assert(all[i - 1].ts <= all[i].ts);
     }
 }
 
