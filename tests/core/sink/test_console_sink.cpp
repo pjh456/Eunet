@@ -19,12 +19,12 @@ static EventSnapshot make_snapshot(
         error
             ? Event::failure(
                   EventType::HTTP_SENT,
-                  EventError{"net", "send failed"},
-                  fd)
+                  util::Error::internal("send failed"),
+                  {fd})
             : Event::info(
                   EventType::HTTP_SENT,
                   "send ok",
-                  fd);
+                  {fd});
 
     static LifecycleFSM dummy_fsm(fd);
 
@@ -34,7 +34,8 @@ static EventSnapshot make_snapshot(
         .state = state,
         .ts = e.ts,
         .has_error = error,
-        .error = e.error ? &(*e.error) : nullptr};
+        .error = e.error,
+    };
 }
 
 int main()

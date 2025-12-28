@@ -18,12 +18,12 @@ static EventSnapshot make_snapshot(
         error
             ? Event::failure(
                   EventType::TCP_CONNECT_START,
-                  EventError{"test", "connect failed"},
-                  fd)
+                  util::Error::internal("connect failed"),
+                  {fd})
             : Event::info(
                   EventType::TCP_CONNECT_START,
                   "connect ok",
-                  fd);
+                  {fd});
 
     static LifecycleFSM dummy_fsm(fd);
 
@@ -33,7 +33,8 @@ static EventSnapshot make_snapshot(
         .state = state,
         .ts = e.ts,
         .has_error = error,
-        .error = e.error ? &(*e.error) : nullptr};
+        .error = e.error,
+    };
 }
 
 int main()
