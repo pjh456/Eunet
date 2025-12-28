@@ -49,8 +49,8 @@ std::string to_string(const core::Event &event)
     {
         ss << "ERROR[";
         if (event.error)
-            ss << to_string(event.error.get_domain());
-        ss << "]: " << event.error.get_message();
+            ss << to_string(event.error.domain());
+        ss << "]: " << event.error.message();
     }
 
     if (event.fd)
