@@ -37,29 +37,29 @@ namespace core
         switch (state)
         {
         case LifeState::Init:
-            if (e.type == EventType::DNS_START)
+            if (e.type == EventType::DNS_RESOLVE_START)
                 transit(LifeState::Resolving);
-            else if (e.type == EventType::TCP_CONNECT)
+            else if (e.type == EventType::TCP_CONNECT_START)
                 transit(LifeState::Connecting);
             break;
 
         case LifeState::Resolving:
-            if (e.type == EventType::DNS_DONE)
+            if (e.type == EventType::DNS_RESOLVE_DONE)
                 transit(LifeState::Connecting);
             break;
 
         case LifeState::Connecting:
-            if (e.type == EventType::TCP_ESTABLISHED)
+            if (e.type == EventType::TCP_CONNECT_SUCCESS)
                 transit(LifeState::Established);
             break;
 
         case LifeState::Established:
-            if (e.type == EventType::REQUEST_SENT)
+            if (e.type == EventType::HTTP_SENT)
                 transit(LifeState::Sending);
             break;
 
         case LifeState::Sending:
-            if (e.type == EventType::REQUEST_RECEIVED)
+            if (e.type == EventType::HTTP_RECEIVED)
                 // transit(LifeState::Receiving);
                 transit(LifeState::Finished);
             break;

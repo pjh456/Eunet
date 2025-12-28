@@ -36,14 +36,12 @@ namespace platform::poller
     platform::fd::Fd &Poller::get_fd() noexcept { return epoll_fd; }
     const platform::fd::Fd &Poller::get_fd() const noexcept { return epoll_fd; }
 
-    util::Result<bool, PollerError>
+    Poller::PollerResult
     Poller::add(int fd, std::uint32_t events) noexcept
     {
-        using Result = util::Result<bool, PollerError>;
-
         if (!valid())
         {
-            return Result::Err(
+            return PollerResult::Err(
                 PollerError{
                     .code = PollerErrorCode::NotInitialized,
                     .cause = SysError{},
@@ -51,7 +49,7 @@ namespace platform::poller
         }
 
         if (fd < 0)
-            return Result::Err(
+            return PollerResult::Err(
                 PollerError{
                     .code = PollerErrorCode::InvalidFd,
                     .cause = SysError{},
@@ -65,7 +63,7 @@ namespace platform::poller
                 epoll_fd.get(),
                 EPOLL_CTL_ADD,
                 fd, &ev) == 0)
-            return Result::Ok(true);
+            return PollerResult::Ok();
 
         const SysError sys = SysError::from_errno(errno);
 
@@ -75,27 +73,25 @@ namespace platform::poller
         else if (errno == ENOENT)
             code = PollerErrorCode::NotFound;
 
-        return Result::Err(
+        return PollerResult::Err(
             PollerError{
                 .code = code,
                 .cause = sys,
             });
     }
 
-    util::Result<bool, PollerError>
+    Poller::PollerResult
     Poller::modify(int fd, std::uint32_t events) noexcept
     {
-        using Result = util::Result<bool, PollerError>;
-
         if (!valid())
-            return Result::Err(
+            return PollerResult::Err(
                 PollerError{
                     PollerErrorCode::NotInitialized,
                     SysError{},
                 });
 
         if (fd < 0)
-            return Result::Err(
+            return PollerResult::Err(
                 PollerError{
                     PollerErrorCode::InvalidFd,
                     SysError{},
@@ -109,7 +105,7 @@ namespace platform::poller
                 epoll_fd.get(),
                 EPOLL_CTL_MOD,
                 fd, &ev) == 0)
-            return Result::Ok(true);
+            return PollerResult::Ok();
 
         SysError sys = SysError::from_errno(errno);
 
@@ -117,27 +113,25 @@ namespace platform::poller
         if (errno == ENOENT)
             code = PollerErrorCode::NotFound;
 
-        return Result::Err(
+        return PollerResult::Err(
             PollerError{
                 code,
                 sys,
             });
     }
 
-    util::Result<bool, PollerError>
+    Poller::PollerResult
     Poller::remove(int fd) noexcept
     {
-        using Result = util::Result<bool, PollerError>;
-
         if (!valid())
-            return Result::Err(
+            return PollerResult::Err(
                 PollerError{
                     PollerErrorCode::NotInitialized,
                     SysError{},
                 });
 
         if (fd < 0)
-            return Result::Err(
+            return PollerResult::Err(
                 PollerError{
                     PollerErrorCode::InvalidFd,
                     SysError{},
@@ -147,7 +141,7 @@ namespace platform::poller
                 epoll_fd.get(),
                 EPOLL_CTL_DEL,
                 fd, nullptr) == 0)
-            return Result::Ok(true);
+            return PollerResult::Ok();
 
         SysError sys = SysError::from_errno(errno);
 
@@ -156,17 +150,17 @@ namespace platform::poller
                 ? PollerErrorCode::NotFound
                 : PollerErrorCode::InvalidFd;
 
-        return Result::Err(
+        return PollerResult::Err(
             PollerError{
                 code,
                 sys,
             });
     }
 
-    util::Result<std::vector<PollEvent>, SysError>
+    SysResult<std::vector<PollEvent>>
     Poller::wait(int timeout_ms) noexcept
     {
-        using Result = util::Result<std::vector<PollEvent>, SysError>;
+        using Result = SysResult<std::vector<PollEvent>>;
 
         if (!valid())
             return Result::Err(SysError::from_errno(EBADF));

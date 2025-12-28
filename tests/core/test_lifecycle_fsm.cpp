@@ -39,20 +39,20 @@ void test_fsm_normal_flow()
 {
     LifecycleFSM fsm;
 
-    fsm.on_event(make_ok(EventType::DNS_START, 3));
+    fsm.on_event(make_ok(EventType::DNS_RESOLVE_START, 3));
     assert(fsm.current_fd() == 3);
     assert(fsm.current_state() == LifeState::Resolving);
 
-    fsm.on_event(make_ok(EventType::DNS_DONE, 3));
+    fsm.on_event(make_ok(EventType::DNS_RESOLVE_DONE, 3));
     assert(fsm.current_state() == LifeState::Connecting);
 
-    fsm.on_event(make_ok(EventType::TCP_ESTABLISHED, 3));
+    fsm.on_event(make_ok(EventType::TCP_CONNECT_SUCCESS, 3));
     assert(fsm.current_state() == LifeState::Established);
 
-    fsm.on_event(make_ok(EventType::REQUEST_SENT, 3));
+    fsm.on_event(make_ok(EventType::HTTP_SENT, 3));
     assert(fsm.current_state() == LifeState::Sending);
 
-    fsm.on_event(make_ok(EventType::REQUEST_RECEIVED, 3));
+    fsm.on_event(make_ok(EventType::HTTP_RECEIVED, 3));
     // assert(fsm.current_state() == LifeState::Receiving);
 
     // Receiving → Finished 是无条件的
@@ -66,10 +66,10 @@ void test_fsm_skip_dns()
 {
     LifecycleFSM fsm;
 
-    fsm.on_event(make_ok(EventType::TCP_CONNECT, 4));
+    fsm.on_event(make_ok(EventType::TCP_CONNECT_START, 4));
     assert(fsm.current_state() == LifeState::Connecting);
 
-    fsm.on_event(make_ok(EventType::TCP_ESTABLISHED, 4));
+    fsm.on_event(make_ok(EventType::TCP_CONNECT_SUCCESS, 4));
     assert(fsm.current_state() == LifeState::Established);
 }
 
@@ -77,10 +77,10 @@ void test_fsm_error_interrupt()
 {
     LifecycleFSM fsm;
 
-    fsm.on_event(make_ok(EventType::DNS_START, 5));
+    fsm.on_event(make_ok(EventType::DNS_RESOLVE_START, 5));
     assert(fsm.current_state() == LifeState::Resolving);
 
-    fsm.on_event(make_error(EventType::DNS_DONE, 5, "dns failed"));
+    fsm.on_event(make_error(EventType::DNS_RESOLVE_DONE, 5, "dns failed"));
     assert(fsm.current_state() == LifeState::Error);
     assert(fsm.has_error());
 
@@ -94,10 +94,10 @@ void test_fsm_error_is_terminal()
 {
     LifecycleFSM fsm;
 
-    fsm.on_event(make_error(EventType::TCP_CONNECT, 6));
+    fsm.on_event(make_error(EventType::TCP_CONNECT_START, 6));
     assert(fsm.current_state() == LifeState::Error);
 
-    fsm.on_event(make_ok(EventType::TCP_ESTABLISHED, 6));
+    fsm.on_event(make_ok(EventType::TCP_CONNECT_SUCCESS, 6));
     assert(fsm.current_state() == LifeState::Error);
 }
 
@@ -106,7 +106,7 @@ void test_fsm_timestamp_behavior()
     LifecycleFSM fsm;
 
     auto t0 = platform::time::wall_now();
-    fsm.on_event(make_ok(EventType::DNS_START, 7));
+    fsm.on_event(make_ok(EventType::DNS_RESOLVE_START, 7));
     auto start = fsm.start_timestamp();
     auto last = fsm.last_timestamp();
 
@@ -115,7 +115,7 @@ void test_fsm_timestamp_behavior()
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-    fsm.on_event(make_ok(EventType::DNS_DONE, 7));
+    fsm.on_event(make_ok(EventType::DNS_RESOLVE_DONE, 7));
     assert(fsm.last_timestamp() > start);
 }
 
@@ -129,7 +129,7 @@ void test_manager_basic()
 
     assert(mgr.size() == 0);
 
-    mgr.on_event(make_ok(EventType::DNS_START, 10));
+    mgr.on_event(make_ok(EventType::DNS_RESOLVE_START, 10));
     assert(mgr.size() == 1);
     assert(mgr.has(10));
 
@@ -142,9 +142,9 @@ void test_manager_multi_fd()
 {
     FsmManager mgr;
 
-    mgr.on_event(make_ok(EventType::DNS_START, 1));
-    mgr.on_event(make_ok(EventType::DNS_START, 2));
-    mgr.on_event(make_ok(EventType::DNS_START, 3));
+    mgr.on_event(make_ok(EventType::DNS_RESOLVE_START, 1));
+    mgr.on_event(make_ok(EventType::DNS_RESOLVE_START, 2));
+    mgr.on_event(make_ok(EventType::DNS_RESOLVE_START, 3));
 
     assert(mgr.size() == 3);
     assert(mgr.has(1));
@@ -156,7 +156,7 @@ void test_manager_error_fsm_persist()
 {
     FsmManager mgr;
 
-    mgr.on_event(make_error(EventType::TCP_CONNECT, 20));
+    mgr.on_event(make_error(EventType::TCP_CONNECT_START, 20));
 
     const LifecycleFSM *fsm = mgr.get(20);
     assert(fsm);

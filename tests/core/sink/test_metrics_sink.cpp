@@ -17,11 +17,11 @@ static EventSnapshot make_snapshot(
     Event e =
         error
             ? Event::failure(
-                  EventType::TCP_CONNECT,
+                  EventType::TCP_CONNECT_START,
                   EventError{"test", "connect failed"},
                   fd)
             : Event::info(
-                  EventType::TCP_CONNECT,
+                  EventType::TCP_CONNECT_START,
                   "connect ok",
                   fd);
 

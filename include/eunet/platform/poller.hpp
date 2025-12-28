@@ -34,6 +34,9 @@ namespace platform::poller
 
     class Poller
     {
+    public:
+        using PollerResult = util::Result<void, PollerError>;
+
     private:
         static constexpr int MAX_EVENTS = 64;
 
@@ -60,15 +63,12 @@ namespace platform::poller
         const platform::fd::Fd &get_fd() const noexcept;
 
     public:
-        util::Result<bool, PollerError>
-        add(int fd, std::uint32_t events) noexcept;
-        util::Result<bool, PollerError>
-        modify(int fd, std::uint32_t events) noexcept;
-        util::Result<bool, PollerError>
-        remove(int fd) noexcept;
+        PollerResult add(int fd, std::uint32_t events) noexcept;
+        PollerResult modify(int fd, std::uint32_t events) noexcept;
+        PollerResult remove(int fd) noexcept;
 
     public:
-        util::Result<std::vector<PollEvent>, SysError>
+        SysResult<std::vector<PollEvent>>
         wait(int timeout_ms) noexcept;
     };
 }

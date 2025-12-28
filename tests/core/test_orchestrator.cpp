@@ -31,17 +31,17 @@ int main()
 
     const int fd = 3;
 
-    auto dns_start = orch.emit(Event::info(EventType::DNS_START, "dns start", fd));
+    auto dns_start = orch.emit(Event::info(EventType::DNS_RESOLVE_START, "dns start", fd));
     assert(dns_start.is_ok());
-    auto dns_done = orch.emit(Event::info(EventType::DNS_DONE, "dns done", fd));
+    auto dns_done = orch.emit(Event::info(EventType::DNS_RESOLVE_DONE, "dns done", fd));
     assert(dns_done.is_ok());
-    auto connect = orch.emit(Event::info(EventType::TCP_CONNECT, "connect", fd));
+    auto connect = orch.emit(Event::info(EventType::TCP_CONNECT_START, "connect", fd));
     assert(connect.is_ok());
-    auto established = orch.emit(Event::info(EventType::TCP_ESTABLISHED, "established", fd));
+    auto established = orch.emit(Event::info(EventType::TCP_CONNECT_SUCCESS, "established", fd));
     assert(established.is_ok());
-    auto send = orch.emit(Event::info(EventType::REQUEST_SENT, "send", fd));
+    auto send = orch.emit(Event::info(EventType::HTTP_SENT, "send", fd));
     assert(send.is_ok());
-    auto recv = orch.emit(Event::info(EventType::REQUEST_RECEIVED, "recv", fd));
+    auto recv = orch.emit(Event::info(EventType::HTTP_RECEIVED, "recv", fd));
     assert(recv.is_ok());
 
     // ---------- Sink call count ----------
