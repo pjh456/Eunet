@@ -1,18 +1,14 @@
-#ifndef INCLUDE_EUNET_PLATFORM_TCP_SOCKET
-#define INCLUDE_EUNET_PLATFORM_TCP_SOCKET
+#ifndef INCLUDE_EUNET_PLATFORM_SOCKET_TCP_SOCKET
+#define INCLUDE_EUNET_PLATFORM_SOCKET_TCP_SOCKET
 
-#include "eunet/util/error.hpp"
+#include "eunet/platform/socket_base.hpp"
 #include "eunet/platform/time.hpp"
-#include "eunet/platform/fd.hpp"
 #include "eunet/platform/address.hpp"
 
 namespace platform::net
 {
-    class TCPSocket
+    class TCPSocket final : public SocketBase
     {
-    private:
-        fd::Fd fd;
-
     public:
         static util::ResultV<TCPSocket> create();
 
@@ -25,24 +21,17 @@ namespace platform::net
             const SocketAddress &addr,
             time::Duration timeout);
 
-    public:
         util::ResultV<size_t>
         send(
             const std::byte *data,
             size_t len,
             time::Duration timeout);
+
         util::ResultV<size_t>
         recv(
             std::byte *buf,
             size_t len,
             time::Duration timeout);
-
-    public:
-        void set_nonblocking(bool enable) noexcept;
-
-        fd::FdView view() const noexcept;
-
-        void close() noexcept;
     };
 }
-#endif // INCLUDE_EUNET_PLATFORM_TCP_SOCKET
+#endif // INCLUDE_EUNET_PLATFORM_SOCKET_TCP_SOCKET
