@@ -36,7 +36,8 @@ void test_event()
     assert(e3.is_error());
     assert(!e3.is_ok());
     assert(e3.error);
-    assert(e3.error.get_message() == "404 Not Found");
+    std::cout << e3.error.message() << std::endl;
+    assert(e3.error.message() == "404 Not Found");
     std::cout << "e3: " << to_string(e3) << "\n";
 
     // 4. 带 fd 与 data 的 info 事件
