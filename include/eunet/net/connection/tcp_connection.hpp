@@ -1,5 +1,5 @@
-#ifndef INCLUDE_EUNET_NET_TCP_CONNECTION
-#define INCLUDE_EUNET_NET_TCP_CONNECTION
+#ifndef INCLUDE_EUNET_NET_CONNECTION_TCP_CONNECTION
+#define INCLUDE_EUNET_NET_CONNECTION_TCP_CONNECTION
 
 #include "eunet/platform/time.hpp"
 #include "eunet/platform/tcp_socket.hpp"
@@ -61,4 +61,4 @@ namespace net::tcp
     };
 }
 
-#endif // INCLUDE_EUNET_NET_TCP_CONNECTION
+#endif // INCLUDE_EUNET_NET_CONNECTION_TCP_CONNECTION
