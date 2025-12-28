@@ -7,24 +7,43 @@
 
 namespace net::tcp
 {
+    class TCPConnection;
+
     class TCPConnection
     {
     private:
         platform::net::TCPSocket sock;
-        IOBuffer m_in_buffer;  // 输入缓冲区
-        IOBuffer m_out_buffer; // 输出缓冲区
+        IOBuffer m_in_buffer;
+        IOBuffer m_out_buffer;
 
     public:
-        explicit TCPConnection(platform::net::TCPSocket sock);
+        static util::ResultV<TCPConnection>
+        connect(
+            const platform::net::SocketAddress &addr,
+            platform::time::Duration timeout);
+
+        static TCPConnection
+        from_accepted_socket(
+            platform::net::TCPSocket &&sock);
+
+    private:
+        explicit TCPConnection(
+            platform::net::TCPSocket &&sock);
+
+    public:
+        TCPConnection(TCPConnection &&) noexcept = default;
+        TCPConnection &operator=(TCPConnection &&) noexcept = default;
 
         ~TCPConnection() = default;
 
     public:
-        platform::net::TCPSocket &socket() { return sock; }
-        IOBuffer &in_buffer() { return m_in_buffer; }
-        IOBuffer &out_buffer() { return m_out_buffer; }
+        IOBuffer &in_buffer();
+        IOBuffer &out_buffer();
 
-        bool has_pending_output() const { return m_out_buffer.readable_bytes() > 0; }
+        platform::fd::FdView fd() const noexcept;
+        void set_nonblocking(bool enable);
+
+        bool has_pending_output() const;
         void close();
 
     public:
