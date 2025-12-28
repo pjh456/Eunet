@@ -86,8 +86,8 @@ void test_fsm_error_interrupt()
 
     auto err = fsm.get_last_error();
     assert(err);
-    assert(err.get_domain() == util::ErrorDomain::Internal);
-    assert(err.get_message() == "dns failed");
+    assert(err.domain() == util::ErrorDomain::Internal);
+    assert(err.message() == "dns failed");
 }
 
 void test_fsm_error_is_terminal()
