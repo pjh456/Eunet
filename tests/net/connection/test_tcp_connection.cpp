@@ -14,51 +14,51 @@ void test_tcp_connection()
     using namespace platform::net;
     using namespace std::chrono;
 
-    // 1. 启动本地服务器
+    // ---------- server ----------
     int listen_fd = ::socket(AF_INET, SOCK_STREAM, 0);
     assert(listen_fd >= 0);
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    addr.sin_port = 0; // 让系统分配端口
+    addr.sin_port = 0;
 
     int opt = 1;
     setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    assert(::bind(listen_fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) == 0);
+    assert(::bind(listen_fd, (sockaddr *)&addr, sizeof(addr)) == 0);
     assert(::listen(listen_fd, 1) == 0);
 
-    socklen_t addrlen = sizeof(addr);
-    assert(::getsockname(listen_fd, reinterpret_cast<sockaddr *>(&addr), &addrlen) == 0);
-
+    socklen_t len = sizeof(addr);
+    assert(::getsockname(listen_fd, (sockaddr *)&addr, &len) == 0);
     uint16_t port = ntohs(addr.sin_port);
 
-    // 2. 启动客户端连接线程
-    std::thread client_thread(
+    // ---------- client ----------
+    std::thread client(
         [port]()
         {
-            auto sock_res = TCPSocket::create();
-            assert(sock_res.is_ok());
-            TCPSocket sock = std::move(sock_res.unwrap());
+            auto addr =
+                SocketAddress::from_ipv4(
+                    htonl(INADDR_LOOPBACK), port);
 
-            SocketAddress server_addr({AF_INET, htons(port), {htonl(INADDR_LOOPBACK)}});
+            auto conn_res =
+                TCPConnection::connect(addr, milliseconds(500));
+            assert(conn_res.is_ok());
 
-            auto res = sock.connect(server_addr, milliseconds(500));
-            assert(res.is_ok());
+            auto conn = std::move(conn_res.unwrap());
 
-            auto conn = TCPConnection::from_accepted_socket(std::move(sock));
+            std::vector<std::byte> data{
+                std::byte{1}, std::byte{2}, std::byte{3}};
 
-            // 发送数据
-            std::vector<std::byte> data = {std::byte(1), std::byte(2), std::byte(3)};
-            auto send_res = conn.write(data.data(), data.size(), milliseconds(500));
-            assert(send_res.is_ok());
-            (void)conn.flush();
+            auto wr = conn.write(
+                data.data(), data.size(), milliseconds(500));
+            assert(wr.is_ok());
 
+            conn.flush();
             conn.close();
         });
 
-    // 3. 接收端
+    // ---------- accept ----------
     int client_fd = ::accept(listen_fd, nullptr, nullptr);
     assert(client_fd >= 0);
 
@@ -70,9 +70,9 @@ void test_tcp_connection()
     ::close(client_fd);
     ::close(listen_fd);
 
-    client_thread.join();
+    client.join();
 
-    std::cout << "TCPConnection tests passed.\n";
+    std::cout << "TCPConnection test passed.\n";
 }
 
 int main()
