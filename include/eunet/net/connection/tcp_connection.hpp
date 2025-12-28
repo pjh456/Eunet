@@ -42,7 +42,6 @@ namespace net::tcp
 
     public:
         platform::fd::FdView fd() const noexcept override;
-        void set_nonblocking(bool enable) override;
         void close() noexcept override;
         bool is_open() const noexcept override;
 
