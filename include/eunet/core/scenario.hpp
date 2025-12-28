@@ -9,7 +9,7 @@ namespace core::scenario
     class Scenario
     {
     public:
-        using RunResult = util::Result<void, EventError>;
+        using RunResult = util::ResultV<void>;
 
     public:
         virtual ~Scenario() = default;
