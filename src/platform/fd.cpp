@@ -34,6 +34,36 @@ namespace platform::fd
 
     Fd::operator bool() const noexcept { return valid(); }
 
+    bool Fd::operator!() const noexcept { return !valid(); }
+
+    SysResult<Fd> Fd::socket(
+        int domain,
+        int type,
+        int protocol) noexcept
+    {
+        int fd = ::socket(domain, type | SOCK_CLOEXEC, protocol);
+        if (fd < 0)
+            return SysResult<Fd>::Err(SysError::from_errno(errno));
+
+        return SysResult<Fd>::Ok(Fd(fd));
+    }
+
+    FdView Fd::view() const noexcept { return FdView{get()}; }
+
+    SysResult<Pipe> Fd::pipe() noexcept
+    {
+        int fds[2];
+        Pipe pipe;
+
+        if (::pipe2(fds, O_CLOEXEC) != 0)
+            return SysResult<Pipe>::Err(SysError::from_errno(errno));
+
+        pipe.read.reset(fds[0]);
+        pipe.write.reset(fds[1]);
+
+        return SysResult<Pipe>::Ok(std::move(pipe));
+    }
+
     int Fd::release() noexcept
     {
         int old = fd;
@@ -51,29 +81,8 @@ namespace platform::fd
         fd = new_fd;
     }
 
-    SysResult<Fd> Fd::socket(
-        int domain,
-        int type,
-        int protocol) noexcept
+    FdView FdView::from_owner(const Fd &owner)
     {
-        int fd = ::socket(domain, type | SOCK_CLOEXEC, protocol);
-        if (fd < 0)
-            return SysResult<Fd>::Err(SysError::from_errno(errno));
-
-        return SysResult<Fd>::Ok(Fd(fd));
-    }
-
-    SysResult<Pipe> Fd::pipe() noexcept
-    {
-        int fds[2];
-        Pipe pipe;
-
-        if (::pipe2(fds, O_CLOEXEC) != 0)
-            return SysResult<Pipe>::Err(SysError::from_errno(errno));
-
-        pipe.read.reset(fds[0]);
-        pipe.write.reset(fds[1]);
-
-        return SysResult<Pipe>::Ok(std::move(pipe));
+        return FdView{owner.get()};
     }
 }

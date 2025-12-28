@@ -37,7 +37,9 @@ namespace platform::poller
     const platform::fd::Fd &Poller::get_fd() const noexcept { return epoll_fd; }
 
     Poller::PollerResult
-    Poller::add(int fd, std::uint32_t events) noexcept
+    Poller::add(
+        const platform::fd::Fd &fd,
+        std::uint32_t events) noexcept
     {
         if (!valid())
         {
@@ -48,7 +50,7 @@ namespace platform::poller
                 });
         }
 
-        if (fd < 0)
+        if (!fd)
             return PollerResult::Err(
                 PollerError{
                     .code = PollerErrorCode::InvalidFd,
@@ -57,12 +59,12 @@ namespace platform::poller
 
         epoll_event ev{};
         ev.events = events;
-        ev.data.fd = fd;
+        ev.data.fd = fd.get();
 
         if (::epoll_ctl(
                 epoll_fd.get(),
                 EPOLL_CTL_ADD,
-                fd, &ev) == 0)
+                fd.get(), &ev) == 0)
             return PollerResult::Ok();
 
         const SysError sys = SysError::from_errno(errno);
@@ -81,7 +83,9 @@ namespace platform::poller
     }
 
     Poller::PollerResult
-    Poller::modify(int fd, std::uint32_t events) noexcept
+    Poller::modify(
+        const platform::fd::Fd &fd,
+        std::uint32_t events) noexcept
     {
         if (!valid())
             return PollerResult::Err(
@@ -90,7 +94,7 @@ namespace platform::poller
                     SysError{},
                 });
 
-        if (fd < 0)
+        if (!fd)
             return PollerResult::Err(
                 PollerError{
                     PollerErrorCode::InvalidFd,
@@ -99,12 +103,12 @@ namespace platform::poller
 
         epoll_event ev{};
         ev.events = events;
-        ev.data.fd = fd;
+        ev.data.fd = fd.get();
 
         if (::epoll_ctl(
                 epoll_fd.get(),
                 EPOLL_CTL_MOD,
-                fd, &ev) == 0)
+                fd.get(), &ev) == 0)
             return PollerResult::Ok();
 
         SysError sys = SysError::from_errno(errno);
@@ -121,7 +125,7 @@ namespace platform::poller
     }
 
     Poller::PollerResult
-    Poller::remove(int fd) noexcept
+    Poller::remove(const platform::fd::Fd &fd) noexcept
     {
         if (!valid())
             return PollerResult::Err(
@@ -130,7 +134,7 @@ namespace platform::poller
                     SysError{},
                 });
 
-        if (fd < 0)
+        if (!fd)
             return PollerResult::Err(
                 PollerError{
                     PollerErrorCode::InvalidFd,
@@ -140,7 +144,7 @@ namespace platform::poller
         if (::epoll_ctl(
                 epoll_fd.get(),
                 EPOLL_CTL_DEL,
-                fd, nullptr) == 0)
+                fd.get(), nullptr) == 0)
             return PollerResult::Ok();
 
         SysError sys = SysError::from_errno(errno);
