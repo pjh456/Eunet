@@ -35,26 +35,28 @@ void test_tcp_connection()
     uint16_t port = ntohs(addr.sin_port);
 
     // 2. 启动客户端连接线程
-    std::thread client_thread([port]()
-                              {
-        auto sock_res = TCPSocket::create();
-        assert(sock_res.is_ok());
-        TCPSocket sock = std::move(sock_res.unwrap());
+    std::thread client_thread(
+        [port]()
+        {
+            auto sock_res = TCPSocket::create();
+            assert(sock_res.is_ok());
+            TCPSocket sock = std::move(sock_res.unwrap());
 
-        SocketAddress server_addr({AF_INET, htons(port), {htonl(INADDR_LOOPBACK)}});
+            SocketAddress server_addr({AF_INET, htons(port), {htonl(INADDR_LOOPBACK)}});
 
-        auto res = sock.connect(server_addr, milliseconds(500));
-        assert(res.is_ok());
+            auto res = sock.connect(server_addr, milliseconds(500));
+            assert(res.is_ok());
 
-        TCPConnection conn(std::move(sock));
+            auto conn = TCPConnection::from_accepted_socket(std::move(sock));
 
-        // 发送数据
-        std::vector<std::byte> data = {std::byte(1), std::byte(2), std::byte(3)};
-        auto send_res = conn.send(data, milliseconds(500));
-        assert(send_res.is_ok());
-        (void)conn.flush();
+            // 发送数据
+            std::vector<std::byte> data = {std::byte(1), std::byte(2), std::byte(3)};
+            auto send_res = conn.send(data, milliseconds(500));
+            assert(send_res.is_ok());
+            (void)conn.flush();
 
-        conn.close(); });
+            conn.close();
+        });
 
     // 3. 接收端
     int client_fd = ::accept(listen_fd, nullptr, nullptr);
