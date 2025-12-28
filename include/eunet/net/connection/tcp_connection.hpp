@@ -32,6 +32,9 @@ namespace net::tcp
             platform::net::TCPSocket &&sock);
 
     public:
+        TCPConnection(const TCPConnection &) = delete;
+        TCPConnection &operator=(const TCPConnection &) = delete;
+
         TCPConnection(TCPConnection &&) noexcept = default;
         TCPConnection &operator=(TCPConnection &&) noexcept = default;
 
@@ -39,6 +42,7 @@ namespace net::tcp
 
     public:
         platform::fd::FdView fd() const noexcept override;
+        void set_nonblocking(bool enable) override;
         void close() noexcept override;
         bool is_open() const noexcept override;
 
