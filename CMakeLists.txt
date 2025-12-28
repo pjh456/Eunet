@@ -18,7 +18,11 @@ if(NOT LIBCAP)
     message(FATAL_ERROR "libcap not found, please install libcap-devel")
 endif()
 
+# fmt-devel checker
+find_package(fmt REQUIRED)
+
 target_link_libraries(eunet PRIVATE cap)
+target_link_libraries(eunet PRIVATE fmt::fmt)
 
 add_executable(main src/main.cpp)
 target_link_libraries(main eunet)
