@@ -83,11 +83,11 @@ void test_tcpsocket()
 
     // 4. send/recv
     const char *msg = "hello world";
-    auto send_res = socket.send(reinterpret_cast<const std::byte *>(msg), strlen(msg), 1s);
+    auto send_res = socket.send_all(reinterpret_cast<const std::byte *>(msg), strlen(msg), 1s);
     assert(send_res.is_ok() && send_res.unwrap() == strlen(msg));
 
     std::vector<std::byte> buf(128);
-    auto recv_res = socket.recv(buf.data(), send_res.unwrap(), 1s);
+    auto recv_res = socket.recv_some(buf.data(), send_res.unwrap(), 1s);
     assert(recv_res.is_ok() && recv_res.unwrap() == send_res.unwrap());
 
     std::string received(reinterpret_cast<const char *>(buf.data()), recv_res.unwrap());
