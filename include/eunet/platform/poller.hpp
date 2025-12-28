@@ -6,26 +6,11 @@
 #include <string>
 
 #include "eunet/util/result.hpp"
-#include "eunet/platform/sys_error.hpp"
+#include "eunet/util/error.hpp"
 #include "eunet/platform/fd.hpp"
 
 namespace platform::poller
 {
-
-    enum class PollerErrorCode
-    {
-        NotInitialized,
-        InvalidFd,
-        AlreadyExists,
-        NotFound,
-    };
-
-    struct PollerError
-    {
-        PollerErrorCode code;
-        SysError cause;
-    };
-
     struct PollEvent
     {
         platform::fd::FdView fd;
@@ -34,8 +19,6 @@ namespace platform::poller
 
     class Poller
     {
-    public:
-        using PollerResult = util::Result<void, PollerError>;
 
     private:
         static constexpr int MAX_EVENTS = 64;
@@ -44,7 +27,7 @@ namespace platform::poller
         platform::fd::Fd epoll_fd;
 
     public:
-        static SysResult<Poller> create();
+        static util::ResultV<Poller> create();
 
     private:
         Poller();
@@ -63,18 +46,19 @@ namespace platform::poller
         const platform::fd::Fd &get_fd() const noexcept;
 
     public:
-        PollerResult add(const platform::fd::Fd &fd, std::uint32_t events) noexcept;
-        PollerResult modify(const platform::fd::Fd &fd, std::uint32_t events) noexcept;
-        PollerResult remove(const platform::fd::Fd &fd) noexcept;
+        util::ResultV<void> add(
+            const platform::fd::Fd &fd,
+            std::uint32_t events) noexcept;
+        util::ResultV<void> modify(
+            const platform::fd::Fd &fd,
+            std::uint32_t events) noexcept;
+        util::ResultV<void>
+        remove(const platform::fd::Fd &fd) noexcept;
 
     public:
-        SysResult<std::vector<PollEvent>>
+        util::ResultV<std::vector<PollEvent>>
         wait(int timeout_ms) noexcept;
     };
 }
-
-const char *to_string(const platform::poller::PollerErrorCode &code);
-
-std::string format_error(const platform::poller::PollerError &e);
 
 #endif // INCLUDE_EUNET_PLATFORM_POLLER
