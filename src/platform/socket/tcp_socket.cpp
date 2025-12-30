@@ -147,7 +147,7 @@ namespace platform::net
                     std::chrono::milliseconds>(
                     deadline - now)
                     .count();
-            poller.wait(ms).unwrap();
+            (void)poller.wait(ms).unwrap();
         }
 
         return Result::Ok(sent);
@@ -196,7 +196,7 @@ namespace platform::net
                     std::chrono::milliseconds>(
                     deadline - now)
                     .count();
-            poller.wait(ms).unwrap();
+            (void)poller.wait(ms).unwrap();
         }
     }
 }

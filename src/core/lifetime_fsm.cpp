@@ -75,10 +75,10 @@ namespace core
 
     void LifecycleFSM::transit(LifeState next) noexcept { state = next; }
 
-    const LifecycleFSM *FsmManager::get(int fd) const
+    const LifecycleFSM *FsmManager::get(SessionId sid) const
     {
         std::lock_guard<std::mutex> lock(mtx);
-        auto it = fsms.find(fd);
+        auto it = fsms.find(sid);
         return it == fsms.end() ? nullptr : &it->second;
     }
 
@@ -100,13 +100,14 @@ namespace core
         //     return;
         // 允许存在无关联 fd 的事件
 
-        std::lock_guard<std::mutex> lock(mtx);
+        std::lock_guard lock(mtx);
 
+        SessionId key = e.session_id;
         auto it = fsms.find(e.fd.fd);
         if (it == fsms.end())
-            it = fsms.emplace(e.fd.fd, LifecycleFSM{e.fd.fd}).first;
+            it = fsms.emplace(key, LifecycleFSM{e.fd.fd}).first;
 
-        it->second.on_event(e);
+        fsms[key].on_event(e);
     }
 }
 

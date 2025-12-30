@@ -33,13 +33,15 @@ namespace core
         CONNECTION_CLOSED
     };
 
+    using SessionId = uint64_t;
+
     struct Event
     {
-
     public:
         EventType type;
         platform::time::WallPoint ts;
         platform::fd::FdView fd{-1};
+        SessionId session_id{0};
 
         std::string msg;
         util::Error error;
