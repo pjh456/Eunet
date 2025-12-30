@@ -61,13 +61,13 @@ namespace core
     {
     private:
         mutable std::mutex mtx;
-        std::unordered_map<int, LifecycleFSM> fsms;
+        std::unordered_map<SessionId, LifecycleFSM> fsms;
 
     public:
         FsmManager() = default;
 
     public:
-        const LifecycleFSM *get(int fd) const;
+        const LifecycleFSM *get(SessionId sid) const;
         bool has(int fd) const noexcept;
 
         std::size_t size() const noexcept;

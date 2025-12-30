@@ -16,13 +16,19 @@ namespace core
     {
         std::lock_guard lock(mtx);
 
+        // 1. 如果事件没有 SessionId 且关联了 FD，尝试从 FSM 恢复或分配
+        // （此处简化处理，实际建议在 Client 创建时就分配好 ID）
+
+        // 2. 更新 Timeline
         auto idx_res = timeline.push(e);
         if (!idx_res.is_ok())
             return EmitResult::Err(idx_res.unwrap_err());
 
+        // 3. 更新 FSM（注意：FsmManager 内部也需要同步）
         fsm_manager.on_event(e);
 
-        const auto *fsm = fsm_manager.get(e.fd.fd);
+        // 4. 快照并分发
+        const auto *fsm = fsm_manager.get(e.session_id); // 改用 session_id 索引
         if (!fsm)
             return EmitResult::Err(
                 util::Error::internal(
@@ -32,38 +38,35 @@ namespace core
         if (latest_event_result.is_err())
             return EmitResult::Err(latest_event_result.unwrap_err());
 
-        auto latest_event = latest_event_result.unwrap();
         EventSnapshot snap{
-            .event = latest_event,
+            .event = e,
             .fd = e.fd.fd,
             .state = fsm->current_state(),
             .ts = e.ts,
             .error = fsm->get_last_error()};
 
-        for (auto *sink : sinks)
-            sink->on_event(snap);
+        for (auto &sink : sinks)
+        {
+            if (sink)
+                sink->on_event(snap);
+        }
 
         return EmitResult::Ok();
     }
 
-    void Orchestrator::attach(sink::IEventSink *sink)
+    void Orchestrator::attach(SinkPtr sink)
     {
-        if (!sink)
-            return;
-
-        sinks.push_back(sink);
+        std::lock_guard lock(mtx);
+        if (sink)
+            sinks.push_back(sink);
     }
 
-    void Orchestrator::detach(sink::IEventSink *sink)
+    void Orchestrator::detach(SinkPtr sink)
     {
-        if (!sink)
-            return;
-
-        sinks.erase(
-            std::remove(
-                sinks.begin(),
-                sinks.end(),
-                sink),
-            sinks.end());
+        std::lock_guard lock(mtx);
+        if (sink)
+            sinks.erase(
+                std::remove(sinks.begin(), sinks.end(), sink),
+                sinks.end());
     }
 }

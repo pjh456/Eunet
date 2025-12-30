@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <mutex>
+#include <memory>
+#include <atomic>
 
 #include "eunet/util/result.hpp"
 #include "eunet/util/error.hpp"
@@ -17,13 +19,14 @@ namespace core
     {
     public:
         using EmitResult = util::ResultV<void>;
+        using SinkPtr = std::shared_ptr<sink::IEventSink>;
 
     private:
         Timeline timeline;
         FsmManager fsm_manager;
 
-        std::vector<sink::IEventSink *> sinks;
-
+        std::vector<SinkPtr> sinks;
+        std::atomic<SessionId> next_session_id_{1};
         mutable std::mutex mtx;
 
     public:
@@ -36,8 +39,10 @@ namespace core
     public:
         EmitResult emit(Event e);
 
-        void attach(sink::IEventSink *sink);
-        void detach(sink::IEventSink *sink);
+        SessionId new_session() { return next_session_id_.fetch_add(1); }
+
+        void attach(SinkPtr sink);
+        void detach(SinkPtr sink);
     };
 }
 

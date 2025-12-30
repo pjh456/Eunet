@@ -51,7 +51,7 @@ namespace ui
                                                   {
             std::lock_guard lock(data_mtx_);
             event_logs_.push_back(snap); });
-            orch_.attach(sink.get());
+            (void)orch_.attach(sink);
 
             // 主界面组件
             auto main_ui = Renderer(input_row_, [this]
