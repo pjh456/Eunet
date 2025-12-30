@@ -50,10 +50,10 @@ int main()
 
     // 2. 初始化核心组件
     core::Orchestrator orch;
-    SimpleConsoleSink console_sink;
+    std::shared_ptr<SimpleConsoleSink> console_sink;
 
     // 将观察者挂载到调度器
-    orch.attach(&console_sink);
+    orch.attach(console_sink);
 
     // 3. 创建异步客户端
     AsyncTCPClient client(orch);
