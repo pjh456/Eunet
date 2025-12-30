@@ -129,11 +129,13 @@ void test_manager_basic()
 
     assert(mgr.size() == 0);
 
-    mgr.on_event(make_ok(EventType::DNS_RESOLVE_START, 10));
+    Event e = make_ok(EventType::DNS_RESOLVE_START, 10);
+    e.session_id = 12345;
+    mgr.on_event(e);
     assert(mgr.size() == 1);
-    assert(mgr.has(10));
+    assert(mgr.has(e.session_id));
 
-    const LifecycleFSM *fsm = mgr.get(10);
+    const LifecycleFSM *fsm = mgr.get(e.session_id);
     assert(fsm);
     assert(fsm->current_state() == LifeState::Resolving);
 }
@@ -142,23 +144,31 @@ void test_manager_multi_fd()
 {
     FsmManager mgr;
 
-    mgr.on_event(make_ok(EventType::DNS_RESOLVE_START, 1));
-    mgr.on_event(make_ok(EventType::DNS_RESOLVE_START, 2));
-    mgr.on_event(make_ok(EventType::DNS_RESOLVE_START, 3));
+    Event e1 = make_ok(EventType::DNS_RESOLVE_START, 1);
+    e1.session_id = 12321;
+    Event e2 = make_ok(EventType::DNS_RESOLVE_START, 2);
+    e2.session_id = 12322;
+    Event e3 = make_ok(EventType::DNS_RESOLVE_START, 3);
+    e3.session_id = 12323;
+
+    mgr.on_event(e1);
+    mgr.on_event(e2);
+    mgr.on_event(e3);
 
     assert(mgr.size() == 3);
-    assert(mgr.has(1));
-    assert(mgr.has(2));
-    assert(mgr.has(3));
+    assert(mgr.has(12321));
+    assert(mgr.has(12322));
+    assert(mgr.has(12323));
 }
 
 void test_manager_error_fsm_persist()
 {
     FsmManager mgr;
+    Event e = make_error(EventType::TCP_CONNECT_START, 20);
+    e.session_id = 11111;
+    mgr.on_event(e);
 
-    mgr.on_event(make_error(EventType::TCP_CONNECT_START, 20));
-
-    const LifecycleFSM *fsm = mgr.get(20);
+    const LifecycleFSM *fsm = mgr.get(e.session_id);
     assert(fsm);
     assert(fsm->current_state() == LifeState::Error);
     assert(fsm->has_error());
