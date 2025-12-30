@@ -59,6 +59,11 @@ namespace core
         if (!sink)
             return;
 
-        std::remove(sinks.begin(), sinks.end(), sink);
+        sinks.erase(
+            std::remove(
+                sinks.begin(),
+                sinks.end(),
+                sink),
+            sinks.end());
     }
 }
