@@ -54,18 +54,12 @@ namespace platform::net
             if (p->ai_family == AF_INET)
             {
                 auto sa = *reinterpret_cast<sockaddr_in *>(p->ai_addr);
-                sa.sin_port = htons(port);
-                out.emplace_back(
-                    reinterpret_cast<sockaddr *>(&sa),
-                    sizeof(sa));
+                out.push_back(Endpoint::from_ipv4(sa.sin_addr.s_addr, port));
             }
             else if (p->ai_family == AF_INET6)
             {
                 auto sa = *reinterpret_cast<sockaddr_in6 *>(p->ai_addr);
-                sa.sin6_port = htons(port);
-                out.emplace_back(
-                    reinterpret_cast<sockaddr *>(&sa),
-                    sizeof(sa));
+                out.push_back(Endpoint::from_ipv6(sa.sin6_addr, port));
             }
         }
 

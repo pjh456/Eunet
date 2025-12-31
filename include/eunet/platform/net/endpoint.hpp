@@ -2,6 +2,7 @@
 #define INCLUDE_EUNET_PLATFORM_NET_ENDPOINT
 
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -11,6 +12,9 @@
 
 namespace platform::net
 {
+    class Endpoint;
+    using EndpointResult = util::ResultV<Endpoint>;
+
     class Endpoint
     {
     private:
@@ -18,10 +22,16 @@ namespace platform::net
         socklen_t m_len{0};
 
     public:
-        static util::ResultV<Endpoint>
+        static EndpointResult
         from_string(
             std::string_view ip,
             uint16_t port);
+
+        static Endpoint from_ipv4(const uint32_t &addr_be, uint16_t port);
+        static Endpoint from_ipv6(const in6_addr &addr, uint16_t port);
+
+        static Endpoint any_ipv4(uint16_t port);
+        static Endpoint loopback_ipv4(uint16_t port);
 
     public:
         Endpoint() = default;

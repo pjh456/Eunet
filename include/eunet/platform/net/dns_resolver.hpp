@@ -10,7 +10,6 @@
 #include "eunet/util/error.hpp"
 #include "eunet/platform/net/common.hpp"
 #include "eunet/platform/net/endpoint.hpp"
-#include "eunet/platform/address.hpp"
 
 namespace platform::net
 {

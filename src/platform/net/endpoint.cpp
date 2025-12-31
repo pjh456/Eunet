@@ -7,7 +7,7 @@
 
 namespace platform::net
 {
-    util::ResultV<Endpoint>
+    EndpointResult
     Endpoint::from_string(
         std::string_view ip,
         uint16_t port)
@@ -17,7 +17,7 @@ namespace platform::net
         {
             sa4.sin_family = AF_INET;
             sa4.sin_port = htons(port);
-            return util::ResultV<Endpoint>::Ok(
+            return EndpointResult::Ok(
                 Endpoint(
                     reinterpret_cast<sockaddr *>(&sa4),
                     sizeof(sa4)));
@@ -28,16 +28,58 @@ namespace platform::net
         {
             sa6.sin6_family = AF_INET6;
             sa6.sin6_port = htons(port);
-            return util::ResultV<Endpoint>::Ok(
+            return EndpointResult::Ok(
                 Endpoint(
                     reinterpret_cast<sockaddr *>(&sa6),
                     sizeof(sa6)));
         }
 
-        return util::ResultV<Endpoint>::Err(
+        return EndpointResult::Err(
             util::Error::system()
                 .message("invalid IP address")
                 .build());
+    }
+
+    Endpoint
+    Endpoint::from_ipv4(
+        const uint32_t &addr_be,
+        uint16_t port)
+    {
+        sockaddr_in sa{};
+        sa.sin_family = AF_INET;
+        sa.sin_addr.s_addr = addr_be;
+        sa.sin_port = htons(port);
+        return Endpoint(
+            reinterpret_cast<sockaddr *>(&sa),
+            static_cast<socklen_t>(sizeof(sa)));
+    }
+
+    Endpoint
+    Endpoint::from_ipv6(
+        const in6_addr &addr,
+        uint16_t port)
+    {
+        sockaddr_in6 sa{};
+        sa.sin6_family = AF_INET6;
+        sa.sin6_addr = addr;
+        sa.sin6_port = htons(port);
+        return Endpoint(
+            reinterpret_cast<sockaddr *>(&sa),
+            static_cast<socklen_t>(sizeof(sa)));
+    }
+
+    Endpoint
+    Endpoint::any_ipv4(
+        uint16_t port)
+    {
+        return from_ipv4(INADDR_ANY, port);
+    }
+
+    Endpoint
+    Endpoint::loopback_ipv4(
+        uint16_t port)
+    {
+        return from_ipv4(htonl(INADDR_LOOPBACK), port);
     }
 
     Endpoint::Endpoint(
