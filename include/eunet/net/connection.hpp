@@ -6,6 +6,7 @@
 
 #include "eunet/util/result.hpp"
 #include "eunet/util/error.hpp"
+#include "eunet/util/byte_buffer.hpp"
 #include "eunet/platform/fd.hpp"
 #include "eunet/platform/time.hpp"
 
@@ -23,11 +24,11 @@ namespace net
 
     public:
         virtual util::ResultV<size_t>
-        read(std::byte *buf, size_t len,
+        read(util::ByteBuffer &buf,
              platform::time::Duration timeout) = 0;
 
         virtual util::ResultV<size_t>
-        write(const std::byte *buf, size_t len,
+        write(util::ByteBuffer &buf,
               platform::time::Duration timeout) = 0;
 
     public:
