@@ -19,7 +19,7 @@ static EventSnapshot make_snapshot(
         error
             ? Event::failure(
                   EventType::HTTP_SENT,
-                  util::Error::internal("send failed"),
+                  util::Error::system().message("send failed").build(),
                   {fd})
             : Event::info(
                   EventType::HTTP_SENT,

@@ -18,7 +18,7 @@ static EventSnapshot make_snapshot(
         error
             ? Event::failure(
                   EventType::TCP_CONNECT_START,
-                  util::Error::internal("connect failed"),
+                  util::Error::system().message("connect failed").build(),
                   {fd})
             : Event::info(
                   EventType::TCP_CONNECT_START,

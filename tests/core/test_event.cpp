@@ -29,7 +29,10 @@ void test_event()
     std::cout << "e2: " << to_string(e2) << "\n";
 
     // 3. failure 事件
-    auto err = util::Error::internal("404 Not Found");
+    auto err =
+        util::Error::protocol()
+            .message("404 Not Found")
+            .build();
 
     auto e3 = Event::failure(EventType::HTTP_RECEIVED, err);
     assert(e3.type == EventType::HTTP_RECEIVED);
@@ -56,7 +59,7 @@ void test_event()
     // 5. 带 fd 与 data 的 failure 事件
     auto e5 = Event::failure(
         EventType::TCP_CONNECT_START,
-        util::Error::internal("connection refused"),
+        util::Error::transport().connection_refused().build(),
         {fd_test});
 
     assert(e5.is_error());
