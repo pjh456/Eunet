@@ -50,6 +50,9 @@ namespace platform::net
 
         virtual IOResult
         try_write(util::ByteBuffer &buf) = 0;
+
+        virtual util::ResultV<void>
+        connect(const Endpoint &ep) = 0;
     };
 }
 
