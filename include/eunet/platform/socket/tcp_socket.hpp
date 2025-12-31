@@ -1,38 +1,43 @@
 #ifndef INCLUDE_EUNET_PLATFORM_SOCKET_TCP_SOCKET
 #define INCLUDE_EUNET_PLATFORM_SOCKET_TCP_SOCKET
 
-#include "eunet/platform/socket_base.hpp"
 #include "eunet/platform/time.hpp"
-#include "eunet/platform/address.hpp"
+#include "eunet/platform/base_socket.hpp"
+#include "eunet/platform/net/common.hpp"
+#include "eunet/platform/net/endpoint.hpp"
 
 namespace platform::net
 {
-    class TCPSocket final : public SocketBase
+    class TCPSocket final
+        : public BaseSocket
     {
     public:
-        static util::ResultV<TCPSocket>
-        create(AddressFamily af = AddressFamily::IPv4);
+        static util::ResultV<TCPSocket> create(
+            AddressFamily af = AddressFamily::IPv4);
 
     public:
-        explicit TCPSocket(fd::Fd &&fd) noexcept;
+        explicit TCPSocket(platform::fd::Fd &&fd) noexcept
+            : BaseSocket(std::move(fd)) {}
+
+        TCPSocket(const TCPSocket &) = delete;
+        TCPSocket &operator=(const TCPSocket &) = delete;
+
+        TCPSocket(TCPSocket &&) noexcept = default;
+        TCPSocket &operator=(TCPSocket &&) noexcept = default;
 
     public:
-        util::ResultV<void>
-        connect(
-            const SocketAddress &addr,
-            time::Duration timeout);
+        IOResult
+        try_read(util::ByteBuffer &buf) override;
 
-        util::ResultV<size_t>
-        send_all(
-            const std::byte *data,
-            size_t len,
-            time::Duration timeout);
+        IOResult
+        try_write(util::ByteBuffer &buf) override;
 
-        util::ResultV<size_t>
-        recv_some(
-            std::byte *buf,
-            size_t len,
-            time::Duration timeout);
+    public:
+        util::ResultV<Endpoint>
+        local_endpoint() const;
+
+        util::ResultV<Endpoint>
+        remote_endpoint() const;
     };
 }
 #endif // INCLUDE_EUNET_PLATFORM_SOCKET_TCP_SOCKET
