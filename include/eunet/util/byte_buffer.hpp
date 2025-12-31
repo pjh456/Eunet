@@ -17,6 +17,8 @@ namespace util
         size_t m_read_pos = 0;
         size_t m_write_pos = 0;
 
+        size_t m_pending_write = 0;
+
     public:
         explicit ByteBuffer(size_t cap = 0);
 

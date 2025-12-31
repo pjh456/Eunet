@@ -29,14 +29,20 @@ namespace util
     std::span<std::byte>
     ByteBuffer::prepare(size_t n)
     {
+        if (m_pending_write != 0)
+            throw std::logic_error("prepare called twice without commit");
+
         ensure_writable(n);
+        m_pending_write = n;
         return {m_storage.data() + m_write_pos, n};
     }
     void ByteBuffer::commit(size_t n)
     {
-        if (m_write_pos + n > m_storage.size())
-            throw std::out_of_range("ByteBuffer::commit: Size is out of range.");
+        if (n > m_pending_write)
+            throw std::logic_error("commit more than prepared");
+
         m_write_pos += n;
+        m_pending_write -= n;
     }
 
     std::span<const std::byte>
