@@ -1,6 +1,7 @@
 #ifndef INCLUDE_EUNET_PLATFORM_POLLER
 #define INCLUDE_EUNET_PLATFORM_POLLER
 
+#include <sys/epoll.h>
 #include <cstdint>
 #include <vector>
 #include <string>
@@ -11,10 +12,22 @@
 
 namespace platform::poller
 {
+    enum class PollEventType : uint32_t
+    {
+        Read = EPOLLIN,
+        Write = EPOLLOUT,
+        Error = EPOLLERR | EPOLLHUP,
+    };
+
+    struct PollEvent;
+
     struct PollEvent
     {
         platform::fd::FdView fd;
         std::uint32_t events;
+
+    public:
+        bool is_writable() { return events == static_cast<uint32_t>(PollEventType::Write); }
     };
 
     class Poller
