@@ -31,7 +31,7 @@ void test_timeline()
 
     Event e4 = Event::failure(
         EventType::HTTP_RECEIVED,
-        util::Error::from_gai(0, "timeout"),
+        util::Error::transport().code(0).timeout().message("timeout").build(),
         {3});
 
     // 2. push 单个
@@ -78,7 +78,7 @@ void test_timeline()
         auto errs = tl.query_errors();
         assert(errs.size() == 1);
         assert(errs.front().error);
-        assert(errs.front().error.domain() == util::ErrorDomain::Network);
+        assert(errs.front().error.domain() == util::ErrorDomain::Transport);
     }
 
     // 8. query_by_time

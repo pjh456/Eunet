@@ -27,7 +27,7 @@ static Event make_error(
 {
     return Event::failure(
         type,
-        util::Error::internal(msg),
+        util::Error::system().message(msg).build(),
         {fd});
 }
 
@@ -86,7 +86,7 @@ void test_fsm_error_interrupt()
 
     auto err = fsm.get_last_error();
     assert(err);
-    assert(err.domain() == util::ErrorDomain::Internal);
+    assert(err.domain() == util::ErrorDomain::System);
     assert(err.message() == "dns failed");
 }
 
