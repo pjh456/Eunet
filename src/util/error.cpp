@@ -44,6 +44,7 @@ namespace util
     }
 
     ErrorDomain Error::domain() const noexcept { return m_data ? m_data->domain : ErrorDomain::None; }
+    ErrorCategory Error::category() const noexcept { return m_data ? m_data->category : ErrorCategory::Unknown; }
     int Error::code() const noexcept { return m_data ? m_data->code : 0; }
     std::string Error::message() const noexcept { return m_data ? m_data->message : "Success"; }
     const Error *Error::cause() const noexcept { return m_cause.get(); }

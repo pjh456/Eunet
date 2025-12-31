@@ -85,6 +85,7 @@ namespace util
 
     public:
         ErrorDomain domain() const noexcept;
+        ErrorCategory category() const noexcept;
         int code() const noexcept;
         std::string message() const noexcept;
         const Error *cause() const noexcept;
