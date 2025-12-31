@@ -58,6 +58,10 @@ namespace platform::poller
     public:
         util::ResultV<std::vector<PollEvent>>
         wait(int timeout_ms) noexcept;
+
+    private:
+        static util::ErrorCategory
+        epoll_errno_category(int err);
     };
 }
 

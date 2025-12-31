@@ -14,6 +14,9 @@ namespace core
     Orchestrator::EmitResult
     Orchestrator::emit(Event e)
     {
+        using Ret = EmitResult;
+        using util::Error;
+
         std::lock_guard lock(mtx);
 
         // 1. 如果事件没有 SessionId 且关联了 FD，尝试从 FSM 恢复或分配
@@ -22,7 +25,15 @@ namespace core
         // 2. 更新 Timeline
         auto idx_res = timeline.push(e);
         if (!idx_res.is_ok())
-            return EmitResult::Err(idx_res.unwrap_err());
+        {
+            return Ret::Err(
+                Error::framework()
+                    .protocol_error()
+                    .message("Failed to append event to timeline")
+                    .context("orchestrator::emit")
+                    .wrap(idx_res.unwrap_err())
+                    .build());
+        }
 
         // 3. 更新 FSM（注意：FsmManager 内部也需要同步）
         fsm_manager.on_event(e);
@@ -30,13 +41,26 @@ namespace core
         // 4. 快照并分发
         const auto *fsm = fsm_manager.get(e.session_id); // 改用 session_id 索引
         if (!fsm)
-            return EmitResult::Err(
-                util::Error::internal(
-                    "FSM missing after event commit"));
+        {
+            return Ret::Err(
+                Error::framework()
+                    .protocol_error()
+                    .message("FSM missing after event commit")
+                    .context("orchestrator::emit")
+                    .build());
+        }
 
         auto latest_event_result = timeline.latest_event();
         if (latest_event_result.is_err())
-            return EmitResult::Err(latest_event_result.unwrap_err());
+        {
+            return Ret::Err(
+                Error::framework()
+                    .protocol_error()
+                    .message("Failed to fetch latest event after commit")
+                    .context("orchestrator::emit")
+                    .wrap(latest_event_result.unwrap_err())
+                    .build());
+        }
 
         EventSnapshot snap{
             .event = e,
@@ -51,7 +75,7 @@ namespace core
                 sink->on_event(snap);
         }
 
-        return EmitResult::Ok();
+        return Ret::Ok();
     }
 
     void Orchestrator::attach(SinkPtr sink)

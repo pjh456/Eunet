@@ -39,9 +39,14 @@ namespace platform::net
             &hints,
             &res);
         if (err != 0)
+        {
             return Result::Err(
-                util::Error::from_gai(
-                    err, "getaddrinfo failed"));
+                util::Error::create()
+                    .system()
+                    .code(err)
+                    .message("getaddrinfo failed")
+                    .build());
+        }
 
         std::vector<SocketAddress> out;
 
@@ -63,15 +68,20 @@ namespace platform::net
                 sa.sin6_port = htons(port);
                 out.emplace_back(
                     reinterpret_cast<sockaddr *>(&sa),
-                    sizeof(sa));
+                    static_cast<socklen_t>(sizeof(sa)));
             }
         }
 
         freeaddrinfo(res);
 
         if (out.empty())
+        {
             return Result::Err(
-                util::Error::internal("No address resolved for " + host));
+                util::Error::create()
+                    .dns()
+                    .message("No address resolved for " + host)
+                    .build());
+        }
 
         return Result::Ok(std::move(out));
     }
@@ -87,7 +97,7 @@ namespace platform::net
         sa.sin_port = htons(port);
         return SocketAddress(
             reinterpret_cast<sockaddr *>(&sa),
-            sizeof(sa));
+            static_cast<socklen_t>(sizeof(sa)));
     }
 
     SocketAddress

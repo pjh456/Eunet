@@ -43,7 +43,16 @@ namespace platform::fd
     {
         int fd = ::socket(domain, type | SOCK_CLOEXEC, protocol);
         if (fd < 0)
-            return FdResult::Err(util::Error::from_errno(errno));
+        {
+            int err_no = errno;
+            return FdResult::Err(
+                util::Error::system()
+                    .set_category(socket_errno_category(err_no))
+                    .code(err_no)
+                    .message("Failed to create socket")
+                    .context("socket")
+                    .build());
+        }
 
         return FdResult::Ok(Fd(fd));
     }
@@ -52,12 +61,22 @@ namespace platform::fd
 
     Fd::PipeResult Fd::pipe() noexcept
     {
+        using namespace util;
         int fds[2];
-        Pipe pipe;
 
         if (::pipe2(fds, O_CLOEXEC) != 0)
-            return PipeResult::Err(util::Error::from_errno(errno));
+        {
+            int err_no = errno;
+            return PipeResult::Err(
+                util::Error::system()
+                    .set_category(pipe_errno_category(err_no))
+                    .code(err_no)
+                    .message("Failed to create pipe")
+                    .context("pipe2")
+                    .build());
+        }
 
+        Pipe pipe;
         pipe.read.reset(fds[0]);
         pipe.write.reset(fds[1]);
 
@@ -81,6 +100,48 @@ namespace platform::fd
         fd = new_fd;
     }
 
+    util::ErrorCategory
+    Fd::socket_errno_category(int err)
+    {
+        using util::ErrorCategory;
+
+        switch (err)
+        {
+        case EMFILE:
+        case ENFILE:
+        case ENOMEM:
+            return ErrorCategory::ResourceExhausted;
+
+        case EACCES:
+            return ErrorCategory::AccessDenied;
+
+        case EAFNOSUPPORT:
+        case EPROTONOSUPPORT:
+        case EINVAL:
+            return ErrorCategory::InvalidInput;
+
+        default:
+            return ErrorCategory::Unknown;
+        }
+    }
+
+    util::ErrorCategory
+    Fd::pipe_errno_category(int err)
+    {
+        using util::ErrorCategory;
+        switch (errno)
+        {
+        case EMFILE:
+        case ENFILE:
+            return ErrorCategory::ResourceExhausted;
+        case EINVAL:
+        case EFAULT:
+            return ErrorCategory::InvalidInput;
+        default:
+            return ErrorCategory::Unknown;
+        }
+    }
+
     FdView FdView::from_owner(const Fd &owner)
     {
         return FdView{owner.get()};
@@ -89,6 +150,7 @@ namespace platform::fd
     FdView::operator bool() const noexcept { return fd >= 0; }
 
     bool FdView::operator==(const FdView &other) const noexcept { return (*this) && other && fd == other.fd; }
+
 }
 
 std::ostream &operator<<(

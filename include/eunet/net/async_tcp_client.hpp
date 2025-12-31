@@ -39,6 +39,9 @@ namespace net::tcp
         util::ResultV<void> set_nonblocking(int fd);
         util::ResultV<void> emit_event(const core::Event &event);
         util::ResultV<sockaddr_in> resolve_host(const std::string &host, uint16_t port);
+
+    private:
+        static util::ErrorCategory connect_errno_category(int err);
     };
 }
 

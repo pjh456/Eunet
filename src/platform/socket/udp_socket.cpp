@@ -37,14 +37,20 @@ namespace platform::net
         const SocketAddress &peer)
     {
         using Result = util::ResultV<void>;
+        using util::Error;
 
         if (::connect(
                 view().fd,
                 peer.as_sockaddr(),
                 peer.length()) < 0)
+        {
+            int err_no = errno;
             return Result::Err(
-                util::Error::from_errno(
-                    errno, "UDP connect failed"));
+                Error::system()
+                    .code(err_no)
+                    .message("UDP connect failed")
+                    .build());
+        }
 
         return Result::Ok();
     }
@@ -55,12 +61,18 @@ namespace platform::net
         size_t len)
     {
         using Result = util::ResultV<size_t>;
+        using util::Error;
 
         ssize_t n = ::send(view().fd, data, len, 0);
         if (n < 0)
+        {
+            int err_no = errno;
             return Result::Err(
-                util::Error::from_errno(
-                    errno, "UDP send failed"));
+                Error::system()
+                    .code(err_no)
+                    .message("UDP send failed")
+                    .build());
+        }
 
         return Result::Ok(static_cast<size_t>(n));
     }
@@ -71,12 +83,18 @@ namespace platform::net
         size_t len)
     {
         using Result = util::ResultV<size_t>;
+        using util::Error;
 
         ssize_t n = ::recv(view().fd, buf, len, 0);
         if (n < 0)
+        {
+            int err_no = errno;
             return Result::Err(
-                util::Error::from_errno(
-                    errno, "UDP recv failed"));
+                Error::system()
+                    .code(err_no)
+                    .message("UDP recv failed")
+                    .build());
+        }
 
         return Result::Ok(static_cast<size_t>(n));
     }

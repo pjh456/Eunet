@@ -6,109 +6,46 @@
 
 namespace util
 {
-
-    std::string ErrorImpl::format() const
+    std::string ErrorData::format() const
     {
-        return fmt::format(
-            "[{}]({}): {}",
-            to_string(domain()),
-            code(), message());
-    }
-
-    class SysErrorImpl : public ErrorImpl
-    {
-    private:
-        int m_errno;
-        std::string m_syscall;
-
-    public:
-        SysErrorImpl(int e, std::string_view s)
-            : m_errno(e), m_syscall(s) {}
-
-    public:
-        ErrorDomain domain() const override
-        {
-            return (m_errno == EMFILE || m_errno == ENFILE)
-                       ? ErrorDomain::Resource
-                       : ErrorDomain::System;
-        }
-        int code() const override { return m_errno; }
-        std::string message() const override { return std::strerror(m_errno); }
-        std::string format() const override
-        {
-            return m_syscall.empty()
-                       ? message()
-                       : fmt::format(
-                             "syscall '{}' failed: {}",
-                             m_syscall, message());
-        }
-    };
-
-    class DnsErrorImpl : public ErrorImpl
-    {
-    private:
-        int m_code;
-        std::string m_host;
-
-    public:
-        DnsErrorImpl(int c, std::string_view h)
-            : m_code(c), m_host(h) {}
-
-    public:
-        ErrorDomain domain() const override { return ErrorDomain::Network; }
-        int code() const override { return m_code; }
-        std::string message() const override { return gai_strerror(m_code); }
-        std::string format() const override
+        if (context.empty())
         {
             return fmt::format(
-                "DNS resolve failed for '{}': {}",
-                m_host, message());
+                "[{}]<{}>({}): {}",
+                to_string(domain),
+                to_string(category),
+                code,
+                message);
         }
-    };
 
-    class GenericErrorImpl : public ErrorImpl
-    {
-        ErrorDomain m_domain;
-        int m_code;
-        std::string m_msg;
-
-    public:
-        GenericErrorImpl(ErrorDomain d, int c, std::string m)
-            : m_domain(d), m_code(c), m_msg(std::move(m)) {}
-        ErrorDomain domain() const override { return m_domain; }
-        int code() const override { return m_code; }
-        std::string message() const override { return m_msg; }
-    };
-
-    // --- Error 包装器实现 ---
-
-    Error Error::from_errno(int err_no, std::string_view syscall)
-    {
-        return Error(std::make_shared<SysErrorImpl>(
-            err_no, syscall));
+        return fmt::format(
+            "[{}]<{}>({}): {} [{}]",
+            to_string(domain),
+            to_string(category),
+            code,
+            message,
+            context);
     }
 
-    Error Error::from_gai(int gai_code, std::string_view host)
+    ErrorBuilder Error::create() { return ErrorBuilder(); }
+
+    ErrorBuilder Error::dns() { return create().set_domain(ErrorDomain::DNS); }
+    ErrorBuilder Error::transport() { return create().set_domain(ErrorDomain::Transport); }
+    ErrorBuilder Error::security() { return create().set_domain(ErrorDomain::Security); }
+    ErrorBuilder Error::protocol() { return create().set_domain(ErrorDomain::Protocol); }
+    ErrorBuilder Error::system() { return create().set_domain(ErrorDomain::System); }
+    ErrorBuilder Error::framework() { return create().set_domain(ErrorDomain::Framework); }
+
+    Error Error::wrap(Error cause) const
     {
-        return Error(std::make_shared<DnsErrorImpl>(
-            gai_code, host));
+        Error e;
+        e.m_cause = std::make_shared<Error>(std::move(cause));
+        return e;
     }
 
-    Error Error::internal(std::string msg)
-    {
-        return Error(std::make_shared<GenericErrorImpl>(
-            ErrorDomain::Internal, -1, std::move(msg)));
-    }
-
-    Error Error::user(std::string msg)
-    {
-        return Error(std::make_shared<GenericErrorImpl>(
-            ErrorDomain::User, -1, std::move(msg)));
-    }
-
-    ErrorDomain Error::domain() const noexcept { return m_impl ? m_impl->domain() : ErrorDomain::None; }
-    int Error::code() const noexcept { return m_impl ? m_impl->code() : 0; }
-    std::string Error::message() const noexcept { return m_impl ? m_impl->message() : "Success"; }
+    ErrorDomain Error::domain() const noexcept { return m_data ? m_data->domain : ErrorDomain::None; }
+    int Error::code() const noexcept { return m_data ? m_data->code : 0; }
+    std::string Error::message() const noexcept { return m_data ? m_data->message : "Success"; }
     const Error *Error::cause() const noexcept { return m_cause.get(); }
 
     std::string Error::format() const
@@ -116,37 +53,81 @@ namespace util
         if (is_ok())
             return "Success";
 
-        std::string out = fmt::format(
-            "[{}] {}",
-            to_string(domain()),
-            m_impl->format());
-
+        std::string out = m_data->format();
         if (m_cause)
             out += " | Caused by: " + m_cause->format();
-
         return out;
+    }
+
+    void Error::wrap(std::shared_ptr<Error> err)
+    {
+        m_cause = err;
+    }
+
+    Error ErrorBuilder::build() const
+    {
+        auto data = std::make_shared<ErrorData>(
+            ErrorData{
+                m_domain,
+                m_category,
+                m_code,
+                m_message.empty() ? "Unknown error" : m_message,
+                m_context});
+
+        Error err(data);
+        if (m_cause)
+            err.wrap(m_cause);
+
+        return err;
     }
 }
 
 std::string_view to_string(util::ErrorDomain domain)
 {
+    using namespace util;
     switch (domain)
     {
-    case util::ErrorDomain::System:
-        return "System";
-    case util::ErrorDomain::Network:
-        return "Network";
-    case util::ErrorDomain::Transport:
+    case ErrorDomain::DNS:
+        return "DNS";
+    case ErrorDomain::Transport:
         return "Transport";
-    case util::ErrorDomain::Platform:
-        return "Platform";
-    case util::ErrorDomain::Resource:
-        return "Resource";
-    case util::ErrorDomain::Internal:
-        return "Internal";
-    case util::ErrorDomain::User:
-        return "User";
+    case ErrorDomain::Security:
+        return "Security";
+    case ErrorDomain::Protocol:
+        return "Protocol";
+    case ErrorDomain::System:
+        return "System";
+    case ErrorDomain::Framework:
+        return "Framework";
+    case ErrorDomain::None:
     default:
         return "None";
+    }
+}
+
+std::string_view to_string(util::ErrorCategory category)
+{
+    using namespace util;
+    switch (category)
+    {
+    case ErrorCategory::Timeout:
+        return "Timeout";
+    case ErrorCategory::Unreachable:
+        return "Unreachable";
+    case ErrorCategory::ConnectionRefused:
+        return "ConnectionRefused";
+    case ErrorCategory::ProtocolError:
+        return "ProtocolError";
+    case ErrorCategory::AuthFailed:
+        return "AuthFailed";
+    case ErrorCategory::ResourceExhausted:
+        return "ResourceExhausted";
+    case ErrorCategory::InvalidInput:
+        return "InvalidInput";
+    case ErrorCategory::Cancelled:
+        return "Cancelled";
+    case ErrorCategory::Unknown:
+    default:
+        return "Unknown";
     }
 }
