@@ -32,6 +32,18 @@ namespace platform::net
         IOResult
         try_write(util::ByteBuffer &buf) override;
 
+        util::ResultV<void>
+        connect(const Endpoint &ep) override;
+
+    public:
+        IOResult
+        read(util::ByteBuffer &buf,
+             time::Duration timeout);
+
+        IOResult
+        write(util::ByteBuffer &buf,
+              platform::time::Duration timeout);
+
     public:
         util::ResultV<Endpoint>
         local_endpoint() const;
