@@ -8,15 +8,11 @@
 
 #include "eunet/util/result.hpp"
 #include "eunet/util/error.hpp"
+#include "eunet/platform/net/common.hpp"
+#include "eunet/platform/net/endpoint.hpp"
 
 namespace platform::net
 {
-    enum class AddressFamily
-    {
-        IPv4,
-        IPv6,
-        Any
-    };
 
     class SocketAddress;
 

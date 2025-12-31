@@ -1,0 +1,84 @@
+#include "eunet/platform/net/dns_resolver.hpp"
+
+#include <netdb.h>
+
+namespace platform::net
+{
+    DNSResolver::ResolveResult
+    DNSResolver::resolve(
+        std::string_view host,
+        uint16_t port,
+        AddressFamily family)
+    {
+        using Ret = ResolveResult;
+        using util::Error;
+
+        addrinfo hints{};
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_flags = AI_ADDRCONFIG;
+
+        switch (family)
+        {
+        case AddressFamily::IPv4:
+            hints.ai_family = AF_INET;
+            break;
+        case AddressFamily::IPv6:
+            hints.ai_family = AF_INET6;
+            break;
+        case AddressFamily::Any:
+        default:
+            hints.ai_family = AF_UNSPEC;
+            break;
+        }
+
+        addrinfo *res = nullptr;
+        int err = ::getaddrinfo(
+            std::string(host).c_str(),
+            nullptr,
+            &hints,
+            &res);
+
+        if (err != 0)
+        {
+            return Ret::Err(
+                Error::dns()
+                    .code(err)
+                    .message("getaddrinfo failed")
+                    .build());
+        }
+
+        EndpointList out;
+
+        for (addrinfo *p = res; p; p = p->ai_next)
+        {
+            if (p->ai_family == AF_INET)
+            {
+                auto sa = *reinterpret_cast<sockaddr_in *>(p->ai_addr);
+                sa.sin_port = htons(port);
+                out.emplace_back(
+                    reinterpret_cast<sockaddr *>(&sa),
+                    sizeof(sa));
+            }
+            else if (p->ai_family == AF_INET6)
+            {
+                auto sa = *reinterpret_cast<sockaddr_in6 *>(p->ai_addr);
+                sa.sin6_port = htons(port);
+                out.emplace_back(
+                    reinterpret_cast<sockaddr *>(&sa),
+                    sizeof(sa));
+            }
+        }
+
+        ::freeaddrinfo(res);
+
+        if (out.empty())
+        {
+            return Ret::Err(
+                Error::dns()
+                    .message("No address resolved")
+                    .build());
+        }
+
+        return Ret::Ok(std::move(out));
+    }
+}
