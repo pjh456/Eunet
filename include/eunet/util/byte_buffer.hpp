@@ -37,7 +37,9 @@ namespace util
     public:
         void append(std::span<const std::byte> data);
         std::span<std::byte> prepare(size_t n);
+        std::span<std::byte> weak_prepare(size_t n);
         void commit(size_t n);
+        void weak_commit(size_t n);
 
     public:
         std::span<const std::byte> readable() const;

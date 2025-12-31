@@ -36,6 +36,16 @@ namespace util
         m_pending_write = n;
         return {m_storage.data() + m_write_pos, n};
     }
+    std::span<std::byte>
+    ByteBuffer::weak_prepare(size_t n)
+    {
+        if (m_pending_write != 0)
+            throw std::logic_error("prepare called twice without commit");
+
+        ensure_writable(n);
+        return {m_storage.data() + m_write_pos, n};
+    }
+
     void ByteBuffer::commit(size_t n)
     {
         if (n > m_pending_write)
@@ -43,6 +53,14 @@ namespace util
 
         m_write_pos += n;
         m_pending_write -= n;
+    }
+
+    void ByteBuffer::weak_commit(size_t n)
+    {
+        if (n > writable_size())
+            throw std::logic_error("commit more than prepared");
+
+        m_write_pos += n;
     }
 
     std::span<const std::byte>
