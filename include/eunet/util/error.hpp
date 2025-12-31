@@ -70,6 +70,12 @@ namespace util
         explicit Error(std::shared_ptr<const ErrorData> data)
             : m_data(std::move(data)) {}
 
+        Error(const Error &) = default;
+        Error &operator=(const Error &) = default;
+
+        Error(Error &&) noexcept = default;
+        Error &operator=(Error &&) noexcept = default;
+
     public:
         Error wrap(Error cause) const;
 
