@@ -317,42 +317,66 @@ namespace core
     Timeline::EvResult
     Timeline::latest_event() const
     {
+        using Ret = EvResult;
+        using util::Error;
+
         std::lock_guard lock(mtx);
 
         if (events.empty())
-            return EvResult::Err(
-                util::Error::internal(
-                    "no events in timeline"));
+            return Ret::Err(
+                Error::framework()
+                    .protocol_error()
+                    .message("Timeline is empty")
+                    .context("timeline::latest_event")
+                    .build());
 
-        return EvResult::Ok(events.back());
+        return Ret::Ok(events.back());
     }
 
     Timeline::EvResult
     Timeline::latest_by_fd(int fd) const
     {
+        using Ret = EvResult;
+        using util::Error;
+
         std::lock_guard lock(mtx);
+
         auto res = query_by_fd_locked(fd);
 
         if (res.empty())
-            return EvResult::Err(
-                util::Error::internal(
-                    "no events for fd"));
+        {
+            return Ret::Err(
+                Error::framework()
+                    .protocol_error()
+                    .message("No events for given fd")
+                    .context("timeline::latest_by_fd")
+                    .build());
+        }
 
-        return EvResult::Ok(res.back());
+        return Ret::Ok(res.back());
     }
 
     Timeline::EvResult
     Timeline::latest_by_type(EventType type) const
     {
+        using Ret = EvResult;
+        using util::Error;
+
         std::lock_guard lock(mtx);
+
         auto res = query_by_type_locked(type);
 
         if (res.empty())
-            return EvResult::Err(
-                util::Error::internal(
-                    "no events for type"));
+        {
+            return Ret::Err(
+                Error::framework()
+                    .protocol_error()
+                    .message("No events for given type")
+                    .context("timeline::latest_by_type")
+                    .build());
+        }
 
-        return EvResult::Ok(res.back());
+        return Ret::Ok(res.back());
     }
 
     Timeline::EvList

@@ -10,8 +10,16 @@ namespace platform::poller
     {
         Poller p;
         if (!p.epoll_fd.valid())
+        {
+            int err_no = errno;
             return util::ResultV<Poller>::Err(
-                util::Error::from_errno(errno));
+                util::Error::system()
+                    .set_category(epoll_errno_category(err_no))
+                    .code(err_no)
+                    .message("Failed to create epoll instance")
+                    .context("epoll_create1")
+                    .build());
+        }
 
         return util::ResultV<Poller>::Ok(std::move(p));
     }
@@ -41,10 +49,18 @@ namespace platform::poller
         const platform::fd::Fd &fd,
         std::uint32_t events) noexcept
     {
+        using Ret = util::ResultV<void>;
+        using util::Error;
+
         if (!valid())
-            return util::ResultV<void>::Err(
-                util::Error::internal(
-                    "Invalid epoll fd"));
+        {
+            return Ret::Err(
+                Error::system()
+                    .invalid_input()
+                    .message("Invalid epoll fd")
+                    .context("epoll_ctl")
+                    .build());
+        }
 
         epoll_event ev{};
         ev.events = events;
@@ -54,10 +70,16 @@ namespace platform::poller
                 epoll_fd.get(),
                 EPOLL_CTL_ADD,
                 fd.get(), &ev) == 0)
-            return util::ResultV<void>::Ok();
+            return Ret::Ok();
 
-        return util::ResultV<void>::Err(
-            util::Error::from_errno(errno));
+        int err_no = errno;
+        return Ret::Err(
+            Error::system()
+                .set_category(epoll_errno_category(err_no))
+                .code(err_no)
+                .message("epoll_ctl ADD failed")
+                .context("epoll_ctl")
+                .build());
     }
 
     util::ResultV<void>
@@ -65,10 +87,18 @@ namespace platform::poller
         const platform::fd::Fd &fd,
         std::uint32_t events) noexcept
     {
+        using Ret = util::ResultV<void>;
+        using util::Error;
+
         if (!valid())
-            return util::ResultV<void>::Err(
-                util::Error::internal(
-                    "Invalid epoll fd"));
+        {
+            return Ret::Err(
+                Error::system()
+                    .invalid_input()
+                    .message("Invalid epoll fd")
+                    .context("epoll_ctl")
+                    .build());
+        }
 
         epoll_event ev{};
         ev.events = events;
@@ -78,37 +108,65 @@ namespace platform::poller
                 epoll_fd.get(),
                 EPOLL_CTL_MOD,
                 fd.get(), &ev) == 0)
-            return util::ResultV<void>::Ok();
+            return Ret::Ok();
 
-        return util::ResultV<void>::Err(
-            util::Error::from_errno(errno));
+        int err_no = errno;
+        return Ret::Err(
+            Error::system()
+                .set_category(epoll_errno_category(err_no))
+                .code(err_no)
+                .message("epoll_ctl MOD failed")
+                .context("epoll_ctl")
+                .build());
     }
 
     util::ResultV<void>
     Poller::remove(const platform::fd::Fd &fd) noexcept
     {
+        using Ret = util::ResultV<void>;
+        using util::Error;
+
         if (!valid())
-            return util::ResultV<void>::Err(
-                util::Error::internal(
-                    "Invalid epoll fd"));
+        {
+            return Ret::Err(
+                Error::system()
+                    .invalid_input()
+                    .message("Invalid epoll fd")
+                    .context("epoll_ctl")
+                    .build());
+        }
 
         if (::epoll_ctl(
                 epoll_fd.get(),
                 EPOLL_CTL_DEL,
                 fd.get(), nullptr) == 0)
-            return util::ResultV<void>::Ok();
+            return Ret::Ok();
 
-        return util::ResultV<void>::Err(
-            util::Error::from_errno(errno));
+        int err_no = errno;
+        return Ret::Err(
+            Error::system()
+                .set_category(epoll_errno_category(err_no))
+                .code(err_no)
+                .message("epoll_ctl DEL failed")
+                .context("epoll_ctl")
+                .build());
     }
 
     util::ResultV<std::vector<PollEvent>>
     Poller::wait(int timeout_ms) noexcept
     {
-        using Result = util::ResultV<std::vector<PollEvent>>;
+        using Ret = util::ResultV<std::vector<PollEvent>>;
+        using util::Error;
 
         if (!valid())
-            return Result::Err(util::Error::from_errno(EBADF));
+        {
+            return Ret::Err(
+                Error::system()
+                    .invalid_input()
+                    .message("Invalid epoll fd")
+                    .context("epoll_wait")
+                    .build());
+        }
 
         epoll_event events[MAX_EVENTS];
         int n;
@@ -123,21 +181,55 @@ namespace platform::poller
         } while (n < 0 && errno == EINTR);
 
         if (n < 0)
-            return Result::Err(util::Error::from_errno(errno));
+        {
+            int err_no = errno;
+            return Ret::Err(
+                Error::system()
+                    .set_category(epoll_errno_category(err_no))
+                    .code(err_no)
+                    .message("epoll_wait failed")
+                    .context("epoll_wait")
+                    .build());
+        }
 
         std::vector<PollEvent> result;
         result.reserve(static_cast<size_t>(n));
 
         for (size_t i = 0; i < n; ++i)
         {
-            result.push_back(
-                {
-                    events[i].data.fd,
-                    events[i].events,
-                });
+            result.push_back({
+                events[i].data.fd,
+                events[i].events,
+            });
         }
 
-        return Result::Ok(std::move(result));
+        return Ret::Ok(std::move(result));
+    }
+
+    util::ErrorCategory
+    Poller::epoll_errno_category(int err)
+    {
+        using util::ErrorCategory;
+
+        switch (err)
+        {
+        case EMFILE:
+        case ENFILE:
+        case ENOMEM:
+            return ErrorCategory::ResourceExhausted;
+
+        case EBADF:
+        case EINVAL:
+        case EEXIST:
+        case ENOENT:
+            return ErrorCategory::InvalidInput;
+
+        case EINTR:
+            return ErrorCategory::Cancelled;
+
+        default:
+            return ErrorCategory::Unknown;
+        }
     }
 
 }

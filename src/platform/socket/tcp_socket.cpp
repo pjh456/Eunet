@@ -37,6 +37,7 @@ namespace platform::net
         time::Duration timeout)
     {
         using Result = util::ResultV<void>;
+        using util::Error;
 
         NonBlockingGuard guard(view());
 
@@ -49,9 +50,14 @@ namespace platform::net
             return Result::Ok();
 
         if (errno != EINPROGRESS)
+        {
+            int err_no = errno;
             return Result::Err(
-                util::Error::from_errno(
-                    errno, "connect failed"));
+                Error::transport()
+                    .code(err_no)
+                    .message("connect failed")
+                    .build());
+        }
 
         auto poller_res = platform::poller::Poller::create();
         if (poller_res.is_err())
@@ -66,9 +72,13 @@ namespace platform::net
         {
             auto now = time::monotonic_now();
             if (time::expired(deadline))
+            {
                 return Result::Err(
-                    util::Error::internal(
-                        "TCP connect timeout"));
+                    Error::transport()
+                        .timeout()
+                        .message("TCP connect timeout")
+                        .build());
+            }
 
             int ms = std::chrono::duration_cast<
                          std::chrono::milliseconds>(
@@ -90,9 +100,14 @@ namespace platform::net
             &len);
 
         if (so_error != 0)
+        {
             return Result::Err(
-                util::Error::from_errno(
-                    so_error, "connect failed"));
+                Error::transport()
+                    .code(so_error)
+                    .connection_refused()
+                    .message("connect failed")
+                    .build());
+        }
 
         return Result::Ok();
     }
@@ -131,16 +146,31 @@ namespace platform::net
                 continue;
             }
 
-            if (errno != EAGAIN && errno != EWOULDBLOCK)
-                return Result::Err(
-                    util::Error::from_errno(
-                        errno, "send failed"));
+            if (n == -1)
+            {
+                int err_no = errno;
+                if (err_no == EAGAIN || errno == EWOULDBLOCK)
+                    return Result::Ok(0UL);
+                else
+                {
+                    return Result::Err(
+                        util::Error::transport()
+                            .connection_refused()
+                            .code(err_no)
+                            .message("send failed")
+                            .build());
+                }
+            }
 
             auto now = time::monotonic_now();
             if (time::expired(deadline))
+            {
                 return Result::Err(
-                    util::Error::internal(
-                        "TCP send timeout"));
+                    util::Error::framework()
+                        .timeout()
+                        .message("TCP send timeout")
+                        .build());
+            }
 
             int ms =
                 std::chrono::duration_cast<
@@ -159,13 +189,14 @@ namespace platform::net
         size_t len,
         time::Duration timeout)
     {
-        using Result = util::ResultV<size_t>;
+        using Ret = util::ResultV<size_t>;
+        using util::Error;
 
         NonBlockingGuard guard(m_fd.view());
 
         auto poller_res = platform::poller::Poller::create();
         if (poller_res.is_err())
-            return Result::Err(poller_res.unwrap_err());
+            return Ret::Err(poller_res.unwrap_err());
 
         auto poller = std::move(poller_res.unwrap());
         poller.add(m_fd, EPOLLIN).unwrap();
@@ -177,19 +208,31 @@ namespace platform::net
             ssize_t n = ::recv(view().fd, buf, len, 0);
 
             if (n >= 0)
-                return util::ResultV<size_t>::Ok(
+                return Ret::Ok(
                     static_cast<size_t>(n));
 
-            if (errno != EAGAIN && errno != EWOULDBLOCK)
-                return util::ResultV<size_t>::Err(
-                    util::Error::from_errno(
-                        errno, "recv failed"));
+            if (n == -1)
+            {
+                int err_no = errno;
+                if (err_no == EAGAIN || err_no == EWOULDBLOCK)
+                    return Ret::Ok(0UL);
+                else
+                    return Ret::Err(
+                        Error::system()
+                            .code(err_no)
+                            .message("recv failed")
+                            .build());
+            }
 
             auto now = time::monotonic_now();
             if (time::expired(deadline))
-                return Result::Err(
-                    util::Error::internal(
-                        "TCP recv timeout"));
+            {
+                return Ret::Err(
+                    Error::framework()
+                        .timeout()
+                        .message("TCP recv timeout")
+                        .build());
+            }
 
             int ms =
                 std::chrono::duration_cast<

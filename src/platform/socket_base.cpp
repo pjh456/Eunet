@@ -38,6 +38,7 @@ namespace platform::net
     SocketBase::local_address() const
     {
         using Result = util::ResultV<SocketAddress>;
+        using util::Error;
 
         sockaddr_storage addr{};
         socklen_t len = sizeof(addr);
@@ -46,19 +47,26 @@ namespace platform::net
                 view().fd,
                 reinterpret_cast<sockaddr *>(&addr),
                 &len) < 0)
+        {
+            int err_no = errno;
             return Result::Err(
-                util::Error::from_errno(
-                    errno, "getsockname failed"));
+                Error::system()
+                    .code(err_no)
+                    .message("getsockname failed")
+                    .build());
+        }
 
         return Result::Ok(
             SocketAddress(
-                reinterpret_cast<sockaddr *>(&addr), len));
+                reinterpret_cast<sockaddr *>(&addr),
+                static_cast<socklen_t>(len)));
     }
 
     util::ResultV<SocketAddress>
     SocketBase::peer_address() const
     {
         using Result = util::ResultV<SocketAddress>;
+        using util::Error;
 
         sockaddr_storage addr{};
         socklen_t len = sizeof(addr);
@@ -67,12 +75,18 @@ namespace platform::net
                 view().fd,
                 reinterpret_cast<sockaddr *>(&addr),
                 &len) < 0)
+        {
+            int err_no = errno;
             return Result::Err(
-                util::Error::from_errno(
-                    errno, "getpeername failed"));
+                Error::system()
+                    .code(err_no)
+                    .message("getpeername failed")
+                    .build());
+        }
 
         return Result::Ok(
             SocketAddress(
-                reinterpret_cast<sockaddr *>(&addr), len));
+                reinterpret_cast<sockaddr *>(&addr),
+                static_cast<socklen_t>(len)));
     }
 }
