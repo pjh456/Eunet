@@ -30,7 +30,7 @@ void test_poller_basic()
 
     // 3. 注册读端 EPOLLIN
     {
-        auto res = poller.add(read_fd, EPOLLIN);
+        auto res = poller.add(read_fd.view(), EPOLLIN);
         assert(res.is_ok());
     }
 
@@ -75,13 +75,13 @@ void test_poller_basic()
 
     // 9. 测试 modify（虽然 pipe 对 OUT 没啥意义，但 API 必须通）
     {
-        auto res = poller.modify(read_fd, EPOLLIN | EPOLLET);
+        auto res = poller.modify(read_fd.view(), EPOLLIN | EPOLLET);
         assert(res.is_ok());
     }
 
     // 10. remove 后，不应再收到事件
     {
-        auto res = poller.remove(read_fd);
+        auto res = poller.remove(read_fd.view());
         assert(res.is_ok());
     }
 
