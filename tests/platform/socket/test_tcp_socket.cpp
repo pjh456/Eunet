@@ -7,11 +7,9 @@
 #include <unistd.h>
 
 #include "eunet/platform/socket/tcp_socket.hpp"
-#include "eunet/platform/io_context.hpp"
 #include "eunet/platform/net/endpoint.hpp"
 #include "eunet/util/byte_buffer.hpp"
 
-using namespace platform;
 using namespace platform::net;
 using namespace std::chrono_literals;
 
@@ -45,7 +43,7 @@ static void run_echo_server(uint16_t port)
     ::close(listen_fd);
 }
 
-void test_io_context_tcp_read_write()
+void test_tcp_blocking_read_write()
 {
     constexpr uint16_t PORT = 23456;
 
@@ -53,11 +51,6 @@ void test_io_context_tcp_read_write()
                        { run_echo_server(PORT); });
 
     std::this_thread::sleep_for(50ms);
-
-    /* ---------- IOContext ---------- */
-    auto ctx_res = IOContext::create();
-    assert(ctx_res.is_ok());
-    IOContext ctx = std::move(ctx_res.unwrap());
 
     /* ---------- socket ---------- */
     auto sock_res = TCPSocket::create(AddressFamily::IPv4);
@@ -67,11 +60,12 @@ void test_io_context_tcp_read_write()
     auto ep_res = Endpoint::from_string("127.0.0.1", PORT);
     assert(ep_res.is_ok());
     Endpoint ep = ep_res.unwrap();
-    assert(sock.try_connect(ep).is_ok());
+
+    assert(sock.connect(ep).is_ok());
 
     /* ---------- write ---------- */
     util::ByteBuffer write_buf(128);
-    const char *msg = "hello io_context";
+    const char *msg = "hello blocking tcp";
 
     {
         auto span = write_buf.prepare(std::strlen(msg));
@@ -79,23 +73,17 @@ void test_io_context_tcp_read_write()
         write_buf.commit(span.size());
     }
 
-    auto write_res = ctx.write(sock, write_buf, 1s);
+    auto write_res = sock.write(write_buf);
     assert(write_res.is_ok());
-    auto write_len = write_res.unwrap();
-    assert(write_len == std::strlen(msg));
-    assert(write_buf.empty()); // 应该已经被 consume
+    assert(write_res.unwrap() == std::strlen(msg));
+    assert(write_buf.empty());
 
     /* ---------- read ---------- */
     util::ByteBuffer read_buf(128);
 
-    auto read_res = ctx.read(sock, read_buf, 2s);
-    // if (read_res.is_err())
-    // {
-    //     std::cout << read_res.unwrap_err().format() << std::endl;
-    // }
+    auto read_res = sock.read(read_buf);
     assert(read_res.is_ok());
-    auto read_len = read_res.unwrap();
-    assert(read_len == std::strlen(msg));
+    assert(read_res.unwrap() == std::strlen(msg));
 
     auto readable = read_buf.readable();
     std::string echoed(
@@ -104,16 +92,13 @@ void test_io_context_tcp_read_write()
 
     assert(echoed == msg);
 
-    read_buf.consume(readable.size());
-    assert(read_buf.empty());
-
     server.join();
 
-    std::cout << "[OK] test_io_context_tcp_read_write\n";
+    std::cout << "[OK] test_tcp_blocking_read_write\n";
 }
 
 int main()
 {
-    test_io_context_tcp_read_write();
+    test_tcp_blocking_read_write();
     return 0;
 }
