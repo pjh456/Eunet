@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <unordered_set>
 
 #include "eunet/util/result.hpp"
 #include "eunet/util/error.hpp"
@@ -33,12 +34,15 @@ namespace platform::poller
 
     class Poller
     {
+    public:
+        using FdTable = std::unordered_set<int>;
 
     private:
         static constexpr int MAX_EVENTS = 64;
 
     private:
         platform::fd::Fd epoll_fd;
+        FdTable fd_table;
 
     public:
         static util::ResultV<Poller> create();
@@ -58,6 +62,8 @@ namespace platform::poller
 
         platform::fd::Fd &get_fd() noexcept;
         const platform::fd::Fd &get_fd() const noexcept;
+
+        bool has_fd(int fd) const noexcept;
 
     public:
         util::ResultV<void> add(

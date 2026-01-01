@@ -44,11 +44,17 @@ namespace platform::poller
     platform::fd::Fd &Poller::get_fd() noexcept { return epoll_fd; }
     const platform::fd::Fd &Poller::get_fd() const noexcept { return epoll_fd; }
 
+    bool Poller::has_fd(int fd) const noexcept { return fd_table.count(fd); }
+
     util::ResultV<void>
     Poller::add(
         platform::fd::FdView fd,
         std::uint32_t events) noexcept
     {
+        if (has_fd(fd.fd))
+            return modify(fd, events);
+        fd_table.emplace(fd.fd);
+
         using Ret = util::ResultV<void>;
         using util::Error;
 
@@ -87,6 +93,9 @@ namespace platform::poller
         platform::fd::FdView fd,
         std::uint32_t events) noexcept
     {
+        if (!has_fd(fd.fd))
+            return add(fd, events);
+
         using Ret = util::ResultV<void>;
         using util::Error;
 
@@ -141,7 +150,10 @@ namespace platform::poller
                 epoll_fd.get(),
                 EPOLL_CTL_DEL,
                 fd.fd, nullptr) == 0)
+        {
+            fd_table.erase(fd.fd);
             return Ret::Ok();
+        }
 
         int err_no = errno;
         return Ret::Err(
