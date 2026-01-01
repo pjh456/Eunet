@@ -27,6 +27,7 @@ namespace platform::poller
         std::uint32_t events;
 
     public:
+        bool is_readable() { return events & static_cast<uint32_t>(PollEventType::Read); }
         bool is_writable() { return events & static_cast<uint32_t>(PollEventType::Write); }
     };
 
