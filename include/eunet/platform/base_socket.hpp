@@ -3,12 +3,14 @@
 
 #include "eunet/util/result.hpp"
 #include "eunet/util/error.hpp"
+#include "eunet/util/byte_buffer.hpp"
 #include "eunet/platform/fd.hpp"
-#include "eunet/platform/io_context.hpp"
 #include "eunet/platform/net/endpoint.hpp"
 
 namespace platform::net
 {
+    using IOResult = util::ResultV<size_t>;
+
     class NonBlockingGuard
     {
     private:
@@ -52,7 +54,7 @@ namespace platform::net
         try_write(util::ByteBuffer &buf) = 0;
 
         virtual util::ResultV<void>
-        connect(const Endpoint &ep) = 0;
+        try_connect(const Endpoint &ep) = 0;
     };
 }
 
