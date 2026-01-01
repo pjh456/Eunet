@@ -32,7 +32,8 @@ namespace util
         AccessDenied,      // 权限不足
         ResourceExhausted, // 资源耗尽
         InvalidInput,      // 校验失败
-        Cancelled          // 操作被取消
+        Cancelled,         // 操作被取消
+        PeerClosed,        // 对端主动关闭
     };
 
     class ErrorBuilder;
@@ -147,6 +148,7 @@ namespace util
         ErrorBuilder &resource_exhausted() { return set_category(ErrorCategory::ResourceExhausted); }
         ErrorBuilder &invalid_input() { return set_category(ErrorCategory::InvalidInput); }
         ErrorBuilder &cancelled() { return set_category(ErrorCategory::Cancelled); }
+        ErrorBuilder &peer_closed() { return set_category(ErrorCategory::PeerClosed); }
 
     public:
         ErrorBuilder &message(std::string msg)
