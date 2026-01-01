@@ -27,7 +27,7 @@ namespace platform::poller
         std::uint32_t events;
 
     public:
-        bool is_writable() { return events == static_cast<uint32_t>(PollEventType::Write); }
+        bool is_writable() { return events & static_cast<uint32_t>(PollEventType::Write); }
     };
 
     class Poller
@@ -60,13 +60,13 @@ namespace platform::poller
 
     public:
         util::ResultV<void> add(
-            const platform::fd::Fd &fd,
+            platform::fd::FdView fd,
             std::uint32_t events) noexcept;
         util::ResultV<void> modify(
-            const platform::fd::Fd &fd,
+            platform::fd::FdView fd,
             std::uint32_t events) noexcept;
         util::ResultV<void>
-        remove(const platform::fd::Fd &fd) noexcept;
+        remove(platform::fd::FdView fd) noexcept;
 
     public:
         util::ResultV<std::vector<PollEvent>>

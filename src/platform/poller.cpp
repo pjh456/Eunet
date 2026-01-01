@@ -46,7 +46,7 @@ namespace platform::poller
 
     util::ResultV<void>
     Poller::add(
-        const platform::fd::Fd &fd,
+        platform::fd::FdView fd,
         std::uint32_t events) noexcept
     {
         using Ret = util::ResultV<void>;
@@ -64,12 +64,12 @@ namespace platform::poller
 
         epoll_event ev{};
         ev.events = events;
-        ev.data.fd = fd.get();
+        ev.data.fd = fd.fd;
 
         if (::epoll_ctl(
                 epoll_fd.get(),
                 EPOLL_CTL_ADD,
-                fd.get(), &ev) == 0)
+                fd.fd, &ev) == 0)
             return Ret::Ok();
 
         int err_no = errno;
@@ -84,7 +84,7 @@ namespace platform::poller
 
     util::ResultV<void>
     Poller::modify(
-        const platform::fd::Fd &fd,
+        platform::fd::FdView fd,
         std::uint32_t events) noexcept
     {
         using Ret = util::ResultV<void>;
@@ -102,12 +102,12 @@ namespace platform::poller
 
         epoll_event ev{};
         ev.events = events;
-        ev.data.fd = fd.get();
+        ev.data.fd = fd.fd;
 
         if (::epoll_ctl(
                 epoll_fd.get(),
                 EPOLL_CTL_MOD,
-                fd.get(), &ev) == 0)
+                fd.fd, &ev) == 0)
             return Ret::Ok();
 
         int err_no = errno;
@@ -121,7 +121,8 @@ namespace platform::poller
     }
 
     util::ResultV<void>
-    Poller::remove(const platform::fd::Fd &fd) noexcept
+    Poller::remove(
+        platform::fd::FdView fd) noexcept
     {
         using Ret = util::ResultV<void>;
         using util::Error;
@@ -139,7 +140,7 @@ namespace platform::poller
         if (::epoll_ctl(
                 epoll_fd.get(),
                 EPOLL_CTL_DEL,
-                fd.get(), nullptr) == 0)
+                fd.fd, nullptr) == 0)
             return Ret::Ok();
 
         int err_no = errno;
