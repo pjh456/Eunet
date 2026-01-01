@@ -1,146 +1,201 @@
-// #include "eunet/platform/socket/udp_socket.hpp"
-// #include "eunet/platform/poller.hpp"
+#include "eunet/platform/socket/udp_socket.hpp"
+#include "eunet/platform/poller.hpp"
 
-// #include <sys/socket.h>
-// #include <cerrno>
+#include <sys/socket.h>
+#include <cerrno>
 
-// namespace platform::net
-// {
+namespace platform::net
+{
 
-//     util::ResultV<UDPSocket>
-//     UDPSocket::create(
-//         AddressFamily af)
-//     {
-//         using Result = util::ResultV<UDPSocket>;
+    util::ResultV<UDPSocket>
+    UDPSocket::create(
+        AddressFamily af)
+    {
+        using Result = util::ResultV<UDPSocket>;
 
-//         int domain =
-//             (af == AddressFamily::IPv6)
-//                 ? AF_INET6
-//                 : AF_INET;
+        int domain =
+            (af == AddressFamily::IPv6)
+                ? AF_INET6
+                : AF_INET;
 
-//         auto fd_res =
-//             fd::Fd::socket(
-//                 domain,
-//                 SOCK_DGRAM,
-//                 0);
+        auto fd_res =
+            fd::Fd::socket(
+                domain,
+                SOCK_DGRAM,
+                0);
 
-//         if (fd_res.is_err())
-//             return Result::Err(fd_res.unwrap_err());
+        if (fd_res.is_err())
+            return Result::Err(fd_res.unwrap_err());
 
-//         return Result::Ok(
-//             UDPSocket(std::move(fd_res.unwrap())));
-//     }
+        return Result::Ok(
+            UDPSocket(std::move(fd_res.unwrap())));
+    }
 
-//     IOResult
-//     UDPSocket::try_read(
-//         util::ByteBuffer &buf)
-//     {
-//         using Ret = IOResult;
-//         using util::Error;
+    IOResult
+    UDPSocket::read(
+        util::ByteBuffer &buf,
+        int timeout_ms)
+    {
+        using Ret = IOResult;
+        using util::Error;
 
-//         NonBlockingGuard guard(view());
+        poller::Poller poller =
+            poller::Poller::create().unwrap();
 
-//         auto buf_len = buf.writable_size();
-//         auto buffer = buf.weak_prepare(buf_len);
+        for (;;)
+        {
+            auto writable = buf.writable_size();
+            auto span = buf.prepare(writable);
 
-//         ssize_t n =
-//             ::recv(
-//                 view().fd,
-//                 buffer.data(),
-//                 buf_len,
-//                 0);
+            ssize_t n = ::recv(
+                view().fd,
+                span.data(),
+                writable,
+                0);
 
-//         if (n > 0)
-//         {
-//             buf.weak_commit(n);
-//             return Ret::Ok(static_cast<size_t>(n));
-//         }
-//         else if (n == 0)
-//         {
-//             // UDP 没有“对端关闭”的语义
-//             return Ret::Ok(0);
-//         }
+            if (n >= 0)
+            {
+                buf.commit(static_cast<size_t>(n));
+                return Ret::Ok(static_cast<size_t>(n));
+            }
 
-//         int err_no = errno;
-//         if (err_no == EAGAIN || err_no == EWOULDBLOCK)
-//             return Ret::Ok(0);
+            int err = errno;
+            if (err == EINTR)
+                continue;
 
-//         return Ret::Err(
-//             Error::transport()
-//                 .code(err_no)
-//                 .message("recv failed")
-//                 .build());
-//     }
+            if (err == EAGAIN || err == EWOULDBLOCK)
+            {
+                auto w = wait_fd_epoll(
+                    poller,
+                    view(),
+                    EPOLLIN,
+                    timeout_ms);
 
-//     IOResult
-//     UDPSocket::try_write(
-//         util::ByteBuffer &buf)
-//     {
-//         using Ret = IOResult;
-//         using util::Error;
+                if (w.is_err())
+                    return Ret::Err(w.unwrap_err());
 
-//         NonBlockingGuard guard(view());
+                continue;
+            }
 
-//         auto data_len = buf.size();
-//         auto data = buf.readable();
+            return Ret::Err(
+                Error::transport()
+                    .code(err)
+                    .message("udp recv failed")
+                    .build());
+        }
+    }
 
-//         ssize_t n =
-//             ::send(
-//                 view().fd,
-//                 data.data(),
-//                 data_len,
-//                 0);
+    IOResult
+    UDPSocket::write(
+        util::ByteBuffer &buf,
+        int timeout_ms)
+    {
+        using Ret = IOResult;
+        using util::Error;
 
-//         if (n > 0)
-//         {
-//             buf.consume(n);
-//             return Ret::Ok(static_cast<size_t>(n));
-//         }
-//         else if (n == 0)
-//         {
-//             // UDP send 返回 0 没有实际意义
-//             return Ret::Ok(0);
-//         }
+        poller::Poller poller =
+            poller::Poller::create().unwrap();
 
-//         int err_no = errno;
-//         if (err_no == EAGAIN || err_no == EWOULDBLOCK)
-//             return Ret::Ok(0);
+        if (buf.empty())
+            return Ret::Ok(0);
 
-//         return Ret::Err(
-//             Error::transport()
-//                 .code(err_no)
-//                 .message("send failed")
-//                 .build());
-//     }
+        for (;;)
+        {
+            auto data = buf.readable();
 
-//     util::ResultV<void>
-//     UDPSocket::try_connect(
-//         const Endpoint &ep)
-//     {
-//         using Result = util::ResultV<void>;
-//         using util::Error;
+            ssize_t n = ::send(
+                view().fd,
+                data.data(),
+                data.size(),
+                0);
 
-//         NonBlockingGuard guard(view());
+            if (n >= 0)
+            {
+                buf.consume(static_cast<size_t>(n));
+                return Ret::Ok(static_cast<size_t>(n));
+            }
 
-//         int ret =
-//             ::connect(
-//                 view().fd,
-//                 ep.as_sockaddr(),
-//                 ep.length());
+            int err = errno;
+            if (err == EINTR)
+                continue;
 
-//         if (ret == 0)
-//             return Result::Ok();
+            if (err == EAGAIN || err == EWOULDBLOCK)
+            {
+                auto w = wait_fd_epoll(
+                    poller,
+                    view(),
+                    EPOLLOUT,
+                    timeout_ms);
 
-//         int err_no = errno;
+                if (w.is_err())
+                    return Ret::Err(w.unwrap_err());
 
-//         // UDP 下一般不会走到这里，但保持与 TCP 对齐
-//         if (err_no == EINPROGRESS)
-//             return Result::Ok();
+                continue;
+            }
 
-//         return Result::Err(
-//             Error::transport()
-//                 .code(err_no)
-//                 .message("connect failed")
-//                 .build());
-//     }
-// }
+            return Ret::Err(
+                Error::transport()
+                    .code(err)
+                    .message("udp send failed")
+                    .build());
+        }
+    }
+
+    util::ResultV<void>
+    UDPSocket::connect(
+        const Endpoint &ep,
+        int timeout_ms)
+    {
+        using Result = util::ResultV<void>;
+        using util::Error;
+
+        int ret = ::connect(
+            view().fd,
+            ep.as_sockaddr(),
+            ep.length());
+
+        if (ret == 0)
+            return Result::Ok();
+
+        if (errno != EINPROGRESS)
+        {
+            return Result::Err(
+                Error::transport()
+                    .code(errno)
+                    .message("udp connect failed")
+                    .build());
+        }
+
+        poller::Poller poller =
+            poller::Poller::create().unwrap();
+
+        auto w = wait_fd_epoll(
+            poller,
+            view(),
+            EPOLLOUT,
+            timeout_ms);
+
+        if (w.is_err())
+            return Result::Err(w.unwrap_err());
+
+        int err = 0;
+        socklen_t len = sizeof(err);
+        ::getsockopt(
+            view().fd,
+            SOL_SOCKET,
+            SO_ERROR,
+            &err,
+            &len);
+
+        if (err != 0)
+        {
+            return Result::Err(
+                Error::transport()
+                    .code(err)
+                    .message("udp connect failed")
+                    .build());
+        }
+
+        return Result::Ok();
+    }
+}
