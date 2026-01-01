@@ -1,121 +1,132 @@
-// #include <cassert>
-// #include <cstring>
-// #include <thread>
+#include <cassert>
+#include <cstring>
+#include <iostream>
+#include <thread>
 
-// #include <sys/socket.h>
-// #include <netinet/in.h>
-// #include <arpa/inet.h>
-// #include <unistd.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
-// #include "eunet/platform/socket/udp_socket.hpp"
-// #include "eunet/platform/address.hpp"
+#include "eunet/platform/socket/udp_socket.hpp"
+#include "eunet/platform/io_context.hpp"
+#include "eunet/platform/net/endpoint.hpp"
+#include "eunet/util/byte_buffer.hpp"
 
-// using platform::net::SocketAddress;
-// using platform::net::UDPSocket;
-// using platform::time::Duration;
+using namespace platform;
+using namespace platform::net;
+using namespace std::chrono_literals;
 
-// namespace
-// {
-//     constexpr uint16_t TEST_PORT = 34567;
-// }
+static void run_udp_echo_server(uint16_t port)
+{
+    int fd = ::socket(AF_INET, SOCK_DGRAM, 0);
+    assert(fd >= 0);
 
-// /*
-//  * 简单 UDP Echo Server（阻塞）
-//  */
-// static void udp_echo_server()
-// {
-//     int fd = ::socket(AF_INET, SOCK_DGRAM, 0);
-//     assert(fd >= 0);
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_port = htons(port);
 
-//     sockaddr_in addr{};
-//     addr.sin_family = AF_INET;
-//     addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-//     addr.sin_port = htons(TEST_PORT);
+    assert(::bind(fd, (sockaddr *)&addr, sizeof(addr)) == 0);
 
-//     int ret = ::bind(
-//         fd,
-//         reinterpret_cast<sockaddr *>(&addr),
-//         sizeof(addr));
-//     assert(ret == 0);
+    std::byte buf[1024];
+    sockaddr_in peer{};
+    socklen_t peer_len = sizeof(peer);
 
-//     std::byte buf[1024];
-//     sockaddr_in peer{};
-//     socklen_t peer_len = sizeof(peer);
+    ssize_t n =
+        ::recvfrom(
+            fd,
+            buf,
+            sizeof(buf),
+            0,
+            (sockaddr *)&peer,
+            &peer_len);
 
-//     ssize_t n = ::recvfrom(
-//         fd,
-//         buf,
-//         sizeof(buf),
-//         0,
-//         reinterpret_cast<sockaddr *>(&peer),
-//         &peer_len);
+    assert(n > 0);
 
-//     assert(n > 0);
+    ssize_t m =
+        ::sendto(
+            fd,
+            buf,
+            n,
+            0,
+            (sockaddr *)&peer,
+            peer_len);
 
-//     // echo 回去
-//     ssize_t sent = ::sendto(
-//         fd,
-//         buf,
-//         static_cast<size_t>(n),
-//         0,
-//         reinterpret_cast<sockaddr *>(&peer),
-//         peer_len);
+    assert(m == n);
 
-//     assert(sent == n);
+    ::close(fd);
+}
 
-//     ::close(fd);
-// }
+void test_io_context_udp_read_write()
+{
+    constexpr uint16_t PORT = 23457;
 
-// int main()
-// {
-//     // 启动 echo server
-//     std::thread server_thread(udp_echo_server);
+    std::thread server([&]
+                       { run_udp_echo_server(PORT); });
 
-//     // 给 server 一点时间 bind
-//     std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::this_thread::sleep_for(50ms);
 
-//     // 创建 UDPSocket
-//     auto sock_res = UDPSocket::create();
-//     assert(sock_res.is_ok());
+    /* ---------- IOContext ---------- */
+    auto ctx_res = IOContext::create();
+    assert(ctx_res.is_ok());
+    IOContext ctx = std::move(ctx_res.unwrap());
 
-//     auto sock = std::move(sock_res.unwrap());
+    /* ---------- socket ---------- */
+    auto sock_res = UDPSocket::create(AddressFamily::IPv4);
+    assert(sock_res.is_ok());
+    UDPSocket sock = std::move(sock_res.unwrap());
 
-//     auto peer_res = SocketAddress::resolve("127.0.0.1", TEST_PORT);
-//     assert(peer_res.is_ok());
+    auto ep_res = Endpoint::from_string("127.0.0.1", PORT);
+    assert(ep_res.is_ok());
+    Endpoint ep = ep_res.unwrap();
 
-//     auto conn_res = sock.connect(peer_res.unwrap()[0]);
-//     assert(conn_res.is_ok());
+    /* UDP connect：只是设置默认 peer */
+    assert(sock.try_connect(ep).is_ok());
 
-//     const char *msg = "hello udp";
-//     size_t msg_len = std::strlen(msg);
+    /* ---------- write ---------- */
+    util::ByteBuffer write_buf(128);
+    const char *msg = "hello udp io_context";
 
-//     // send
-//     auto send_res = sock.send(
-//         reinterpret_cast<const std::byte *>(msg),
-//         msg_len);
-//     assert(send_res.is_ok());
-//     assert(send_res.unwrap() == msg_len);
+    {
+        auto span = write_buf.prepare(std::strlen(msg));
+        std::memcpy(span.data(), msg, span.size());
+        write_buf.commit(span.size());
+    }
 
-//     // recv
-//     std::byte buf[128];
-//     auto recv_res = sock.recv(
-//         buf,
-//         sizeof(buf));
-//     assert(recv_res.is_ok());
-//     assert(recv_res.unwrap() == msg_len);
+    auto write_res = ctx.write(sock, write_buf, 1s);
+    assert(write_res.is_ok());
+    auto write_len = write_res.unwrap();
+    assert(write_len == std::strlen(msg));
+    assert(write_buf.empty());
 
-//     assert(
-//         std::memcmp(
-//             buf,
-//             msg,
-//             msg_len) == 0);
+    /* ---------- read ---------- */
+    util::ByteBuffer read_buf(128);
 
-//     sock.close();
+    auto read_res = ctx.read(sock, read_buf, 2s);
+    // if (read_res.is_err())
+    // {
+    //     std::cout << read_res.unwrap_err().format() << std::endl;
+    // }
+    assert(read_res.is_ok());
+    auto read_len = read_res.unwrap();
+    assert(read_len == std::strlen(msg));
 
-//     server_thread.join();
-//     return 0;
-// }
+    auto readable = read_buf.readable();
+    std::string echoed(
+        reinterpret_cast<const char *>(readable.data()),
+        readable.size());
+
+    assert(echoed == msg);
+
+    read_buf.consume(readable.size());
+    assert(read_buf.empty());
+
+    server.join();
+
+    std::cout << "[OK] test_io_context_udp_read_write\n";
+}
+
 int main()
 {
+    test_io_context_udp_read_write();
     return 0;
 }
