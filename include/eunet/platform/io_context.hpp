@@ -8,6 +8,8 @@
 #include "eunet/util/error.hpp"
 #include "eunet/util/byte_buffer.hpp"
 #include "eunet/platform/fd.hpp"
+#include "eunet/platform/time.hpp"
+#include "eunet/platform/base_socket.hpp"
 #include "eunet/platform/poller.hpp"
 
 namespace platform
@@ -19,19 +21,8 @@ namespace platform
 
     class IOContext
     {
-    public:
-        struct FdState
-        {
-            std::coroutine_handle<> read_waiter{};
-        };
-
-        using FdStateTable = std::unordered_map<int, FdState>;
-
     private:
         poller::Poller m_poller;
-
-        FdStateTable m_states;
-        bool m_running = false;
 
     public:
         static util::ResultV<IOContext> create();
@@ -40,35 +31,61 @@ namespace platform
         IOContext();
 
     public:
+        IOContext(const IOContext &) = delete;
+        IOContext &operator=(const IOContext &) = delete;
+
+        IOContext(IOContext &&) noexcept = default;
+        IOContext &operator=(IOContext &&) noexcept = default;
+
         ~IOContext() = default;
 
     public:
-        void run();
-        void stop();
-
-    public:
-        FdStateTable &fd_state() { return m_states; }
-        const FdStateTable &fd_state() const { return m_states; }
-
         poller::Poller &poller() { return m_poller; }
         const poller::Poller &poller() const { return m_poller; }
 
     public:
-        IOResult read(
-            fd::Fd &fd,
-            util::ByteBuffer &buf);
-        IOResult write(
-            fd::Fd &fd,
-            util::ByteBuffer &buf);
+        IOResult
+        read(
+            net::BaseSocket &sock,
+            util::ByteBuffer &buf,
+            time::Duration timeout);
+
+        IOResult
+        write(
+            net::BaseSocket &sock,
+            util::ByteBuffer &buf,
+            time::Duration timeout);
 
     public:
         ReadAwaitable
         async_read(
-            fd::Fd &fd,
+            net::BaseSocket &sock,
             util::ByteBuffer &buf);
         // ReadAwaitable
         // async_write(
         //     fd::Fd &fd,
+        //     util::ByteBuffer &buf);
+
+    public:
+        util::ResultV<void>
+        wait_readable(
+            net::BaseSocket &sock,
+            int timeout_ms);
+
+        ReadAwaitable
+        async_wait_readable(
+            net::BaseSocket &sock,
+            util::ByteBuffer &buf);
+
+    public:
+        util::ResultV<void>
+        wait_writable(
+            net::BaseSocket &sock,
+            int timeout_ms);
+
+        // util::ResultV<void>
+        // async_wait_writable(
+        //     net::BaseSocket &sock,
         //     util::ByteBuffer &buf);
     };
 
@@ -76,19 +93,22 @@ namespace platform
     {
     private:
         IOContext &m_ctx;
-        fd::Fd &m_fd;
+        fd::FdView m_fd;
         util::ByteBuffer &m_buf;
         IOResult result;
 
     public:
         ReadAwaitable(
-            IOContext &ctx, fd::Fd &fd,
+            IOContext &ctx, fd::FdView fd,
             util::ByteBuffer &buf);
 
     public:
         bool await_ready() const noexcept;
         void await_suspend(std::coroutine_handle<> h);
         IOResult await_resume();
+
+    public:
+        void set_result(IOResult r);
     };
 }
 
