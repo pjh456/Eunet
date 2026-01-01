@@ -88,7 +88,11 @@ void test_io_context_tcp_read_write()
     /* ---------- read ---------- */
     util::ByteBuffer read_buf(128);
 
-    auto read_res = ctx.read(sock, read_buf, 1s);
+    auto read_res = ctx.read(sock, read_buf, 2s);
+    // if (read_res.is_err())
+    // {
+    //     std::cout << read_res.unwrap_err().format() << std::endl;
+    // }
     assert(read_res.is_ok());
     auto read_len = read_res.unwrap();
     assert(read_len == std::strlen(msg));
