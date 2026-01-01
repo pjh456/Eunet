@@ -27,13 +27,13 @@ namespace platform::net
 
     public:
         IOResult
-        try_read(util::ByteBuffer &buf) override;
+        read(util::ByteBuffer &buf, int timeout_ms = -1) override;
 
         IOResult
-        try_write(util::ByteBuffer &buf) override;
+        write(util::ByteBuffer &buf, int timeout_ms = -1) override;
 
         util::ResultV<void>
-        try_connect(const Endpoint &ep) override;
+        connect(const Endpoint &ep, int timeout_ms = -1) override;
     };
 }
 #endif // INCLUDE_EUNET_PLATFORM_SOCKET_TCP_SOCKET

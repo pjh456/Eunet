@@ -6,23 +6,6 @@
 
 namespace platform::net
 {
-    NonBlockingGuard::NonBlockingGuard(fd::FdView fd) noexcept
-        : m_fd(fd), m_old_flags(-1)
-    {
-        if (!m_fd)
-            return;
-
-        m_old_flags = ::fcntl(m_fd.fd, F_GETFL, 0);
-        if (m_old_flags >= 0)
-            ::fcntl(m_fd.fd, F_SETFL, m_old_flags | O_NONBLOCK);
-    }
-
-    NonBlockingGuard::~NonBlockingGuard() noexcept
-    {
-        if (m_fd && m_old_flags >= 0)
-            ::fcntl(m_fd.fd, F_SETFL, m_old_flags);
-    }
-
     BaseSocket::BaseSocket(fd::Fd &&fd)
         : m_fd(std::move(fd)) {}
 
@@ -90,4 +73,57 @@ namespace platform::net
                 reinterpret_cast<sockaddr *>(&addr),
                 static_cast<socklen_t>(len)));
     }
+
+    util::ResultV<void>
+    wait_fd_epoll(
+        poller::Poller &poller,
+        fd::FdView fd,
+        uint32_t events,
+        int timeout_ms)
+    {
+        using Result = util::ResultV<void>;
+        using util::Error;
+
+        auto r = poller.add(fd, events);
+        if (r.is_err())
+            return Result::Err(r.unwrap_err());
+
+        auto evs = poller.wait(timeout_ms);
+        poller.remove(fd); // 一定要清理
+
+        if (evs.is_err())
+            return Result::Err(evs.unwrap_err());
+
+        if (evs.unwrap().empty())
+        {
+            return Result::Err(
+                Error::transport()
+                    .timeout()
+                    .message("epoll wait timeout")
+                    .build());
+        }
+
+        for (auto &ev : evs.unwrap())
+        {
+            if (ev.fd != fd)
+                continue;
+
+            if (ev.events & (EPOLLERR | EPOLLHUP))
+            {
+                return Result::Err(
+                    Error::transport()
+                        .message("socket error or hangup")
+                        .build());
+            }
+
+            if (ev.events & events)
+                return Result::Ok();
+        }
+
+        return Result::Err(
+            Error::transport()
+                .message("unexpected epoll event")
+                .build());
+    }
+
 }
