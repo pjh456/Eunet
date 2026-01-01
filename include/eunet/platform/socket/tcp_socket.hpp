@@ -34,13 +34,6 @@ namespace platform::net
 
         util::ResultV<void>
         try_connect(const Endpoint &ep) override;
-
-    public:
-        util::ResultV<Endpoint>
-        local_endpoint() const;
-
-        util::ResultV<Endpoint>
-        remote_endpoint() const;
     };
 }
 #endif // INCLUDE_EUNET_PLATFORM_SOCKET_TCP_SOCKET

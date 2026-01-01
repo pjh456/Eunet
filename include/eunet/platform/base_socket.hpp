@@ -46,6 +46,12 @@ namespace platform::net
         bool is_open() const noexcept;
         void close() noexcept;
 
+        util::ResultV<Endpoint>
+        local_endpoint() const;
+
+        util::ResultV<Endpoint>
+        remote_endpoint() const;
+
     public:
         virtual IOResult
         try_read(util::ByteBuffer &buf) = 0;
