@@ -29,93 +29,135 @@ namespace platform::net
             TCPSocket(std::move(fd_res.unwrap())));
     }
 
-    util::ResultV<size_t>
-    TCPSocket::try_read(
-        util::ByteBuffer &buf)
+    IOResult
+    TCPSocket::read(
+        util::ByteBuffer &buf,
+        int timeout_ms)
     {
-        using Ret = util::ResultV<size_t>;
+        using Ret = IOResult;
         using util::Error;
 
-        NonBlockingGuard guard(view());
+        poller::Poller poller =
+            poller::Poller::create().unwrap();
 
-        auto buf_len = buf.writable_size();
-        auto buffer = buf.weak_prepare(buf_len);
-        ssize_t n = ::recv(view().fd, buffer.data(), buf_len, 0);
+        for (;;)
+        {
+            auto writable = buf.writable_size();
+            auto span = buf.prepare(writable);
 
-        if (n > 0)
-        {
-            buf.weak_commit(n);
-            return Ret::Ok(static_cast<size_t>(n));
-        }
-        else if (n == 0)
-        {
+            ssize_t n = ::recv(
+                view().fd,
+                span.data(),
+                writable,
+                0);
+
+            if (n > 0)
+            {
+                buf.commit(n);
+                return Ret::Ok(static_cast<size_t>(n));
+            }
+
+            if (n == 0)
+            {
+                return Ret::Err(
+                    Error::transport()
+                        .peer_closed()
+                        .message("peer closed")
+                        .build());
+            }
+
+            int err = errno;
+            if (err == EINTR)
+                continue;
+
+            if (err == EAGAIN || err == EWOULDBLOCK)
+            {
+                auto w = wait_fd_epoll(
+                    poller, view(),
+                    EPOLLIN, timeout_ms);
+
+                if (w.is_err())
+                    return Ret::Err(w.unwrap_err());
+
+                continue;
+            }
+
             return Ret::Err(
                 Error::transport()
-                    .peer_closed()
-                    .code(0)
-                    .message("peer closed")
+                    .code(err)
+                    .message("recv failed")
                     .build());
         }
-
-        int err_no = errno;
-        if (err_no == EAGAIN || err_no == EWOULDBLOCK)
-            return Ret::Ok(0);
-
-        return Ret::Err(
-            Error::transport()
-                .code(err_no)
-                .message("recv failed")
-                .build());
     }
 
-    util::ResultV<size_t>
-    TCPSocket::try_write(
-        util::ByteBuffer &buf)
+    IOResult
+    TCPSocket::write(
+        util::ByteBuffer &buf,
+        int timeout_ms)
     {
-        using Ret = util::ResultV<size_t>;
+        using Ret = IOResult;
         using util::Error;
 
-        NonBlockingGuard guard(view());
+        poller::Poller poller =
+            poller::Poller::create().unwrap();
 
-        auto data_len = buf.size();
-        auto data = buf.readable();
-        ssize_t n = ::send(view().fd, data.data(), data_len, 0);
+        while (!buf.empty())
+        {
+            auto data = buf.readable();
+            ssize_t n = ::send(
+                view().fd,
+                data.data(),
+                data.size(),
+                0);
 
-        if (n > 0)
-        {
-            buf.consume(n);
-            return Ret::Ok(static_cast<size_t>(n));
-        }
-        else if (n == 0)
-        {
+            if (n > 0)
+            {
+                buf.consume(n);
+                return Ret::Ok(static_cast<size_t>(n));
+            }
+
+            if (n == 0)
+            {
+                return Ret::Err(
+                    Error::transport()
+                        .peer_closed()
+                        .message("peer closed")
+                        .build());
+            }
+
+            int err = errno;
+            if (err == EINTR)
+                continue;
+
+            if (err == EAGAIN || err == EWOULDBLOCK)
+            {
+                auto w = wait_fd_epoll(
+                    poller, view(),
+                    EPOLLOUT, timeout_ms);
+
+                if (w.is_err())
+                    return Ret::Err(w.unwrap_err());
+
+                continue;
+            }
+
             return Ret::Err(
                 Error::transport()
-                    .peer_closed()
-                    .code(0)
-                    .message("peer closed")
+                    .code(err)
+                    .message("send failed")
                     .build());
         }
 
-        int err_no = errno;
-        if (err_no == EAGAIN || err_no == EWOULDBLOCK)
-            return Ret::Ok(0);
-
-        return Ret::Err(
-            Error::transport()
-                .code(err_no)
-                .message("send failed")
-                .build());
+        return Ret::Ok(0);
     }
 
     util::ResultV<void>
-    TCPSocket::try_connect(
-        const Endpoint &ep)
+    TCPSocket::connect(
+        const Endpoint &ep,
+        int timeout_ms)
     {
         using Result = util::ResultV<void>;
         using util::Error;
-
-        // 非阻塞连接
-        NonBlockingGuard guard(view());
 
         int ret = ::connect(
             view().fd,
@@ -123,16 +165,46 @@ namespace platform::net
             ep.length());
 
         if (ret == 0)
-            return Result::Ok(); // 立即连接成功
-
-        int err_no = errno;
-        if (err_no == EINPROGRESS)
             return Result::Ok();
 
-        return Result::Err(
-            Error::transport()
-                .code(err_no)
-                .message("connect failed")
-                .build());
+        if (errno != EINPROGRESS)
+        {
+            return Result::Err(
+                Error::transport()
+                    .code(errno)
+                    .message("connect failed")
+                    .build());
+        }
+
+        poller::Poller poller =
+            poller::Poller::create().unwrap();
+
+        auto w = wait_fd_epoll(
+            poller, view(),
+            EPOLLOUT, timeout_ms);
+
+        if (w.is_err())
+            return Result::Err(w.unwrap_err());
+
+        int err = 0;
+        socklen_t len = sizeof(err);
+        ::getsockopt(
+            view().fd,
+            SOL_SOCKET,
+            SO_ERROR,
+            &err,
+            &len);
+
+        if (err != 0)
+        {
+            return Result::Err(
+                Error::transport()
+                    .code(err)
+                    .message("connect failed")
+                    .build());
+        }
+
+        return Result::Ok();
     }
+
 }

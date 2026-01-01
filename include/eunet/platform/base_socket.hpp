@@ -5,26 +5,13 @@
 #include "eunet/util/error.hpp"
 #include "eunet/util/byte_buffer.hpp"
 #include "eunet/platform/fd.hpp"
+#include "eunet/platform/poller.hpp"
+#include "eunet/platform/time.hpp"
 #include "eunet/platform/net/endpoint.hpp"
 
 namespace platform::net
 {
     using IOResult = util::ResultV<size_t>;
-
-    class NonBlockingGuard
-    {
-    private:
-        fd::FdView m_fd;
-        int m_old_flags;
-
-    public:
-        explicit NonBlockingGuard(fd::FdView fd) noexcept;
-        ~NonBlockingGuard() noexcept;
-
-        NonBlockingGuard(const NonBlockingGuard &) = delete;
-        NonBlockingGuard &operator=(const NonBlockingGuard &) = delete;
-    };
-
     class BaseSocket
     {
     protected:
@@ -54,14 +41,21 @@ namespace platform::net
 
     public:
         virtual IOResult
-        try_read(util::ByteBuffer &buf) = 0;
+        read(util::ByteBuffer &buf, int timeout_ms = -1) = 0;
 
         virtual IOResult
-        try_write(util::ByteBuffer &buf) = 0;
+        write(util::ByteBuffer &buf, int timeout_ms = -1) = 0;
 
         virtual util::ResultV<void>
-        try_connect(const Endpoint &ep) = 0;
+        connect(const Endpoint &ep, int timeout_ms = -1) = 0;
     };
+
+    util::ResultV<void>
+    wait_fd_epoll(
+        poller::Poller &poller,
+        fd::FdView fd,
+        uint32_t events,
+        int timeout_ms = -1);
 }
 
 #endif // INCLUDE_EUNET_PLATFORM_BASE_SOCKET
