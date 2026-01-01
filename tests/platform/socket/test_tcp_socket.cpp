@@ -1,114 +1,115 @@
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <thread>
-#include <vector>
-#include <cstring>
+
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#include "eunet/platform/net/endpoint.hpp"
 #include "eunet/platform/socket/tcp_socket.hpp"
+#include "eunet/platform/io_context.hpp"
+#include "eunet/platform/net/endpoint.hpp"
 #include "eunet/util/byte_buffer.hpp"
 
+using namespace platform;
 using namespace platform::net;
 using namespace std::chrono_literals;
 
-// 简单 TCP 回环 echo server，用于单元测试
-void echo_server(uint16_t port, bool &running)
+static void run_echo_server(uint16_t port)
 {
-    int server_fd = ::socket(AF_INET, SOCK_STREAM, 0);
-    assert(server_fd >= 0);
+    int listen_fd = ::socket(AF_INET, SOCK_STREAM, 0);
+    assert(listen_fd >= 0);
+
+    int opt = 1;
+    ::setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // 127.0.0.1
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     addr.sin_port = htons(port);
 
-    int opt = 1;
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    assert(::bind(listen_fd, (sockaddr *)&addr, sizeof(addr)) == 0);
+    assert(::listen(listen_fd, 1) == 0);
 
-    int ret = ::bind(server_fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr));
-    assert(ret == 0);
+    int conn = ::accept(listen_fd, nullptr, nullptr);
+    assert(conn >= 0);
 
-    ret = ::listen(server_fd, 1);
-    assert(ret == 0);
+    std::byte buf[1024];
+    ssize_t n = ::recv(conn, buf, sizeof(buf), 0);
+    assert(n > 0);
 
-    running = true;
+    ssize_t m = ::send(conn, buf, n, 0);
+    assert(m == n);
 
-    int client_fd = ::accept(server_fd, nullptr, nullptr);
-    if (client_fd >= 0)
-    {
-        std::vector<char> buf(1024);
-        while (true)
-        {
-            ssize_t n = ::recv(client_fd, buf.data(), buf.size(), 0);
-            if (n <= 0)
-                break;
-            ::send(client_fd, buf.data(), n, 0); // echo 回去
-        }
-        ::close(client_fd);
-    }
-
-    ::close(server_fd);
-    running = false;
+    ::close(conn);
+    ::close(listen_fd);
 }
 
-void test_tcpsocket()
+void test_io_context_tcp_read_write()
 {
-    std::cout << "[TEST] TCPSocket unit test start\n";
+    constexpr uint16_t PORT = 23456;
 
-    uint16_t port = 54321;
-    bool server_running = false;
+    std::thread server([&]
+                       { run_echo_server(PORT); });
 
-    // 启动本地 echo server
-    std::thread server_thread(echo_server, port, std::ref(server_running));
+    std::this_thread::sleep_for(50ms);
 
-    // 等待 server 启动
-    while (!server_running)
-        std::this_thread::sleep_for(10ms);
+    /* ---------- IOContext ---------- */
+    auto ctx_res = IOContext::create();
+    assert(ctx_res.is_ok());
+    IOContext ctx = std::move(ctx_res.unwrap());
 
-    // 1. 创建 socket
-    auto sock_res = TCPSocket::create();
-    assert(sock_res.is_ok() && "Failed to create TCPSocket");
-    auto socket = std::move(sock_res.unwrap());
+    /* ---------- socket ---------- */
+    auto sock_res = TCPSocket::create(AddressFamily::IPv4);
+    assert(sock_res.is_ok());
+    TCPSocket sock = std::move(sock_res.unwrap());
 
-    // 2. 构造回环地址 Endpoint
-    auto ep = Endpoint::loopback_ipv4(port);
+    auto ep_res = Endpoint::from_string("127.0.0.1", PORT);
+    assert(ep_res.is_ok());
+    Endpoint ep = ep_res.unwrap();
+    assert(sock.try_connect(ep).is_ok());
 
-    // 3. connect
-    auto conn_res = socket.connect(ep);
-    assert(conn_res.is_ok() && "Connect failed");
+    /* ---------- write ---------- */
+    util::ByteBuffer write_buf(128);
+    const char *msg = "hello io_context";
 
-    // 4. send
-    const char *msg = "hello world";
-    util::ByteBuffer send_buf(strlen(msg));
-    send_buf.append(std::span<const std::byte>(reinterpret_cast<const std::byte *>(msg), strlen(msg)));
-    auto write_res = socket.write(send_buf, 1s);
+    {
+        auto span = write_buf.prepare(std::strlen(msg));
+        std::memcpy(span.data(), msg, span.size());
+        write_buf.commit(span.size());
+    }
+
+    auto write_res = ctx.write(sock, write_buf, 1s);
     assert(write_res.is_ok());
-    assert(write_res.unwrap() == strlen(msg));
+    auto write_len = write_res.unwrap();
+    assert(write_len == std::strlen(msg));
+    assert(write_buf.empty()); // 应该已经被 consume
 
-    // 5. recv
-    util::ByteBuffer recv_buf(strlen(msg));
-    auto read_res = socket.read(recv_buf, 1s);
+    /* ---------- read ---------- */
+    util::ByteBuffer read_buf(128);
+
+    auto read_res = ctx.read(sock, read_buf, 1s);
     assert(read_res.is_ok());
-    size_t n = read_res.unwrap();
-    assert(n == strlen(msg));
+    auto read_len = read_res.unwrap();
+    assert(read_len == std::strlen(msg));
 
-    std::string received(reinterpret_cast<const char *>(recv_buf.readable().data()), n);
-    assert(received == msg);
+    auto readable = read_buf.readable();
+    std::string echoed(
+        reinterpret_cast<const char *>(readable.data()),
+        readable.size());
 
-    std::cout << "[INFO] Sent and received: " << received << "\n";
+    assert(echoed == msg);
 
-    socket.close();
+    read_buf.consume(readable.size());
+    assert(read_buf.empty());
 
-    // 等待 server 结束
-    server_thread.join();
+    server.join();
 
-    std::cout << "[TEST] TCPSocket unit test end\n";
+    std::cout << "[OK] test_io_context_tcp_read_write\n";
 }
 
 int main()
 {
-    test_tcpsocket();
+    test_io_context_tcp_read_write();
     return 0;
 }
