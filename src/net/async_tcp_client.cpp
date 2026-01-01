@@ -145,7 +145,7 @@ namespace net::tcp
         auto poller = std::move(poller_res.unwrap());
 
         // 监控可写(EPOLLOUT)和错误(EPOLLERR)
-        (void)poller.add(sock, EPOLLOUT | EPOLLERR | EPOLLHUP);
+        (void)poller.add(sock.view(), EPOLLOUT | EPOLLERR | EPOLLHUP);
         auto wait_res = poller.wait(timeout_ms);
 
         if (wait_res.is_err())
