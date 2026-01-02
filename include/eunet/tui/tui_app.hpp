@@ -37,8 +37,8 @@ namespace ui
         std::string current_url_ = "http://www.example.com";
 
         // ---------------- components ----------------
-        Component input_url_;
-        Component btn_go_;
+        // Component input_url_;
+        // Component btn_go_;
         Component event_menu_;
         Component root_;
 
@@ -71,17 +71,17 @@ namespace ui
 
         void init_components()
         {
-            input_url_ = Input(&current_url_, "Enter URL");
+            // input_url_ = Input(&current_url_, "Enter URL");
 
-            btn_go_ = Button(" GO ", [this]
-                             {
-                                 if (engine_.is_running())
-                                     return;
+            // btn_go_ = Button(" GO ", [this]
+            //                  {
+            //                      if (engine_.is_running())
+            //                          return;
 
-                                 reset_session();
-                                 engine_.execute(
-                                     std::make_unique<net::http::HttpGetScenario>(
-                                         current_url_)); });
+            //                      reset_session();
+            //                      engine_.execute(
+            //                          std::make_unique<net::http::HttpGetScenario>(
+            //                              current_url_)); });
 
             event_menu_ = Menu(
                 &menu_entries_,
@@ -89,13 +89,13 @@ namespace ui
                 menu_option());
 
             // ---- focus tree (ONLY interactive components) ----
-            auto input_row = Container::Horizontal({
-                input_url_,
-                btn_go_,
-            });
+            // auto input_row = Container::Horizontal({
+            //     input_url_,
+            //     btn_go_,
+            // });
 
             auto main_container = Container::Vertical({
-                input_row,
+                // input_row,
                 event_menu_,
             });
 
@@ -114,7 +114,6 @@ namespace ui
         {
             return vbox({
                        render_header(),
-                       render_input_bar(),
                        separator(),
                        render_content(),
                    }) |
@@ -129,16 +128,6 @@ namespace ui
                 filler(),
                 text(running ? " RUNNING " : " IDLE ") | bgcolor(running ? Color::Green : Color::GrayDark) | color(Color::Black),
             });
-        }
-
-        Element render_input_bar()
-        {
-            return hbox({
-                       text(" URL: "),
-                       input_url_->Render(),
-                       btn_go_->Render(),
-                   }) |
-                   border;
         }
 
         Element render_content()
