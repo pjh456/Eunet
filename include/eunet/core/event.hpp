@@ -69,6 +69,7 @@ namespace core
     };
 }
 
+std::string to_string(core::EventType type);
 std::string to_string(const core::Event &event);
 
 #endif // INCLUDE_EUNET_CORE_EVENT
