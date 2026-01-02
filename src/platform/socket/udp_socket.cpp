@@ -45,17 +45,15 @@ namespace platform::net
         for (;;)
         {
             auto writable = buf.writable_size();
-            auto span = buf.prepare(writable);
+            auto span = buf.weak_prepare(writable);
 
             ssize_t n = ::recv(
-                view().fd,
-                span.data(),
-                writable,
-                0);
+                view().fd, span.data(),
+                writable, MSG_DONTWAIT);
 
             if (n >= 0)
             {
-                buf.commit(static_cast<size_t>(n));
+                buf.weak_commit(static_cast<size_t>(n));
                 return Ret::Ok(static_cast<size_t>(n));
             }
 
@@ -65,6 +63,9 @@ namespace platform::net
 
             if (err == EAGAIN || err == EWOULDBLOCK)
             {
+                if (timeout_ms == 0)
+                    return Ret::Ok(0);
+
                 auto w = wait_fd_epoll(
                     poller,
                     view(),

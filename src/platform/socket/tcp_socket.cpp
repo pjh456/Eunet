@@ -43,7 +43,7 @@ namespace platform::net
         for (;;)
         {
             auto writable = buf.writable_size();
-            auto span = buf.prepare(writable);
+            auto span = buf.weak_prepare(writable);
 
             ssize_t n = ::recv(
                 view().fd,
@@ -53,7 +53,7 @@ namespace platform::net
 
             if (n > 0)
             {
-                buf.commit(n);
+                buf.weak_commit(n);
                 return Ret::Ok(static_cast<size_t>(n));
             }
 
@@ -104,6 +104,7 @@ namespace platform::net
         while (!buf.empty())
         {
             auto data = buf.readable();
+
             ssize_t n = ::send(
                 view().fd,
                 data.data(),
