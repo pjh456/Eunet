@@ -1,170 +1,148 @@
-// #include "eunet/net/connection/tcp_connection.hpp"
+#include "eunet/net/connection/tcp_connection.hpp"
 
-// #include <utility>
-// #include <algorithm>
-// #include <string.h>
+#include <utility>
+#include <algorithm>
+#include <string.h>
 
-// namespace net::tcp
-// {
-//     util::ResultV<TCPConnection>
-//     TCPConnection::connect(
-//         const platform::net::SocketAddress &addr,
-//         platform::time::Duration timeout)
-//     {
-//         using Result = util::ResultV<TCPConnection>;
+namespace net::tcp
+{
+    util::ResultV<TCPConnection>
+    TCPConnection::connect(
+        const platform::net::Endpoint &ep,
+        int timeout_ms)
+    {
+        using platform::net::AddressFamily;
 
-//         auto sock_res = platform::net::TCPSocket::create();
-//         if (sock_res.is_err())
-//             return Result::Err(sock_res.unwrap_err());
+        auto af = static_cast<sa_family_t>(ep.family());
+        auto domain = (af == AF_INET6) ? AddressFamily::IPv6 : AddressFamily::IPv4;
 
-//         auto sock = std::move(sock_res.unwrap());
+        auto sock = platform::net::TCPSocket::create(domain);
+        if (sock.is_err())
+            return util::ResultV<TCPConnection>::Err(sock.unwrap_err());
 
-//         auto conn_res = sock.connect(addr, timeout);
-//         if (conn_res.is_err())
-//             return Result::Err(conn_res.unwrap_err());
+        auto s = std::move(sock.unwrap());
 
-//         return Result::Ok(TCPConnection(std::move(sock)));
-//     }
+        auto res = s.connect(ep, timeout_ms);
+        if (res.is_err())
+            return util::ResultV<TCPConnection>::Err(res.unwrap_err());
 
-//     TCPConnection
-//     TCPConnection::from_accepted_socket(
-//         platform::net::TCPSocket &&sock)
-//     {
-//         return TCPConnection(std::move(sock));
-//     }
+        return util::ResultV<TCPConnection>::Ok(
+            TCPConnection(std::move(s)));
+    }
 
-//     TCPConnection::TCPConnection(
-//         platform::net::TCPSocket &&sock)
-//         : sock(std::move(sock)) {}
+    TCPConnection::TCPConnection(
+        platform::net::TCPSocket &&sock) noexcept
+        : m_sock(std::move(sock)) {}
 
-//     platform::fd::FdView
-//     TCPConnection::fd() const noexcept { return sock.view(); }
+    TCPConnection
+    TCPConnection::from_accepted_socket(
+        platform::net::TCPSocket &&sock)
+    {
+        return TCPConnection(std::move(sock));
+    }
 
-//     void TCPConnection::close() noexcept { sock.close(); }
+    platform::fd::FdView
+    TCPConnection::fd() const noexcept
+    {
+        return m_sock.view();
+    }
 
-//     bool TCPConnection::is_open() const noexcept { return (bool)sock.view(); }
+    bool TCPConnection::is_open() const noexcept
+    {
+        return static_cast<bool>(m_sock.view());
+    }
 
-//     bool TCPConnection::has_pending_output()
-//         const noexcept { return m_out_buffer.readable_bytes() > 0; }
+    void TCPConnection::close() noexcept
+    {
+        m_sock.close();
+    }
 
-//     util::ResultV<void>
-//     TCPConnection::flush()
-//     {
-//         while (m_out_buffer.readable_bytes() > 0)
-//         {
-//             platform::time::Duration timeout(0);
-//             auto res = sock.send_all(
-//                 m_out_buffer.peek(),
-//                 m_out_buffer.readable_bytes(),
-//                 timeout);
+    IOResult
+    TCPConnection::read(
+        util::ByteBuffer &buf,
+        int timeout_ms)
+    {
+        size_t total_read = 0;
 
-//             if (res.is_ok())
-//                 m_out_buffer.retrieve(res.unwrap());
-//             else
-//             {
-//                 auto err = res.unwrap_err();
-//                 if (err.code() == EAGAIN ||
-//                     err.code() == EWOULDBLOCK)
-//                     break;
-//                 return util::ResultV<void>::Err(err);
-//             }
-//         }
-//         return util::ResultV<void>::Ok();
-//     }
+        // 1. 先搬已有的 in_buffer
+        if (!m_in.empty())
+        {
+            auto readable = m_in.readable();
+            buf.append(readable);
+            total_read += readable.size();
+            m_in.consume(readable.size());
+            return IOResult::Ok(total_read);
+        }
 
-//     util::ResultV<size_t>
-//     TCPConnection::write(
-//         const std::byte *data,
-//         size_t len,
-//         platform::time::Duration timeout)
-//     {
-//         size_t written = 0;
+        // 2. 直接从 socket 读进 buf
+        auto res = m_sock.read(buf, timeout_ms);
 
-//         // 1. 优先直写 socket
-//         if (m_out_buffer.readable_bytes() == 0)
-//         {
-//             auto res = sock.send_all(data, len, timeout);
-//             if (res.is_ok())
-//                 written = res.unwrap();
-//             else
-//             {
-//                 auto err = res.unwrap_err();
-//                 if (err.code() != EAGAIN &&
-//                     err.code() != EWOULDBLOCK)
-//                     return util::ResultV<size_t>::Err(err);
-//             }
-//         }
+        if (res.is_err())
+            return IOResult::Err(res.unwrap_err());
 
-//         // 2. 剩余进入 buffer
-//         if (written < len)
-//             m_out_buffer.append(data + written, len - written);
+        size_t n = res.unwrap();
+        total_read += n;
 
-//         return util::ResultV<size_t>::Ok(len);
-//     }
+        return IOResult::Ok(total_read);
+    }
 
-//     util::ResultV<size_t>
-//     TCPConnection::read(
-//         std::byte *buf,
-//         size_t len,
-//         platform::time::Duration timeout)
-//     {
-//         // 1. buffer 有数据，优先读 buffer
-//         if (m_in_buffer.readable_bytes() > 0)
-//         {
-//             size_t n = std::min(len, m_in_buffer.readable_bytes());
-//             memcpy(buf, m_in_buffer.peek(), n);
-//             m_in_buffer.retrieve(n);
-//             return util::ResultV<size_t>::Ok(n);
-//         }
+    IOResult
+    TCPConnection::write(
+        util::ByteBuffer &buf,
+        int timeout_ms)
+    {
+        size_t total_written = 0;
 
-//         // 2. 直接从 socket 读
-//         auto res = sock.recv_some(buf, len, timeout);
-//         if (res.is_ok())
-//             return util::ResultV<size_t>::Ok(res.unwrap());
+        // 1. 如果没有积压，尝试直写 socket
+        if (m_out.empty())
+        {
+            auto readable = buf.readable();
+            if (!readable.empty())
+            {
+                auto res = m_sock.write(
+                    buf,
+                    timeout_ms);
 
-//         return util::ResultV<size_t>::Err(res.unwrap_err());
-//     }
+                if (res.is_err())
+                    return IOResult::Err(res.unwrap_err());
 
-//     IOBuffer &
-//     TCPConnection::in_buffer() { return m_in_buffer; }
+                size_t n = res.unwrap();
+                total_written += n;
+            }
+        }
 
-//     IOBuffer &
-//     TCPConnection::out_buffer() { return m_out_buffer; }
+        // 2. 剩余的全部进入 out_buffer
+        if (!buf.readable().empty())
+        {
+            auto rem = buf.readable();
+            m_out.append(rem);
+            total_written += rem.size();
+            buf.consume(rem.size());
+        }
 
-//     util::ResultV<size_t>
-//     TCPConnection::read_available()
-//     {
-//         platform::net::NonBlockingGuard guard(sock.view());
+        return IOResult::Ok(total_written);
+    }
 
-//         size_t total_read = 0;
-//         while (true)
-//         {
-//             // 预留 4KB 写空间
-//             m_in_buffer.ensure_writable(4096);
+    bool TCPConnection::has_pending_output() const noexcept
+    {
+        return !m_out.empty();
+    }
 
-//             // 直接让 Socket 把数据写进 IOBuffer 的写空闲区
-//             auto res = sock.recv_some(
-//                 m_in_buffer.begin_write(),
-//                 m_in_buffer.writable_bytes(),
-//                 platform::time::Duration(0));
+    util::ResultV<void>
+    TCPConnection::flush()
+    {
+        while (m_out.size() > 0)
+        {
+            auto res = m_sock.write(
+                m_out,
+                0 /* non-blocking */);
 
-//             if (res.is_ok())
-//             {
-//                 size_t n = res.unwrap();
-//                 if (n == 0)
-//                     break; // 对端关闭
-//                 m_in_buffer.has_written(n);
-//                 total_read += n;
-//             }
-//             else
-//             {
-//                 auto err = res.unwrap_err();
-//                 if (err.code() == EAGAIN ||
-//                     err.code() == EWOULDBLOCK)
-//                     break;
-//                 return util::ResultV<size_t>::Err(err);
-//             }
-//         }
-//         return util::ResultV<size_t>::Ok(total_read);
-//     }
-// }
+            if (res.is_err())
+                return util::ResultV<void>::Err(res.unwrap_err());
+
+            if (res.unwrap() == 0)
+                break;
+        }
+        return util::ResultV<void>::Ok();
+    }
+}
