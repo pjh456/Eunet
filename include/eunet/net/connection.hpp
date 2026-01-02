@@ -12,27 +12,36 @@
 
 namespace net
 {
+    using IOResult = util::ResultV<size_t>;
     class Connection
     {
     public:
         virtual ~Connection() = default;
 
     public:
+        // --- 生命周期 ---
         virtual platform::fd::FdView fd() const noexcept = 0;
-        virtual void close() noexcept = 0;
         virtual bool is_open() const noexcept = 0;
+        virtual void close() noexcept = 0;
 
     public:
-        virtual util::ResultV<size_t>
+        // --- 核心 IO ---
+        // 从连接读取数据，写入 buf
+        virtual IOResult
         read(util::ByteBuffer &buf,
-             platform::time::Duration timeout) = 0;
+             int timeout_ms = -1) = 0;
 
-        virtual util::ResultV<size_t>
+        // 从 buf 写入连接
+        virtual IOResult
         write(util::ByteBuffer &buf,
-              platform::time::Duration timeout) = 0;
+              int timeout_ms = -1) = 0;
 
     public:
+        // --- 可选语义 ---
+        // 是否还有待发送的数据
         virtual bool has_pending_output() const noexcept { return false; }
+
+        // 强制刷新输出缓冲
         virtual util::ResultV<void> flush() { return util::ResultV<void>::Ok(); }
     };
 
