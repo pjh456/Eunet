@@ -55,6 +55,8 @@ namespace net::tcp
     public:
         util::ByteBuffer &in_buffer() noexcept { return m_in; }
         util::ByteBuffer &out_buffer() noexcept { return m_out; }
+        platform::net::TCPSocket &socket() noexcept { return m_sock; }
+        const platform::net::TCPSocket &socket() const noexcept { return m_sock; }
     };
 }
 
