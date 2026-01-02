@@ -4,6 +4,14 @@
 #include <netdb.h>
 #include <fmt/format.h>
 
+#define DOMAIN_CASE(name)         \
+    case util::ErrorDomain::name: \
+        return #name
+
+#define CATEGORY_CASE(name)         \
+    case util::ErrorCategory::name: \
+        return #name
+
 namespace util
 {
     std::string ErrorData::format() const
@@ -29,12 +37,17 @@ namespace util
 
     ErrorBuilder Error::create() { return ErrorBuilder(); }
 
-    ErrorBuilder Error::dns() { return create().set_domain(ErrorDomain::DNS); }
-    ErrorBuilder Error::transport() { return create().set_domain(ErrorDomain::Transport); }
-    ErrorBuilder Error::security() { return create().set_domain(ErrorDomain::Security); }
-    ErrorBuilder Error::protocol() { return create().set_domain(ErrorDomain::Protocol); }
-    ErrorBuilder Error::system() { return create().set_domain(ErrorDomain::System); }
-    ErrorBuilder Error::framework() { return create().set_domain(ErrorDomain::Framework); }
+    ErrorBuilder Error::dns() { return create().dns(); }
+    ErrorBuilder Error::transport() { return create().transport(); }
+    ErrorBuilder Error::security() { return create().security(); }
+    ErrorBuilder Error::protocol() { return create().protocol(); }
+
+    ErrorBuilder Error::system() { return create().system(); }
+    ErrorBuilder Error::hardware() { return create().hardware(); }
+
+    ErrorBuilder Error::config() { return create().config(); }
+    ErrorBuilder Error::state() { return create().state(); }
+    ErrorBuilder Error::internal() { return create().internal(); }
 
     Error Error::wrap(Error cause) const
     {
@@ -69,8 +82,7 @@ namespace util
     {
         auto data = std::make_shared<ErrorData>(
             ErrorData{
-                m_domain,
-                m_category,
+                m_domain, m_category, m_severity,
                 m_code,
                 m_message.empty() ? "Unknown error" : m_message,
                 m_context});
@@ -85,50 +97,111 @@ namespace util
 
 std::string_view to_string(util::ErrorDomain domain)
 {
-    using namespace util;
     switch (domain)
     {
-    case ErrorDomain::DNS:
-        return "DNS";
-    case ErrorDomain::Transport:
-        return "Transport";
-    case ErrorDomain::Security:
-        return "Security";
-    case ErrorDomain::Protocol:
-        return "Protocol";
-    case ErrorDomain::System:
-        return "System";
-    case ErrorDomain::Framework:
-        return "Framework";
-    case ErrorDomain::None:
+        DOMAIN_CASE(DNS);
+        DOMAIN_CASE(Transport);
+        DOMAIN_CASE(Security);
+        DOMAIN_CASE(Protocol);
+
+        DOMAIN_CASE(System);
+        DOMAIN_CASE(Hardware);
+
+        DOMAIN_CASE(Config);
+        DOMAIN_CASE(State);
+        DOMAIN_CASE(Internal);
+
     default:
-        return "None";
+        DOMAIN_CASE(None);
     }
 }
 
 std::string_view to_string(util::ErrorCategory category)
 {
-    using namespace util;
     switch (category)
     {
-    case ErrorCategory::Timeout:
-        return "Timeout";
-    case ErrorCategory::Unreachable:
-        return "Unreachable";
-    case ErrorCategory::ConnectionRefused:
-        return "ConnectionRefused";
-    case ErrorCategory::ProtocolError:
-        return "ProtocolError";
-    case ErrorCategory::AuthFailed:
-        return "AuthFailed";
-    case ErrorCategory::ResourceExhausted:
-        return "ResourceExhausted";
-    case ErrorCategory::InvalidInput:
-        return "InvalidInput";
-    case ErrorCategory::Cancelled:
-        return "Cancelled";
-    case ErrorCategory::Unknown:
+        CATEGORY_CASE(Success);
+
+        CATEGORY_CASE(Timeout);
+        CATEGORY_CASE(ConnectionRefused);
+        CATEGORY_CASE(HostUnreachable);
+        CATEGORY_CASE(NetworkDown);
+        CATEGORY_CASE(TargetNotFound);
+        CATEGORY_CASE(ResolutionFailed);
+
+        CATEGORY_CASE(PeerClosed);
+        CATEGORY_CASE(ConnectionReset);
+        CATEGORY_CASE(BrokenPipe);
+        CATEGORY_CASE(Aborted);
+
+        CATEGORY_CASE(ProtocolViolation);
+        CATEGORY_CASE(PayloadTooLarge);
+        CATEGORY_CASE(UnsupportedVersion);
+        CATEGORY_CASE(DataTruncated);
+
+        CATEGORY_CASE(AuthFailed);
+        CATEGORY_CASE(CertificateInvalid);
+        CATEGORY_CASE(UntrustedAuthority);
+
+        CATEGORY_CASE(ResourceExhausted);
+        CATEGORY_CASE(Busy);
+        CATEGORY_CASE(InvalidState);
+        CATEGORY_CASE(InvalidArgument);
+
+        CATEGORY_CASE(Cancelled);
+
     default:
-        return "Unknown";
+        CATEGORY_CASE(Unknown);
+    }
+}
+
+util::ErrorCategory from_errno(int err_no)
+{
+    using util::ErrorCategory;
+    switch (err_no)
+    {
+    case ETIMEDOUT:
+        return ErrorCategory::Timeout;
+    case ECONNREFUSED:
+        return ErrorCategory::ConnectionRefused;
+    case ENETUNREACH:
+    case EHOSTUNREACH:
+        return ErrorCategory::HostUnreachable;
+    case ENETDOWN:
+        return ErrorCategory::NetworkDown;
+    case EPIPE:
+        return ErrorCategory::BrokenPipe;
+    case ECONNRESET:
+        return ErrorCategory::ConnectionReset;
+    case ECONNABORTED:
+        return ErrorCategory::Aborted;
+    case EMFILE:
+    case ENFILE:
+    case ENOMEM:
+        return ErrorCategory::ResourceExhausted;
+    case EINVAL:
+        return ErrorCategory::InvalidArgument;
+    case EAGAIN:
+        return ErrorCategory::Busy;
+    default:
+        return ErrorCategory::Unknown;
+    }
+}
+
+util::ErrorCategory from_gai_error(int gai_err)
+{
+    using util::ErrorCategory;
+    switch (gai_err)
+    {
+    case EAI_NONAME:
+        return ErrorCategory::TargetNotFound; // 关键：域名不存在
+    case EAI_AGAIN:
+        return ErrorCategory::Busy; // 临时错误，可重试
+    case EAI_FAIL:
+        return ErrorCategory::ResolutionFailed; // 服务器错误
+    case EAI_MEMORY:
+        return ErrorCategory::ResourceExhausted;
+    default:
+        return ErrorCategory::Unknown;
     }
 }
