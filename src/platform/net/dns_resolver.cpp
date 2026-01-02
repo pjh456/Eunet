@@ -43,7 +43,9 @@ namespace platform::net
             return Ret::Err(
                 Error::dns()
                     .code(err)
-                    .message("getaddrinfo failed")
+                    .set_category(from_gai_error(err))
+                    .message(gai_strerror(err))
+                    .context(std::string(host))
                     .build());
         }
 
@@ -69,7 +71,9 @@ namespace platform::net
         {
             return Ret::Err(
                 Error::dns()
-                    .message("No address resolved")
+                    .target_not_found()
+                    .message("DNS query returned no addresses")
+                    .context(std::string(host))
                     .build());
         }
 

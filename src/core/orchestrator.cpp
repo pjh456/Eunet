@@ -27,10 +27,9 @@ namespace core
         if (!idx_res.is_ok())
         {
             return Ret::Err(
-                Error::framework()
-                    .protocol_error()
+                Error::internal()
+                    .resource_exhausted() // 假设是内存分配失败导致 push 失败
                     .message("Failed to append event to timeline")
-                    .context("orchestrator::emit")
                     .wrap(idx_res.unwrap_err())
                     .build());
         }
@@ -43,10 +42,11 @@ namespace core
         if (!fsm)
         {
             return Ret::Err(
-                Error::framework()
-                    .protocol_error()
-                    .message("FSM missing after event commit")
-                    .context("orchestrator::emit")
+                Error::internal()
+                    .invalid_state()
+                    .fatal()
+                    .message("FSM instance missing for active session")
+                    .context(std::to_string(e.session_id))
                     .build());
         }
 
@@ -54,8 +54,7 @@ namespace core
         if (latest_event_result.is_err())
         {
             return Ret::Err(
-                Error::framework()
-                    .protocol_error()
+                Error::internal()
                     .message("Failed to fetch latest event after commit")
                     .context("orchestrator::emit")
                     .wrap(latest_event_result.unwrap_err())

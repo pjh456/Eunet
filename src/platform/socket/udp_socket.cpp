@@ -81,7 +81,9 @@ namespace platform::net
             return Ret::Err(
                 Error::transport()
                     .code(err)
-                    .message("udp recv failed")
+                    .set_category(from_errno(err))
+                    .message("Failed to receive datagram from UDP socket")
+                    .context("read")
                     .build());
         }
     }
@@ -137,7 +139,9 @@ namespace platform::net
             return Ret::Err(
                 Error::transport()
                     .code(err)
-                    .message("udp send failed")
+                    .set_category(from_errno(err))
+                    .message("Failed to send datagram to UDP socket")
+                    .context("write")
                     .build());
         }
     }
@@ -163,7 +167,9 @@ namespace platform::net
             return Result::Err(
                 Error::transport()
                     .code(errno)
-                    .message("udp connect failed")
+                    .set_category(from_errno(errno))
+                    .message("Immediate UDP connection attempt failed")
+                    .context("connect")
                     .build());
         }
 
@@ -193,7 +199,9 @@ namespace platform::net
             return Result::Err(
                 Error::transport()
                     .code(err)
-                    .message("udp connect failed")
+                    .set_category(from_errno(err))
+                    .message("Async UDP connection attempt failed")
+                    .context("getsockopt(SO_ERROR)")
                     .build());
         }
 

@@ -36,7 +36,9 @@ namespace platform::net
             return Result::Err(
                 Error::system()
                     .code(err_no)
-                    .message("getsockname failed")
+                    .set_category(from_errno(err_no))
+                    .message("Failed to get local socket address")
+                    .context("getsockname")
                     .build());
         }
 
@@ -64,7 +66,9 @@ namespace platform::net
             return Result::Err(
                 Error::system()
                     .code(err_no)
-                    .message("getpeername failed")
+                    .set_category(from_errno(err_no))
+                    .message("Failed to get remote peer address")
+                    .context("getpeername")
                     .build());
         }
 
@@ -89,17 +93,20 @@ namespace platform::net
             return Result::Err(r.unwrap_err());
 
         auto evs = poller.wait(timeout_ms);
-        poller.remove(fd); // 一定要清理
 
         if (evs.is_err())
             return Result::Err(evs.unwrap_err());
+
+        (void)poller.remove(fd); // 一定要清理
 
         if (evs.unwrap().empty())
         {
             return Result::Err(
                 Error::transport()
                     .timeout()
-                    .message("epoll wait timeout")
+                    .transient()
+                    .message("Wait for socket events timed out")
+                    .context("epoll_wait")
                     .build());
         }
 
@@ -112,7 +119,10 @@ namespace platform::net
             {
                 return Result::Err(
                     Error::transport()
-                        .message("socket error or hangup")
+                        .connection_reset()
+                        .fatal()
+                        .message("Socket connection reset or hung up")
+                        .context("epoll_event_check")
                         .build());
             }
 
@@ -121,8 +131,9 @@ namespace platform::net
         }
 
         return Result::Err(
-            Error::transport()
-                .message("unexpected epoll event")
+            Error::internal()
+                .invalid_state()
+                .message("Received unexpected epoll event mask")
                 .build());
     }
 

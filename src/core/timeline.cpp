@@ -324,10 +324,9 @@ namespace core
 
         if (events.empty())
             return Ret::Err(
-                Error::framework()
-                    .protocol_error()
-                    .message("Timeline is empty")
-                    .context("timeline::latest_event")
+                Error::state()
+                    .invalid_state()
+                    .message("Cannot fetch latest event: Timeline is empty")
                     .build());
 
         return Ret::Ok(events.back());
@@ -346,10 +345,10 @@ namespace core
         if (res.empty())
         {
             return Ret::Err(
-                Error::framework()
-                    .protocol_error()
-                    .message("No events for given fd")
-                    .context("timeline::latest_by_fd")
+                Error::state()
+                    .target_not_found() // 没有找到指定 FD 的事件
+                    .message("No events found for specified FD")
+                    .context(std::to_string(fd))
                     .build());
         }
 
@@ -369,10 +368,10 @@ namespace core
         if (res.empty())
         {
             return Ret::Err(
-                Error::framework()
-                    .protocol_error()
-                    .message("No events for given type")
-                    .context("timeline::latest_by_type")
+                Error::state()
+                    .target_not_found() // 没有找到指定 Type 的事件
+                    .message("No events found for specified Type")
+                    // .context(to_string(type))
                     .build());
         }
 

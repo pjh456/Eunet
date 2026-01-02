@@ -8,20 +8,22 @@ namespace platform::poller
 {
     util::ResultV<Poller> Poller::create()
     {
+        using Ret = util::ResultV<Poller>;
+        using util::Error;
         Poller p;
         if (!p.epoll_fd.valid())
         {
             int err_no = errno;
-            return util::ResultV<Poller>::Err(
-                util::Error::system()
-                    .set_category(epoll_errno_category(err_no))
+            return Ret::Err(
+                Error::system()
                     .code(err_no)
+                    .set_category(from_errno(err_no)) // 主要是 ResourceExhausted
                     .message("Failed to create epoll instance")
                     .context("epoll_create1")
                     .build());
         }
 
-        return util::ResultV<Poller>::Ok(std::move(p));
+        return Ret::Ok(std::move(p));
     }
 
     Poller::Poller()
@@ -61,10 +63,9 @@ namespace platform::poller
         if (!valid())
         {
             return Ret::Err(
-                Error::system()
-                    .invalid_input()
-                    .message("Invalid epoll fd")
-                    .context("epoll_ctl")
+                Error::internal()
+                    .invalid_argument()
+                    .message("Poller is not initialized")
                     .build());
         }
 
@@ -81,10 +82,10 @@ namespace platform::poller
         int err_no = errno;
         return Ret::Err(
             Error::system()
-                .set_category(epoll_errno_category(err_no))
                 .code(err_no)
-                .message("epoll_ctl ADD failed")
-                .context("epoll_ctl")
+                .set_category(from_errno(err_no))
+                .message("Failed to update epoll interest list")
+                .context("Poller.add: epoll_ctl")
                 .build());
     }
 
@@ -102,10 +103,9 @@ namespace platform::poller
         if (!valid())
         {
             return Ret::Err(
-                Error::system()
-                    .invalid_input()
-                    .message("Invalid epoll fd")
-                    .context("epoll_ctl")
+                Error::internal()
+                    .invalid_argument()
+                    .message("Poller is not initialized")
                     .build());
         }
 
@@ -122,10 +122,10 @@ namespace platform::poller
         int err_no = errno;
         return Ret::Err(
             Error::system()
-                .set_category(epoll_errno_category(err_no))
                 .code(err_no)
-                .message("epoll_ctl MOD failed")
-                .context("epoll_ctl")
+                .set_category(from_errno(err_no))
+                .message("Failed to update epoll interest list")
+                .context("Poller.modify: epoll_ctl")
                 .build());
     }
 
@@ -139,10 +139,9 @@ namespace platform::poller
         if (!valid())
         {
             return Ret::Err(
-                Error::system()
-                    .invalid_input()
-                    .message("Invalid epoll fd")
-                    .context("epoll_ctl")
+                Error::internal()
+                    .invalid_argument()
+                    .message("Poller is not initialized")
                     .build());
         }
 
@@ -158,10 +157,10 @@ namespace platform::poller
         int err_no = errno;
         return Ret::Err(
             Error::system()
-                .set_category(epoll_errno_category(err_no))
                 .code(err_no)
-                .message("epoll_ctl DEL failed")
-                .context("epoll_ctl")
+                .set_category(from_errno(err_no))
+                .message("Failed to update epoll interest list")
+                .context("Poller.remove: epoll_ctl")
                 .build());
     }
 
@@ -174,10 +173,9 @@ namespace platform::poller
         if (!valid())
         {
             return Ret::Err(
-                Error::system()
-                    .invalid_input()
-                    .message("Invalid epoll fd")
-                    .context("epoll_wait")
+                Error::internal()
+                    .invalid_argument()
+                    .message("Poller is not initialized")
                     .build());
         }
 
@@ -198,9 +196,9 @@ namespace platform::poller
             int err_no = errno;
             return Ret::Err(
                 Error::system()
-                    .set_category(epoll_errno_category(err_no))
                     .code(err_no)
-                    .message("epoll_wait failed")
+                    .set_category(from_errno(err_no)) // 主要是 EINTR (Cancelled)
+                    .message("Epoll wait syscall failed")
                     .context("epoll_wait")
                     .build());
         }
@@ -218,31 +216,4 @@ namespace platform::poller
 
         return Ret::Ok(std::move(result));
     }
-
-    util::ErrorCategory
-    Poller::epoll_errno_category(int err)
-    {
-        using util::ErrorCategory;
-
-        switch (err)
-        {
-        case EMFILE:
-        case ENFILE:
-        case ENOMEM:
-            return ErrorCategory::ResourceExhausted;
-
-        case EBADF:
-        case EINVAL:
-        case EEXIST:
-        case ENOENT:
-            return ErrorCategory::InvalidInput;
-
-        case EINTR:
-            return ErrorCategory::Cancelled;
-
-        default:
-            return ErrorCategory::Unknown;
-        }
-    }
-
 }
