@@ -35,8 +35,10 @@ namespace platform::net
         }
 
         return EndpointResult::Err(
-            util::Error::system()
-                .message("invalid IP address")
+            util::Error::config()
+                .invalid_argument()
+                .message("Invalid IP address format")
+                .context(std::string(ip)) // 放入错误的 IP 字符串
                 .build());
     }
 

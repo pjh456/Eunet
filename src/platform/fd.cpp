@@ -47,9 +47,9 @@ namespace platform::fd
             int err_no = errno;
             return FdResult::Err(
                 util::Error::system()
-                    .set_category(socket_errno_category(err_no))
                     .code(err_no)
-                    .message("Failed to create socket")
+                    .set_category(from_errno(err_no)) // 涵盖 EMFILE (ResourceExhausted)
+                    .message("Failed to create socket descriptor")
                     .context("socket")
                     .build());
         }
@@ -69,9 +69,9 @@ namespace platform::fd
             int err_no = errno;
             return PipeResult::Err(
                 util::Error::system()
-                    .set_category(pipe_errno_category(err_no))
                     .code(err_no)
-                    .message("Failed to create pipe")
+                    .set_category(from_errno(err_no))
+                    .message("Failed to create pipe pair")
                     .context("pipe2")
                     .build());
         }
@@ -98,48 +98,6 @@ namespace platform::fd
                 ;
         }
         fd = new_fd;
-    }
-
-    util::ErrorCategory
-    Fd::socket_errno_category(int err)
-    {
-        using util::ErrorCategory;
-
-        switch (err)
-        {
-        case EMFILE:
-        case ENFILE:
-        case ENOMEM:
-            return ErrorCategory::ResourceExhausted;
-
-        case EACCES:
-            return ErrorCategory::AccessDenied;
-
-        case EAFNOSUPPORT:
-        case EPROTONOSUPPORT:
-        case EINVAL:
-            return ErrorCategory::InvalidInput;
-
-        default:
-            return ErrorCategory::Unknown;
-        }
-    }
-
-    util::ErrorCategory
-    Fd::pipe_errno_category(int err)
-    {
-        using util::ErrorCategory;
-        switch (errno)
-        {
-        case EMFILE:
-        case ENFILE:
-            return ErrorCategory::ResourceExhausted;
-        case EINVAL:
-        case EFAULT:
-            return ErrorCategory::InvalidInput;
-        default:
-            return ErrorCategory::Unknown;
-        }
     }
 
     FdView FdView::from_owner(const Fd &owner)

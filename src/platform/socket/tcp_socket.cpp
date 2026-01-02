@@ -62,7 +62,8 @@ namespace platform::net
                 return Ret::Err(
                     Error::transport()
                         .peer_closed()
-                        .message("peer closed")
+                        .message("Connection closed by peer")
+                        .context("recv")
                         .build());
             }
 
@@ -85,7 +86,9 @@ namespace platform::net
             return Ret::Err(
                 Error::transport()
                     .code(err)
-                    .message("recv failed")
+                    .set_category(from_errno(err))
+                    .message("Failed to receive data from TCP socket")
+                    .context("read")
                     .build());
         }
     }
@@ -122,7 +125,8 @@ namespace platform::net
                 return Ret::Err(
                     Error::transport()
                         .peer_closed()
-                        .message("peer closed")
+                        .message("Connection closed by peer")
+                        .context("recv")
                         .build());
             }
 
@@ -145,7 +149,9 @@ namespace platform::net
             return Ret::Err(
                 Error::transport()
                     .code(err)
-                    .message("send failed")
+                    .set_category(from_errno(err))
+                    .message("Failed to send data to TCP socket")
+                    .context("write")
                     .build());
         }
 
@@ -173,7 +179,9 @@ namespace platform::net
             return Result::Err(
                 Error::transport()
                     .code(errno)
-                    .message("connect failed")
+                    .set_category(from_errno(errno))
+                    .message("Immediate TCP connection attempt failed")
+                    .context("connect")
                     .build());
         }
 
@@ -201,7 +209,9 @@ namespace platform::net
             return Result::Err(
                 Error::transport()
                     .code(err)
-                    .message("connect failed")
+                    .set_category(from_errno(err))
+                    .message("Async TCP connection attempt failed")
+                    .context("getsockopt(SO_ERROR)")
                     .build());
         }
 

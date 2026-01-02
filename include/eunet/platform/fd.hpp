@@ -52,10 +52,6 @@ namespace platform::fd
     public:
         int release() noexcept;
         void reset(int new_fd) noexcept;
-
-    private:
-        static util::ErrorCategory socket_errno_category(int err);
-        static util::ErrorCategory pipe_errno_category(int err);
     };
 
     struct FdView
