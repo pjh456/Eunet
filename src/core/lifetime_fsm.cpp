@@ -111,7 +111,7 @@ namespace core
     }
 }
 
-const char *to_string(core::LifeState s) noexcept
+std::string to_string(core::LifeState s) noexcept
 {
     using namespace core;
     switch (s)
