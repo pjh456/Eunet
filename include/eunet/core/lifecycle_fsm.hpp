@@ -15,11 +15,12 @@ namespace core
     {
         Init,        // 尚未开始
         Resolving,   // DNS 中
-        Connecting,  // TCP_CONNECT 已发生
-        Established, // TCP_ESTABLISHED
-        Sending,     // REQUEST_SENT
-        Receiving,   // REQUEST_RECEIVED
-        Finished,    // 正常完成
+        Connecting,  // TCP 连接中
+        Handshaking, // TLS 握手中（新增）
+        Established, // 连接就绪（可收发）
+        Sending,     // 请求发送中
+        Receiving,   // 响应接收中
+        Finished,    // 正常完成（HTTP body done / graceful close）
         Error        // 任意错误
     };
 

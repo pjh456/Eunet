@@ -1,5 +1,9 @@
 #include "eunet/core/lifecycle_fsm.hpp"
 
+#define STATE_CASE(name)        \
+    case core::LifeState::name: \
+        return #name
+
 namespace core
 {
     LifecycleFSM::LifecycleFSM(int fd) : fd(fd) {}
@@ -25,6 +29,7 @@ namespace core
         if (state == LifeState::Init)
             start_ts = e.ts;
 
+        // -------- 全局错误处理 --------
         if (e.is_error())
         {
             last_error = e.error;
@@ -35,10 +40,17 @@ namespace core
         switch (state)
         {
         case LifeState::Init:
-            if (e.type == EventType::DNS_RESOLVE_START)
+            switch (e.type)
+            {
+            case EventType::DNS_RESOLVE_START:
                 transit(LifeState::Resolving);
-            else if (e.type == EventType::TCP_CONNECT_START)
+                break;
+            case EventType::TCP_CONNECT_START:
                 transit(LifeState::Connecting);
+                break;
+            default:
+                break;
+            }
             break;
 
         case LifeState::Resolving:
@@ -47,23 +59,61 @@ namespace core
             break;
 
         case LifeState::Connecting:
-            if (e.type == EventType::TCP_CONNECT_SUCCESS)
+            switch (e.type)
+            {
+            case EventType::TCP_CONNECT_SUCCESS:
+                // 是否启用 TLS，通常由 config 决定
+                // if (use_tls)
+                //     transit(LifeState::Handshaking);
+                // else
                 transit(LifeState::Established);
+                break;
+
+            case EventType::TCP_CONNECT_TIMEOUT:
+                transit(LifeState::Error);
+                break;
+
+            default:
+                break;
+            }
+            break;
+
+        case LifeState::Handshaking:
+            switch (e.type)
+            {
+            case EventType::TLS_HANDSHAKE_DONE:
+                transit(LifeState::Established);
+                break;
+            default:
+                break;
+            }
             break;
 
         case LifeState::Established:
-            if (e.type == EventType::HTTP_SENT)
+            if (e.type == EventType::HTTP_REQUEST_BUILD ||
+                e.type == EventType::HTTP_SENT)
+            {
                 transit(LifeState::Sending);
+            }
             break;
 
         case LifeState::Sending:
-            if (e.type == EventType::HTTP_RECEIVED)
-                // transit(LifeState::Receiving);
-                transit(LifeState::Finished);
+            if (e.type == EventType::HTTP_SENT)
+                transit(LifeState::Receiving);
             break;
 
         case LifeState::Receiving:
-            transit(LifeState::Finished);
+            switch (e.type)
+            {
+            case EventType::HTTP_HEADERS_RECEIVED:
+                // still Receiving
+                break;
+            case EventType::HTTP_BODY_DONE:
+                transit(LifeState::Finished);
+                break;
+            default:
+                break;
+            }
             break;
 
         case LifeState::Finished:
@@ -116,22 +166,15 @@ std::string to_string(core::LifeState s) noexcept
     using namespace core;
     switch (s)
     {
-    case LifeState::Init:
-        return "Init";
-    case LifeState::Resolving:
-        return "Resolving";
-    case LifeState::Connecting:
-        return "Connecting";
-    case LifeState::Established:
-        return "Established";
-    case LifeState::Sending:
-        return "Sending";
-    case LifeState::Receiving:
-        return "Receiving";
-    case LifeState::Finished:
-        return "Finished";
-    case LifeState::Error:
-        return "Error";
+        STATE_CASE(Init);
+        STATE_CASE(Resolving);
+        STATE_CASE(Connecting);
+        STATE_CASE(Handshaking);
+        STATE_CASE(Established);
+        STATE_CASE(Sending);
+        STATE_CASE(Receiving);
+        STATE_CASE(Finished);
+        STATE_CASE(Error);
     default:
         return "Unknown";
     }
