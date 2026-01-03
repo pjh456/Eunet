@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 
 project(eunet LANGUAGES CXX)
 
@@ -15,6 +15,9 @@ if(NOT LIBCAP)
     message(FATAL_ERROR "libcap not found, please install libcap-devel")
 endif()
 
+# boost checker
+find_package(Boost REQUIRED COMPONENTS system)
+
 # fmt-devel checker
 find_package(fmt REQUIRED)
 
@@ -26,6 +29,7 @@ add_subdirectory(src)
 
 target_link_libraries(eunet PUBLIC ftxui::screen ftxui::dom ftxui::component)
 target_link_libraries(eunet PRIVATE cap)
+target_link_libraries(eunet PRIVATE Boost::system)
 target_link_libraries(eunet PRIVATE fmt::fmt)
 
 add_executable(main src/main.cpp)
