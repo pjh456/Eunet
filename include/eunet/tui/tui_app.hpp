@@ -22,23 +22,25 @@ namespace ui
     class TuiApp
     {
     private:
+        static constexpr size_t MAX_EVENTS = 2000;
+
         core::Orchestrator &orch_;
         core::NetworkEngine &engine_;
 
         ScreenInteractive screen_ = ScreenInteractive::Fullscreen();
 
+        std::vector<core::EventSnapshot> pending_;
+
         // ---------------- data ----------------
         std::mutex data_mtx_;
         std::vector<core::EventSnapshot> snapshots_;
-        std::vector<std::string> menu_entries_;
+        std::vector<std::string> dummy_entries_; // 只占位
 
         // ---------------- state ----------------
         int selected_menu_idx_ = 0;
         std::string current_url_ = "http://www.example.com";
 
         // ---------------- components ----------------
-        // Component input_url_;
-        // Component btn_go_;
         Component event_menu_;
         Component root_;
 
@@ -71,28 +73,10 @@ namespace ui
 
         void init_components()
         {
-            // input_url_ = Input(&current_url_, "Enter URL");
-
-            // btn_go_ = Button(" GO ", [this]
-            //                  {
-            //                      if (engine_.is_running())
-            //                          return;
-
-            //                      reset_session();
-            //                      engine_.execute(
-            //                          std::make_unique<net::http::HttpGetScenario>(
-            //                              current_url_)); });
-
             event_menu_ = Menu(
-                &menu_entries_,
+                &dummy_entries_,
                 &selected_menu_idx_,
                 menu_option());
-
-            // ---- focus tree (ONLY interactive components) ----
-            // auto input_row = Container::Horizontal({
-            //     input_url_,
-            //     btn_go_,
-            // });
 
             auto main_container = Container::Vertical({
                 // input_row,
@@ -100,10 +84,13 @@ namespace ui
             });
 
             // ---- root renderer ----
-            root_ = Renderer(main_container, [&]
-                             {
-                                 std::lock_guard lock(data_mtx_);
-                                 return render_layout(); });
+            root_ = Renderer(
+                main_container,
+                [&]
+                {
+                    apply_pending_events();
+                    return render_layout();
+                });
         }
 
         // ============================================================
@@ -133,9 +120,9 @@ namespace ui
         Element render_content()
         {
             return hbox({
-                event_menu_->Render() | frame | vscroll_indicator | flex,
+                event_menu_->Render() | flex,
                 separator(),
-                render_detail_panel() | size(WIDTH, EQUAL, 60),
+                render_detail_panel() | flex,
             });
         }
 
@@ -148,7 +135,7 @@ namespace ui
                 return vbox({
                            text("No Event Selected") | center,
                            separator(),
-                           text("Press GO to start") | dim | center,
+                           text("Waiting for events...") | dim | center,
                        }) |
                        center;
             }
@@ -187,16 +174,24 @@ namespace ui
             {
                 if (state.index < 0 ||
                     state.index >= (int)snapshots_.size())
-                    return text(state.label);
+                    return text("");
 
                 const auto &snap = snapshots_[state.index];
                 Color c = snapshot_color(snap);
 
-                Element e = text(state.label);
+                std::string preview = " ";
+                preview += snap.event.msg;
+                if (preview.size() > 40)
+                    preview = preview.substr(0, 37) + "...";
+
+                Element e = hbox({
+                    text(snapshot_icon(snap)) | color(c),
+                    text(to_string(snap.state)) | bold,
+                    text(preview) | dim,
+                });
+
                 if (state.focused)
-                    e = e | inverted | bold;
-                else
-                    e = e | color(c);
+                    e = e | inverted;
 
                 return e;
             };
@@ -212,7 +207,8 @@ namespace ui
             std::lock_guard lock(data_mtx_);
 
             snapshots_.clear();
-            menu_entries_.clear();
+            pending_.clear();
+            dummy_entries_.clear();
             selected_menu_idx_ = 0;
 
             snapshots_.push_back(
@@ -220,32 +216,42 @@ namespace ui
                     core::Event::info(
                         core::EventType::CONNECTION_IDLE,
                         "Session started"),
-                });
+                    0, core::LifeState::Init});
 
-            snapshots_.back().state = core::LifeState::Init;
-            menu_entries_.push_back("[i] Init        Session started");
-
-            screen_.PostEvent(Event::Custom);
+            dummy_entries_.resize(1);
         }
 
         void on_new_event(const core::EventSnapshot &snap)
         {
+            {
+                std::lock_guard lock(data_mtx_);
+                pending_.push_back(snap);
+            }
+            screen_.PostEvent(Event::Custom);
+        }
+
+        void apply_pending_events()
+        {
             std::lock_guard lock(data_mtx_);
 
-            snapshots_.push_back(snap);
+            for (auto &snap : pending_)
+            {
+                snapshots_.push_back(snap);
 
-            std::string preview = snap.event.msg;
-            if (preview.size() > 40)
-                preview = preview.substr(0, 37) + "...";
+                if (snapshots_.size() > MAX_EVENTS)
+                {
+                    snapshots_.erase(snapshots_.begin());
+                    if (selected_menu_idx_ > 0)
+                        --selected_menu_idx_;
+                }
+            }
 
-            menu_entries_.push_back(
-                fmt::format("{} {:<10} {}",
-                            snapshot_icon(snap),
-                            to_string(snap.state),
-                            preview));
+            if (!pending_.empty())
+                selected_menu_idx_ = snapshots_.size() - 1;
 
-            selected_menu_idx_ = menu_entries_.size() - 1;
-            screen_.PostEvent(Event::Custom);
+            dummy_entries_.resize(snapshots_.size());
+
+            pending_.clear();
         }
 
         // ============================================================
