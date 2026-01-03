@@ -48,23 +48,6 @@ namespace net::http
         config_.path = url.empty() ? "/" : std::string(url);
     }
 
-    std::vector<std::byte>
-    HttpGetScenario::buffer_to_bytes(
-        const boost::beast::flat_buffer &buf)
-    {
-        std::vector<std::byte> out;
-        out.reserve(buf.size());
-        auto seq = buf.data();
-
-        for (auto it = boost::asio::buffer_sequence_begin(seq);
-             it != boost::asio::buffer_sequence_end(seq); ++it)
-        {
-            auto p = static_cast<const std::byte *>(it->data());
-            out.insert(out.end(), p, p + it->size());
-        }
-        return out;
-    }
-
     util::ResultV<void>
     HttpGetScenario::run(
         core::Orchestrator &orch)
