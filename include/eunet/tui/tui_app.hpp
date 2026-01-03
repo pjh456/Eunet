@@ -19,6 +19,12 @@ namespace ui
 {
     using namespace ftxui;
 
+    /**
+     * @brief 终端用户界面应用程序
+     *
+     * 基于 FTXUI 库构建。负责渲染事件列表、详情面板和状态栏。
+     * 该类运行在 UI 线程，通过 shared memory (pending_ events) 与网络线程通信。
+     */
     class TuiApp
     {
     private:
@@ -52,6 +58,12 @@ namespace ui
             reset_session();
         }
 
+        /**
+         * @brief 启动 UI 主循环
+         *
+         * 注册 Sink 到 Orchestrator，并阻塞当前线程进行界面渲染。
+         * 直到用户退出或收到终止信号。
+         */
         void run()
         {
             auto sink = std::make_shared<TuiSink>(
@@ -221,6 +233,13 @@ namespace ui
             dummy_entries_.resize(1);
         }
 
+        /**
+         * @brief 网络事件回调
+         *
+         * 当 Orchestrator 分发新事件时调用。
+         * 该函数在网络线程上下文中执行，必须加锁并将事件放入待处理队列，
+         * 然后通过 screen_.PostEvent 通知 UI 线程刷新。
+         */
         void on_new_event(const core::EventSnapshot &snap)
         {
             {
@@ -230,6 +249,12 @@ namespace ui
             screen_.PostEvent(Event::Custom);
         }
 
+        /**
+         * @brief 应用待处理事件
+         *
+         * 在 UI 渲染帧开始前调用。将 pending_ 队列中的事件移动到
+         * 用于显示的 snapshots_ 列表中，并更新菜单选中项。
+         */
         void apply_pending_events()
         {
             std::lock_guard lock(data_mtx_);
