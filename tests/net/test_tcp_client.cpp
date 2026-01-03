@@ -6,7 +6,7 @@
 
 #include "eunet/core/orchestrator.hpp"
 #include "eunet/core/sink.hpp"
-#include "eunet/net/async_tcp_client.hpp"
+#include "eunet/net/tcp_client.hpp"
 #include "eunet/platform/time.hpp"
 
 // 1. 实现一个简单的 ConsoleSink 用于观察事件流
@@ -46,7 +46,7 @@ int main()
     using namespace net::tcp;
     using namespace std::chrono_literals;
 
-    std::cout << "--- EuNet AsyncTCPClient Test ---" << std::endl;
+    std::cout << "--- EuNet TCPClient Test ---" << std::endl;
 
     // 2. 初始化核心组件
     core::Orchestrator orch;
@@ -56,7 +56,7 @@ int main()
     orch.attach(console_sink);
 
     // 3. 创建异步客户端
-    AsyncTCPClient client(orch);
+    TCPClient client(orch);
 
     // 4. 执行测试流程：连接 -> 发送 -> 接收
     const std::string host = "www.baidu.com";

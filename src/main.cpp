@@ -3,7 +3,6 @@
 #include <chrono>
 
 #include "eunet/core/orchestrator.hpp"
-#include "eunet/net/async_tcp_client.hpp"
 #include "eunet/tui/tui_app.hpp"
 #include "eunet/net/http_scenario.hpp"
 

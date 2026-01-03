@@ -1,5 +1,5 @@
-#ifndef INCLUDE_EUNET_NET_ASYNC_TCP_CLIENT
-#define INCLUDE_EUNET_NET_ASYNC_TCP_CLIENT
+#ifndef INCLUDE_EUNET_NET_TCP_CLIENT
+#define INCLUDE_EUNET_NET_TCP_CLIENT
 
 #include <vector>
 #include <string>
@@ -12,7 +12,7 @@
 
 namespace net::tcp
 {
-    class AsyncTCPClient
+    class TCPClient
     {
     private:
         core::Orchestrator &orch;
@@ -20,14 +20,14 @@ namespace net::tcp
         std::optional<platform::net::TCPSocket> m_sock;
 
     public:
-        explicit AsyncTCPClient(core::Orchestrator &o);
-        ~AsyncTCPClient();
+        explicit TCPClient(core::Orchestrator &o);
+        ~TCPClient();
 
         // 禁止拷贝，允许移动
-        AsyncTCPClient(const AsyncTCPClient &) = delete;
-        AsyncTCPClient &operator=(const AsyncTCPClient &) = delete;
-        AsyncTCPClient(AsyncTCPClient &&) = default;
-        AsyncTCPClient &operator=(AsyncTCPClient &&) = default;
+        TCPClient(const TCPClient &) = delete;
+        TCPClient &operator=(const TCPClient &) = delete;
+        TCPClient(TCPClient &&) = default;
+        TCPClient &operator=(TCPClient &&) = default;
 
     public:
         util::ResultV<void> connect(
@@ -43,4 +43,4 @@ namespace net::tcp
     };
 }
 
-#endif
+#endif // INCLUDE_EUNET_NET_TCP_CLIENT
