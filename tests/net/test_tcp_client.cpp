@@ -36,7 +36,7 @@ public:
 
         if (snap.error)
         {
-            std::cout << "  └─ \033[31mError:\033[0m " << snap.error.format() << std::endl;
+            std::cout << "  └─ \033[31mError:\033[0m " << snap.error->format() << std::endl;
         }
     }
 };
