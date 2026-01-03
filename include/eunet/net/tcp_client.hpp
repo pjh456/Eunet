@@ -12,6 +12,13 @@
 
 namespace net::tcp
 {
+    /**
+     * @brief 可观测的 TCP 客户端
+     *
+     * 封装了 TCP 连接建立和数据收发过程。
+     * 关键特性是它会在关键节点（DNS, Connect Start, Success, Send, Recv）
+     * 主动向 Orchestrator 发送 Event，从而实现可视化。
+     */
     class TCPClient
     {
     private:
@@ -30,6 +37,16 @@ namespace net::tcp
         TCPClient &operator=(TCPClient &&) = default;
 
     public:
+        /**
+         * @brief 发起连接
+         *
+         * 执行 DNS 解析（如果需要）并建立 TCP 连接。
+         * 过程中会产生多个 Event。
+         *
+         * @param host 目标主机名或 IP
+         * @param port 目标端口
+         * @param timeout_ms 超时限制
+         */
         util::ResultV<void> connect(
             const std::string &host, uint16_t port, int timeout_ms = 3000);
         util::ResultV<size_t> send(

@@ -30,16 +30,19 @@ namespace net::tcp
         using Ret = util::ResultV<void>;
         using util::Error;
 
+        // 上报 DNS 解析开始事件
         (void)emit_event(
             core::Event::info(
                 core::EventType::DNS_RESOLVE_START,
                 "Resolving host: " + host));
 
+        // 调用底层 Resolver 进行域名解析
         auto resolve_res =
             platform::net::DNSResolver::resolve(
                 host, port,
                 platform::net::AddressFamily::IPv4);
 
+        // 检查解析结果 如果失败则上报 DNS 解析失败事件并返回
         if (resolve_res.is_err())
         {
             auto err = resolve_res.unwrap_err();
@@ -57,20 +60,26 @@ namespace net::tcp
                     .build());
         }
 
+        // 获取解析到的第一个 Endpoint
         const auto &ep = resolve_res.unwrap().front();
 
+        // 上报 DNS 解析完成事件
         (void)emit_event(
             core::Event::info(
                 core::EventType::DNS_RESOLVE_DONE,
                 "Resolved to: " + to_string(ep)));
 
+        // 上报 TCP 连接开始事件
         (void)emit_event(
             core::Event::info(
                 core::EventType::TCP_CONNECT_START,
                 fmt::format("Connecting to {}:{} (timeout={}ms)...",
                             host, port, timeout_ms)));
 
+        // 调用底层 TCP Connection 的连接逻辑
         auto conn_res = TCPConnection::connect(ep, m_poller, timeout_ms);
+
+        // 检查连接结果 如果失败则上报连接失败事件
         if (conn_res.is_err())
         {
             auto err = conn_res.unwrap_err();
@@ -88,8 +97,10 @@ namespace net::tcp
                     .build());
         }
 
+        // 保存连接对象所有权
         m_conn.emplace(std::move(conn_res.unwrap()));
 
+        // 上报 TCP 连接成功事件 附带分配的 FD
         (void)emit_event(
             core::Event::info(
                 core::EventType::TCP_CONNECT_SUCCESS,
