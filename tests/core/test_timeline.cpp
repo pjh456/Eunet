@@ -78,7 +78,7 @@ void test_timeline()
         auto errs = tl.query_errors();
         assert(errs.size() == 1);
         assert(errs.front().error);
-        assert(errs.front().error.domain() == util::ErrorDomain::Transport);
+        assert(errs.front().error->domain() == util::ErrorDomain::Transport);
     }
 
     // 8. query_by_time

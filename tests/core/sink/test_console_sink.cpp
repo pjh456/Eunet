@@ -33,7 +33,7 @@ static EventSnapshot make_snapshot(
         .fd = fd,
         .state = state,
         .ts = e.ts,
-        .error = e.error,
+        .error = error ? e.error : std::nullopt,
     };
 }
 
