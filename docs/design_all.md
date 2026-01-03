@@ -27,13 +27,13 @@
 
 以下是各目录的职责摘要，稍后将展开每个文件的详细设计。
 
-### 3.1 `util/` (通用工具)
+### 3.1 [`util/` (通用工具)](./design/util_design.md)
 该模块不依赖任何业务逻辑，提供纯粹的 C++ 工具类。
 *   **error.hpp/cpp**: 定义了统一的错误类型 `Error`，包含域（Domain）、类别（Category）和严重程度。
 *   **result.hpp**: 实现了 `Result<T, E>` 模版，用于替代异常处理，提供类似 Rust 的链式调用（`map`, `and_then`）。
 *   **byte_buffer.hpp/cpp**: 提供类似 Netty 的 `ByteBuffer`，支持自动扩容、读写指针管理。
 
-### 3.2 `platform/` (平台适配)
+### 3.2 [`platform/` (平台适配)](./design/platform_design.md.md)
 该模块直接与 Linux Kernel 交互。
 *   **fd.hpp/cpp**: 文件描述符的 RAII 封装，确保 `close` 被调用。
 *   **poller.hpp/cpp**: `epoll` 的面向对象封装，处理 IO 多路复用。
@@ -46,7 +46,7 @@
     *   **endpoint.hpp**: IP 地址与端口封装。
     *   **dns_resolver.hpp**: 域名解析封装。
 
-### 3.3 `core/` (核心引擎)
+### 3.3 [`core/` (核心引擎)](./design/core_design.md)
 该模块不涉及具体的 Socket API，只关心数据流和状态。
 *   **event.hpp/cpp**: 定义系统中所有可能发生的事件结构。
 *   **event_snapshot.hpp**: 用于 UI 渲染的事件不可变快照。
@@ -56,7 +56,7 @@
 *   **engine.hpp**: 负责驱动 `Scenario` 运行的线程包装器。
 *   **sink.hpp**: 事件消费者的接口定义。
 
-### 3.4 `net/` (网络实现)
+### 3.4 [`net/` (网络实现)](./design/net_design.md)
 该模块组合 Platform 和 Core，执行实际的网络任务。
 *   **connection.hpp**: 连接抽象接口。
 *   **connection/tcp_connection.hpp**: 组合了 `TCPSocket` 和 `ByteBuffer`。
@@ -64,6 +64,6 @@
 *   **http_client.hpp/cpp**: 基于 `TCPClient` 和 `Boost.Beast` 实现 HTTP 协议解析。
 *   **http_scenario.hpp/cpp**: 定义具体的 HTTP 请求任务（URL解析、执行流程）。
 
-### 3.5 `ui/` (用户界面)
+### 3.5 [`tui/` (用户界面)](./design/tui_design.md)
 *   **tui_app.hpp**: 定义 FTXUI 的布局、渲染循环和数据绑定。
 *   **tui_sink.hpp**: 核心层到 UI 层的桥梁，处理线程安全的事件投递。
