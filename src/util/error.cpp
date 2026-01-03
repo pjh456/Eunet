@@ -49,13 +49,6 @@ namespace util
     ErrorBuilder Error::state() { return create().state(); }
     ErrorBuilder Error::internal() { return create().internal(); }
 
-    Error Error::wrap(Error cause) const
-    {
-        Error e;
-        e.m_cause = std::make_shared<Error>(std::move(cause));
-        return e;
-    }
-
     ErrorDomain Error::domain() const noexcept { return m_data ? m_data->domain : ErrorDomain::None; }
     ErrorCategory Error::category() const noexcept { return m_data ? m_data->category : ErrorCategory::Unknown; }
     int Error::code() const noexcept { return m_data ? m_data->code : 0; }

@@ -9,6 +9,12 @@
 
 namespace util
 {
+    /**
+     * @brief 错误域定义
+     *
+     * 用于区分错误产生的逻辑层次或子系统。
+     * 不同的域有助于在上层逻辑中快速定位问题源头。
+     */
     enum class ErrorDomain
     {
         None = 0,
@@ -29,7 +35,12 @@ namespace util
         Internal // 库内部逻辑错误 (Assert 失败, 空指针)
     };
 
-    // 错误的语义性质（用于决定业务逻辑：是否重试、是否报错等）
+    /**
+     * @brief 错误分类
+     *
+     * 定义错误的语义性质。这是业务逻辑判断如何处理错误的关键依据。
+     * 例如：Busy 或 Timeout 通常意味着可以重试。
+     */
     enum class ErrorCategory
     {
         Success = 0,
@@ -70,6 +81,11 @@ namespace util
         Cancelled // 用户点击了“停止”按钮
     };
 
+    /**
+     * @brief 错误严重程度
+     *
+     * 用于 UI 展示或日志分级的元数据。
+     */
     enum class ErrorSeverity
     {
         Fatal,     // 红色：连接彻底失败，无法恢复 (NXDOMAIN, ConnectionRefused)
@@ -80,6 +96,12 @@ namespace util
     class ErrorBuilder;
     class Error;
 
+    /**
+     * @brief 错误数据载体
+     *
+     * 存储错误的具体信息，包括错误码、描述文本和上下文。
+     * 该结构体通常由 Error 类通过共享指针管理。
+     */
     struct ErrorData
     {
         ErrorDomain domain = ErrorDomain::None;
@@ -92,6 +114,14 @@ namespace util
         std::string format() const;
     };
 
+    /**
+     * @brief 统一错误处理类
+     *
+     * 该类是系统中传递错误的核心载体。它采用值语义（内部引用计数），
+     * 支持错误链（Caused By）机制，允许保留错误的原始触发原因。
+     *
+     * @note 该类设计为轻量级复制，可安全地在 Result<T, E> 中传递。
+     */
     class Error
     {
     private:
@@ -99,18 +129,74 @@ namespace util
         std::shared_ptr<Error> m_cause; // 错误链
 
     public:
+        /**
+         * @brief 创建一个错误构建器
+         *
+         * @return ErrorBuilder 用于链式构造 Error 对象
+         */
         static ErrorBuilder create();
 
+        /**
+         * @brief 创建一个错误域为 DNS 的错误构建器
+         *
+         * @return ErrorBuilder 用于链式构造 Error 对象
+         */
         static ErrorBuilder dns();
+
+        /**
+         * @brief 创建一个错误域为 transport 的错误构建器
+         *
+         * @return ErrorBuilder 用于链式构造 Error 对象
+         */
         static ErrorBuilder transport();
+
+        /**
+         * @brief 创建一个错误域为 security 的错误构建器
+         *
+         * @return ErrorBuilder 用于链式构造 Error 对象
+         */
         static ErrorBuilder security();
+
+        /**
+         * @brief 创建一个错误域为 protocol 的错误构建器
+         *
+         * @return ErrorBuilder 用于链式构造 Error 对象
+         */
         static ErrorBuilder protocol();
 
+        /**
+         * @brief 创建一个错误域为 system 的错误构建器
+         *
+         * @return ErrorBuilder 用于链式构造 Error 对象
+         */
         static ErrorBuilder system();
+
+        /**
+         * @brief 创建一个错误域为 hardware 的错误构建器
+         *
+         * @return ErrorBuilder 用于链式构造 Error 对象
+         */
         static ErrorBuilder hardware();
 
+        /**
+         * @brief 创建一个错误域为 config 的错误构建器
+         *
+         * @return ErrorBuilder 用于链式构造 Error 对象
+         */
         static ErrorBuilder config();
+
+        /**
+         * @brief 创建一个错误域为 state 的错误构建器
+         *
+         * @return ErrorBuilder 用于链式构造 Error 对象
+         */
         static ErrorBuilder state();
+
+        /**
+         * @brief 创建一个错误域为 internal 的错误构建器
+         *
+         * @return ErrorBuilder 用于链式构造 Error 对象
+         */
         static ErrorBuilder internal();
 
     public:
@@ -125,7 +211,14 @@ namespace util
         Error &operator=(Error &&) noexcept = default;
 
     public:
-        Error wrap(Error cause) const;
+        /**
+         * @brief 包装一个底层原因错误
+         *
+         * 包装一个错误，并将当前错误作为被包装错误的父级原因。
+         *
+         * @param cause 导致当前错误的原始错误
+         */
+        void wrap(std::shared_ptr<Error> err);
 
     public:
         bool is_ok() const noexcept { return !m_data; }
@@ -139,11 +232,13 @@ namespace util
         const Error *cause() const noexcept;
 
         std::string format() const;
-
-    public:
-        void wrap(std::shared_ptr<Error> err);
     };
 
+    /**
+     * @brief 错误构建器
+     *
+     * 采用 Builder 模式构造 Error 对象，允许流式设置属性。
+     */
     class ErrorBuilder
     {
         friend class Error;
