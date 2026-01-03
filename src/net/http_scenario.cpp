@@ -61,12 +61,21 @@ namespace net::http
 
         if (res.is_err())
         {
-            return util::ResultV<void>::Err(
-                util::Error::protocol()
-                    .message("HTTP GET failed")
-                    .context("HttpGetScenario")
-                    .wrap(res.unwrap_err())
-                    .build());
+            auto err = res.unwrap_err();
+            if (err.category() != util::ErrorCategory::PeerClosed)
+            {
+                (void)orch.emit(
+                    core::Event::failure(
+                        core::EventType::CONNECTION_IDLE,
+                        err));
+
+                return util::ResultV<void>::Err(
+                    util::Error::protocol()
+                        .message("HTTP GET failed")
+                        .context("HttpGetScenario")
+                        .wrap(res.unwrap_err())
+                        .build());
+            }
         }
 
         return util::ResultV<void>::Ok();

@@ -22,6 +22,8 @@ namespace net::http
     util::ResultV<HttpResponse>
     HTTPClient::get(const HttpRequest &cfg)
     {
+        bool headers_emitted = false;
+
         // ---------------- connect ----------------
         {
             auto r = tcp.connect(cfg.host, cfg.port);
@@ -64,8 +66,12 @@ namespace net::http
             auto r = tcp.send(send_buf);
             if (r.is_err())
             {
-                tcp.close();
-                return util::ResultV<HttpResponse>::Err(r.unwrap_err());
+                auto err = r.unwrap_err();
+                if (err.category() != util::ErrorCategory::PeerClosed)
+                {
+                    tcp.close();
+                    return util::ResultV<HttpResponse>::Err(r.unwrap_err());
+                }
             }
         }
 
@@ -91,6 +97,15 @@ namespace net::http
                 boost::system::error_code ec;
                 parser.put(bytes, ec);
 
+                if (parser.is_header_done() && !headers_emitted)
+                {
+                    (void)emit(
+                        core::Event::info(
+                            core::EventType::HTTP_HEADERS_RECEIVED,
+                            "..."));
+                    headers_emitted = true;
+                }
+
                 if (ec)
                 {
                     tcp.close();
@@ -112,15 +127,22 @@ namespace net::http
 
             if (err.category() == util::ErrorCategory::PeerClosed)
             {
-                if (parser.is_done())
-                    break;
+                // 告知 parser：输入已结束（EOF）
+                boost::system::error_code ec;
+                parser.put(boost::asio::const_buffer{}, ec);
 
-                tcp.close();
-                return util::ResultV<HttpResponse>::Err(
-                    util::Error::protocol()
-                        .message("Connection closed before HTTP response completed")
-                        .context("TCP EOF")
-                        .build());
+                if (ec)
+                {
+                    tcp.close();
+                    return util::ResultV<HttpResponse>::Err(
+                        util::Error::protocol()
+                            .message("HTTP parse error on EOF")
+                            .context(ec.message())
+                            .build());
+                }
+
+                // 现在 parser 很可能已经 is_done()
+                break;
             }
 
             // ---------- real failure ----------

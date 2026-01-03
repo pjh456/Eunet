@@ -123,7 +123,6 @@ namespace platform::net
             {
                 return Ret::Err(
                     Error::transport()
-                        .success()
                         .peer_closed()
                         .message("Connection closed by peer")
                         .context("recv")

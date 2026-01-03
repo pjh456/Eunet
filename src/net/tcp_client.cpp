@@ -211,6 +211,9 @@ namespace net::tcp
                     core::EventType::HTTP_RECEIVED,
                     err, m_conn->fd()));
 
+            if (err.category() == util::ErrorCategory::PeerClosed)
+                return Ret::Err(err);
+
             return Ret::Err(
                 Error::transport()
                     .message("connection recv failed")
