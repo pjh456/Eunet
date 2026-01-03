@@ -39,6 +39,7 @@ void test_fsm_normal_flow()
 {
     LifecycleFSM fsm;
 
+    // DNS
     fsm.on_event(make_ok(EventType::DNS_RESOLVE_START, 3));
     assert(fsm.current_fd() == 3);
     assert(fsm.current_state() == LifeState::Resolving);
@@ -46,17 +47,22 @@ void test_fsm_normal_flow()
     fsm.on_event(make_ok(EventType::DNS_RESOLVE_DONE, 3));
     assert(fsm.current_state() == LifeState::Connecting);
 
+    // TCP
     fsm.on_event(make_ok(EventType::TCP_CONNECT_SUCCESS, 3));
     assert(fsm.current_state() == LifeState::Established);
 
-    fsm.on_event(make_ok(EventType::HTTP_SENT, 3));
+    // HTTP send
+    fsm.on_event(make_ok(EventType::HTTP_REQUEST_BUILD, 3));
     assert(fsm.current_state() == LifeState::Sending);
 
-    fsm.on_event(make_ok(EventType::HTTP_RECEIVED, 3));
-    // assert(fsm.current_state() == LifeState::Receiving);
+    fsm.on_event(make_ok(EventType::HTTP_SENT, 3));
+    assert(fsm.current_state() == LifeState::Receiving);
 
-    // Receiving → Finished 是无条件的
-    // fsm.on_event(make_ok(EventType::REQUEST_RECEIVED, 3));
+    // HTTP recv
+    fsm.on_event(make_ok(EventType::HTTP_HEADERS_RECEIVED, 3));
+    assert(fsm.current_state() == LifeState::Receiving);
+
+    fsm.on_event(make_ok(EventType::HTTP_BODY_DONE, 3));
     assert(fsm.current_state() == LifeState::Finished);
 
     assert(!fsm.has_error());
@@ -99,6 +105,9 @@ void test_fsm_error_is_terminal()
 
     fsm.on_event(make_ok(EventType::TCP_CONNECT_SUCCESS, 6));
     assert(fsm.current_state() == LifeState::Error);
+
+    fsm.on_event(make_ok(EventType::HTTP_BODY_DONE, 6));
+    assert(fsm.current_state() == LifeState::Error);
 }
 
 void test_fsm_timestamp_behavior()
@@ -107,6 +116,7 @@ void test_fsm_timestamp_behavior()
 
     auto t0 = platform::time::wall_now();
     fsm.on_event(make_ok(EventType::DNS_RESOLVE_START, 7));
+
     auto start = fsm.start_timestamp();
     auto last = fsm.last_timestamp();
 
@@ -132,6 +142,7 @@ void test_manager_basic()
     Event e = make_ok(EventType::DNS_RESOLVE_START, 10);
     e.session_id = 12345;
     mgr.on_event(e);
+
     assert(mgr.size() == 1);
     assert(mgr.has(e.session_id));
 
@@ -140,14 +151,16 @@ void test_manager_basic()
     assert(fsm->current_state() == LifeState::Resolving);
 }
 
-void test_manager_multi_fd()
+void test_manager_multi_session()
 {
     FsmManager mgr;
 
     Event e1 = make_ok(EventType::DNS_RESOLVE_START, 1);
     e1.session_id = 12321;
+
     Event e2 = make_ok(EventType::DNS_RESOLVE_START, 2);
     e2.session_id = 12322;
+
     Event e3 = make_ok(EventType::DNS_RESOLVE_START, 3);
     e3.session_id = 12323;
 
@@ -164,6 +177,7 @@ void test_manager_multi_fd()
 void test_manager_error_fsm_persist()
 {
     FsmManager mgr;
+
     Event e = make_error(EventType::TCP_CONNECT_START, 20);
     e.session_id = 11111;
     mgr.on_event(e);
@@ -187,7 +201,7 @@ int main()
     test_fsm_timestamp_behavior();
 
     test_manager_basic();
-    test_manager_multi_fd();
+    test_manager_multi_session();
     test_manager_error_fsm_persist();
 
     std::cout << "[LifecycleFSM] all tests passed\n";
