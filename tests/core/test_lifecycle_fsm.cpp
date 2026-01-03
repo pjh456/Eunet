@@ -91,9 +91,9 @@ void test_fsm_error_interrupt()
     assert(fsm.has_error());
 
     auto err = fsm.get_last_error();
-    assert(err);
-    assert(err.domain() == util::ErrorDomain::System);
-    assert(err.message() == "dns failed");
+    assert(err.has_value());
+    assert(err->domain() == util::ErrorDomain::System);
+    assert(err->message() == "dns failed");
 }
 
 void test_fsm_error_is_terminal()
