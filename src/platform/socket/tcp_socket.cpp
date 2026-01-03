@@ -60,7 +60,8 @@ namespace platform::net
             if (n == 0)
             {
                 return Ret::Err(
-                    Error::transport()
+                    Error::create()
+                        .success()
                         .peer_closed()
                         .message("Connection closed by peer")
                         .context("recv")
@@ -124,6 +125,7 @@ namespace platform::net
             {
                 return Ret::Err(
                     Error::transport()
+                        .success()
                         .peer_closed()
                         .message("Connection closed by peer")
                         .context("recv")
