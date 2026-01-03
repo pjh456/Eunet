@@ -25,6 +25,12 @@ namespace core
         Error        // 任意错误
     };
 
+    /**
+     * @brief 生命周期状态机
+     *
+     * 维护单个网络连接的生命周期状态。
+     * 根据输入的 Event 流，推导当前连接处于 Init, Connecting, Established 等哪个阶段。
+     */
     class LifecycleFSM
     {
     public:
@@ -53,6 +59,14 @@ namespace core
         std::optional<util::Error> get_last_error() const noexcept;
 
     public:
+        /**
+         * @brief 响应新事件并更新状态
+         *
+         * 核心状态流转逻辑。
+         * 例如：收到 TCP_CONNECT_SUCCESS 事件时，状态从 Connecting 变为 Established。
+         *
+         * @param e 发生的事件
+         */
         void on_event(const Event &e);
 
     private:

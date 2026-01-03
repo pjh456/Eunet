@@ -17,30 +17,30 @@ namespace core
         using Ret = EmitResult;
         using util::Error;
 
+        // 加锁 保护 Timeline 和 FSM 以及 Sink 列表
         std::lock_guard lock(mtx);
 
-        // 1. 如果事件没有 SessionId 且关联了 FD，尝试从 FSM 恢复或分配
-        // （此处简化处理，实际应该在 Client 创建时就分配好 ID）
-
-        // 2. 更新 Timeline
+        // 将事件追加到 Timeline 数据库中
         auto idx_res = timeline.push(e);
         if (!idx_res.is_ok())
         {
+            // 记录 Timeline 写入失败通常意味着内存不足
             return Ret::Err(
                 Error::internal()
-                    .resource_exhausted() // 假设是内存分配失败导致 push 失败
+                    .resource_exhausted()
                     .message("Failed to append event to timeline")
                     .context("Orchestrator::emit")
                     .wrap(idx_res.unwrap_err())
                     .build());
         }
 
-        // 3. 更新 FSM（注意：FsmManager 内部也需要同步）
+        // 将事件输入状态机管理器 更新对应 Session 的生命周期状态
         fsm_manager.on_event(e);
 
-        // 4. 快照并分发
-        const auto *fsm = fsm_manager.get(e.session_id); // 改用 session_id 索引
+        // 获取当前 Session 的状态机实例 如果是新建的则可能需要查找
+        const auto *fsm = fsm_manager.get(e.session_id);
 
+        // 从 Timeline 取回刚刚存入的事件以确保一致性
         auto latest_event_result = timeline.latest_event();
         if (latest_event_result.is_err())
         {
@@ -52,6 +52,8 @@ namespace core
                     .build());
         }
 
+        // 构建事件快照 包含原始事件、当前状态、累积错误等
+        // 快照是不可变的数据结构 适合跨线程传递给 UI
         EventSnapshot snap{
             .event = e,
             .fd = e.fd.fd,
@@ -60,6 +62,7 @@ namespace core
             .error = fsm ? fsm->get_last_error() : std::nullopt,
         };
 
+        // 遍历所有注册的 Sink 分发快照
         for (auto &sink : sinks)
         {
             if (sink)
