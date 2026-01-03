@@ -7,6 +7,12 @@
 
 namespace ui
 {
+    /**
+     * @brief UI 事件接收器
+     *
+     * 实现了 IEventSink 接口。作为 Core 层到 UI 层的桥梁。
+     * 主要职责是接收快照，并触发 FTXUI 的线程安全重绘事件 (PostEvent)。
+     */
     class TuiSink : public core::sink::IEventSink
     {
     private:
