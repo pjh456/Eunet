@@ -171,25 +171,48 @@ eunet http https://example.com
 
 ---
 
-## 📦 构建与运行（占位）
+## 📦 构建与运行
 
-> 当前项目处于早期阶段，构建方式将在核心功能稳定后补充。
+在部署或构建 `eunet` 项目之前，需要确保依赖库可用。
 
-```bash
-# TODO
-```
+不同类型的依赖处理方式不同：
+
+### 系统库依赖（需要提前安装）
+
+|库名|用途|下载方式|
+|----|---|----|
+|`boost`|HTTP 网络请求部分|包管理器安装 `boost-devel` 或其他指定名字|
+|`fmt`|格式化输出|包管理器安装 `fmt-devel` 或其他指定名字|
 
 ---
 
+### 第三方开源库（需要手动拉取）
+
+|库名|用途|下载方式|
+|----|---|----|
+|`FTXUI`|TUI 组件库|通过 `git clone https://github.com/ArthurSonzogni/FTXUI.git` 拉取到 `include/` 文件夹内|
+
+### 构建
+
+依赖安装完毕后，进入项目根目录并执行以下命令：
+
+```bash
+mkdir -p build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build .
+```
+
+即可自动构建。
+
 ## 🧪 开发路线（简要）
 
-* [ ] 最小 ICMP ping 实现
-* [ ] TCP 连接 + 时间统计
-* [ ] HTTP 请求生命周期拆解
-* [ ] 事件时间线模型
-* [ ] TUI 展示
-* [ ] openEuler 适配与测试
-* [ ] 文档与示例补充
+* [-] 最小 ICMP ping 实现
+* [-] TCP 连接 + 时间统计
+* [-] HTTP 请求生命周期拆解
+* [-] 事件时间线模型
+* [-] TUI 展示
+* [-] openEuler 适配与测试
+* [-] 文档与示例补充
 
 ---
 
