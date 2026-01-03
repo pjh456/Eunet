@@ -33,7 +33,7 @@
 *   **result.hpp**: 实现了 `Result<T, E>` 模版，用于替代异常处理，提供类似 Rust 的链式调用（`map`, `and_then`）。
 *   **byte_buffer.hpp/cpp**: 提供类似 Netty 的 `ByteBuffer`，支持自动扩容、读写指针管理。
 
-### 3.2 [`platform/` (平台适配)](./design/platform_design.md.md)
+### 3.2 [`platform/` (平台适配)](./design/platform_design.md)
 该模块直接与 Linux Kernel 交互。
 *   **fd.hpp/cpp**: 文件描述符的 RAII 封装，确保 `close` 被调用。
 *   **poller.hpp/cpp**: `epoll` 的面向对象封装，处理 IO 多路复用。
@@ -67,3 +67,4 @@
 ### 3.5 [`tui/` (用户界面)](./design/tui_design.md)
 *   **tui_app.hpp**: 定义 FTXUI 的布局、渲染循环和数据绑定。
 *   **tui_sink.hpp**: 核心层到 UI 层的桥梁，处理线程安全的事件投递。
+
