@@ -120,9 +120,9 @@ namespace ui
         Element render_content()
         {
             return hbox({
-                event_menu_->Render() | flex,
+                event_menu_->Render() | frame | vscroll_indicator | size(WIDTH, LESS_THAN, 40) | flex,
                 separator(),
-                render_detail_panel() | flex,
+                render_detail_panel() | size(WIDTH, GREATER_THAN, 60) | flex,
             });
         }
 
@@ -159,7 +159,7 @@ namespace ui
                 lines.push_back(text(snap.error.format()) | color(Color::RedLight));
             }
 
-            return vbox(std::move(lines));
+            return vbox(std::move(lines)) | frame | vscroll_indicator;
         }
 
         // ============================================================
