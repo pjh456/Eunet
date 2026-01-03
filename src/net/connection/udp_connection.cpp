@@ -5,6 +5,7 @@ namespace net::udp
     util::ResultV<UDPConnection>
     UDPConnection::connect(
         const platform::net::Endpoint &ep,
+        platform::poller::Poller &poller,
         int timeout_ms)
     {
         using platform::net::AddressFamily;
@@ -15,7 +16,7 @@ namespace net::udp
                 ? AddressFamily::IPv6
                 : AddressFamily::IPv4;
 
-        auto sock = platform::net::UDPSocket::create(domain);
+        auto sock = platform::net::UDPSocket::create(poller, domain);
         if (sock.is_err())
             return util::ResultV<UDPConnection>::Err(
                 sock.unwrap_err());

@@ -16,8 +16,9 @@ namespace platform::net
     {
     protected:
         fd::Fd m_fd;
+        poller::Poller &m_poller;
 
-        explicit BaseSocket(fd::Fd &&fd);
+        explicit BaseSocket(fd::Fd &&fd, poller::Poller &poller);
 
     public:
         BaseSocket(const BaseSocket &) = delete;

@@ -23,6 +23,7 @@ namespace net::udp
     public:
         static util::ResultV<UDPConnection>
         connect(const platform::net::Endpoint &ep,
+                platform::poller::Poller &poller,
                 int timeout_ms = -1);
 
         static UDPConnection

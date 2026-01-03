@@ -69,7 +69,7 @@ namespace net::http
             }
         }
 
-        emit(core::Event::info(
+        (void)emit(core::Event::info(
             core::EventType::HTTP_SENT,
             "HTTP request sent"));
 

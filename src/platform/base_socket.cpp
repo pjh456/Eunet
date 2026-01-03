@@ -6,8 +6,8 @@
 
 namespace platform::net
 {
-    BaseSocket::BaseSocket(fd::Fd &&fd)
-        : m_fd(std::move(fd)) {}
+    BaseSocket::BaseSocket(fd::Fd &&fd, poller::Poller &poller)
+        : m_fd(std::move(fd)), m_poller(poller) {}
 
     fd::FdView
     BaseSocket::view()
