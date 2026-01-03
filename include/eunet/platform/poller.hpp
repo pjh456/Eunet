@@ -32,6 +32,12 @@ namespace platform::poller
         bool is_writable() { return events & static_cast<uint32_t>(PollEventType::Write); }
     };
 
+    /**
+     * @brief Epoll 多路复用器封装
+     *
+     * 封装 Linux epoll 相关的系统调用。
+     * 提供面向对象的接口来管理关注的文件描述符事件。
+     */
     class Poller
     {
     public:
@@ -66,16 +72,46 @@ namespace platform::poller
         bool has_fd(int fd) const noexcept;
 
     public:
+        /**
+         * @brief 注册或更新感兴趣的事件
+         *
+         * @param fd 目标文件描述符视图
+         * @param events 感兴趣的事件掩码 (如 EPOLLIN | EPOLLOUT)
+         * @return ResultV<void> 成功或系统错误
+         */
         util::ResultV<void> add(
             platform::fd::FdView fd,
             std::uint32_t events) noexcept;
+
+        /**
+         * @brief 注册或更新感兴趣的事件
+         *
+         * @param fd 目标文件描述符视图
+         * @param events 感兴趣的事件掩码 (如 EPOLLIN | EPOLLOUT)
+         * @return ResultV<void> 成功或系统错误
+         */
         util::ResultV<void> modify(
             platform::fd::FdView fd,
             std::uint32_t events) noexcept;
+
+        /**
+         * @brief 移除感兴趣的事件
+         *
+         * @param fd 目标文件描述符视图
+         * @return ResultV<void> 成功或系统错误
+         */
         util::ResultV<void>
         remove(platform::fd::FdView fd) noexcept;
 
     public:
+        /**
+         * @brief 等待事件发生
+         *
+         * 封装 epoll_wait。
+         *
+         * @param timeout_ms 超时时间（毫秒），-1 表示无限等待
+         * @return ResultV<std::vector<PollEvent>> 就绪的事件列表
+         */
         util::ResultV<std::vector<PollEvent>>
         wait(int timeout_ms) noexcept;
     };

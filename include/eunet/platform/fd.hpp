@@ -5,7 +5,6 @@
 
 #include "eunet/util/result.hpp"
 #include "eunet/util/error.hpp"
-// #include "eunet/platform/sys_error.hpp"
 
 namespace platform::fd
 {
@@ -13,6 +12,13 @@ namespace platform::fd
     struct FdView;
     struct Pipe;
 
+    /**
+     * @brief 文件描述符 (RAII 封装)
+     *
+     * 独占管理底层文件描述符的生命周期。
+     * 确保在对象析构时自动调用 close 关闭资源。
+     * 禁止拷贝，只允许移动 (Move-only)。
+     */
     class Fd
     {
     public:
@@ -54,6 +60,13 @@ namespace platform::fd
         void reset(int new_fd) noexcept;
     };
 
+    /**
+     * @brief 文件描述符视图
+     *
+     * 不持有所有权的文件描述符包装，仅用于参数传递。
+     * 类似于 std::string_view 之于 std::string。
+     * 使用者需自行确保 Fd 的持有者在 View 使用期间存活。
+     */
     struct FdView
     {
         int fd;
