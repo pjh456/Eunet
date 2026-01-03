@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <mutex>
+#include <optional>
 #include <unordered_map>
 
 #include "eunet/util/result.hpp"
@@ -36,7 +37,7 @@ namespace core
         TimeStamp start_ts{};
         TimeStamp last_ts{};
 
-        util::Error last_error;
+        std::optional<util::Error> last_error;
 
     public:
         explicit LifecycleFSM(int fd = -1);
@@ -49,7 +50,7 @@ namespace core
         TimeStamp last_timestamp() const noexcept;
 
         bool has_error() const noexcept;
-        util::Error get_last_error() const noexcept;
+        std::optional<util::Error> get_last_error() const noexcept;
 
     public:
         void on_event(const Event &e);

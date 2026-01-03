@@ -6,7 +6,8 @@
 
 namespace core
 {
-    LifecycleFSM::LifecycleFSM(int fd) : fd(fd) {}
+    LifecycleFSM::LifecycleFSM(int fd)
+        : fd(fd), last_error(std::nullopt) {}
 
     int LifecycleFSM::current_fd() const noexcept { return fd; }
     LifeState LifecycleFSM::current_state() const noexcept { return state; }
@@ -16,8 +17,8 @@ namespace core
     LifecycleFSM::TimeStamp
     LifecycleFSM::last_timestamp() const noexcept { return last_ts; }
 
-    bool LifecycleFSM::has_error() const noexcept { return !last_error.is_ok(); }
-    util::Error
+    bool LifecycleFSM::has_error() const noexcept { return last_error.has_value(); }
+    std::optional<util::Error>
     LifecycleFSM::get_last_error() const noexcept { return last_error; }
 
     void LifecycleFSM::on_event(const Event &e)
@@ -32,7 +33,7 @@ namespace core
         // -------- 全局错误处理 --------
         if (e.is_error())
         {
-            last_error = e.error;
+            last_error = e.error.value();
             transit(LifeState::Error);
             return;
         }
