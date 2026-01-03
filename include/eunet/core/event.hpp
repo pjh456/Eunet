@@ -38,12 +38,22 @@ namespace core
 
     using SessionId = uint64_t;
 
+    /**
+     * @brief 系统事件定义
+     *
+     * 代表系统中发生的任何有意义的状态变更。
+     * 事件是不可变的（创建后），并携带了发生的时间戳、关联的 FD 和 Session。
+     */
     struct Event
     {
     public:
+        /** 事件类型枚举 */
         EventType type;
+        /** 事件发生的墙上时间 */
         platform::time::WallPoint ts;
+        /** 关联的文件描述符（如果有） */
         platform::fd::FdView fd{-1};
+        /** 关联的会话 ID */
         SessionId session_id{0};
 
         std::string msg;
