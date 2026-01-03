@@ -1,6 +1,8 @@
 #ifndef INCLUDE_EUNET_CORE_EVENT_SNAPSHOT
 #define INCLUDE_EUNET_CORE_EVENT_SNAPSHOT
 
+#include <optional>
+
 #include "eunet/util/error.hpp"
 #include "eunet/core/event.hpp"
 #include "eunet/core/lifecycle_fsm.hpp"
@@ -13,7 +15,7 @@ namespace core
         int fd;
         LifeState state;
         platform::time::WallPoint ts;
-        util::Error error;
+        std::optional<util::Error> error = std::nullopt;
     };
 
 }
