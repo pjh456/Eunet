@@ -85,15 +85,24 @@ namespace util
 
     void ByteBuffer::compact()
     {
+        // 检查读取位置是否已经在头部 如果是则无需移动
         if (m_read_pos == 0)
             return;
 
+        // 计算当前未读数据的有效长度
         const size_t sz = size();
+
+        // 使用 memmove 将有效数据搬运到缓冲区起始位置
+        // 注意此处必须用 memmove 而非 memcpy 因为内存区域可能重叠
         std::memmove(
             m_storage.data(),
             m_storage.data() + m_read_pos,
             sz);
+
+        // 重置读取指针为 0
         m_read_pos = 0;
+
+        // 更新写入指针为有效数据长度
         m_write_pos = sz;
     }
 
