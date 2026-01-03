@@ -41,6 +41,7 @@ namespace net::http
 
         req.set(http::field::host, cfg.host);
         req.set(http::field::user_agent, "EuNet/0.1");
+        req.set(http::field::connection, "close");
 
         for (auto &[k, v] : cfg.headers)
             req.set(k, v);
