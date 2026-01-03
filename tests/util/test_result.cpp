@@ -34,7 +34,7 @@ static_assert(ValidResultTypes<int, std::string>);
 static_assert(!ValidResultTypes<int, int>);
 
 /* ============================================================
- * 编译期测试：map / map_or
+ * 编译期测试：map
  * ============================================================ */
 
 static_assert(requires {
@@ -49,20 +49,8 @@ static_assert(!requires {
         { return "x"; });
 });
 
-static_assert(requires {
-    Result<int, std::string>{1}.map_or(
-        [](int) -> std::string
-        { return "ok"; });
-});
-
-static_assert(!requires {
-    Result<int, std::string>{1}.map_or(
-        [](int) -> int
-        { return 1; });
-});
-
 /* ============================================================
- * 编译期测试：map_err / map_err_or
+ * 编译期测试：map_err
  * ============================================================ */
 
 static_assert(requires {
@@ -75,18 +63,6 @@ static_assert(!requires {
     Result<int, std::string>{1}.map_err(
         [](const std::string &) -> int
         { return 1; });
-});
-
-static_assert(requires {
-    Result<int, std::string>{1}.map_err_or(
-        [](const std::string &) -> int
-        { return 1; });
-});
-
-static_assert(!requires {
-    Result<int, std::string>{1}.map_err_or(
-        [](const std::string &) -> std::string
-        { return "x"; });
 });
 
 /* ============================================================
@@ -139,13 +115,6 @@ static_assert(requires {
 static_assert(requires {
     Result<void, std::string>::Ok().map(
         [] {});
-});
-
-// map_or: void -> E
-static_assert(requires {
-    Result<void, std::string>::Ok().map_or(
-        []
-        { return std::string("ok"); });
 });
 
 // map_err
@@ -253,7 +222,7 @@ void test_void_basic()
 }
 
 /* ============================================================
- * map / map_or 行为
+ * map 行为
  * ============================================================ */
 
 void test_map()
@@ -272,25 +241,8 @@ void test_map()
     assert(r2.unwrap_err() == "x");
 }
 
-void test_map_or()
-{
-    auto ok = Result<int, std::string>::Ok(3);
-    auto err = Result<int, std::string>::Err("fallback");
-
-    auto v1 = ok.map_or(
-        [](int x)
-        { return std::string(x, 'a'); });
-
-    auto v2 = err.map_or(
-        [](int)
-        { return std::string("never"); });
-
-    assert(v1 == "aaa");
-    assert(v2 == "fallback");
-}
-
 /* ============================================================
- * map_err / map_err_or 行为
+ * map_err 行为
  * ============================================================ */
 
 void test_map_err()
@@ -313,23 +265,6 @@ void test_map_err()
 
     assert(r1.unwrap() == 5);
     assert(r2.unwrap_err() == 3);
-}
-
-void test_map_err_or()
-{
-    auto ok = Result<int, std::string>::Ok(7);
-    auto err = Result<int, std::string>::Err("abc");
-
-    auto v1 = ok.map_err_or(
-        [](const std::string &)
-        { return 0; });
-
-    auto v2 = err.map_err_or(
-        [](const std::string &s)
-        { return static_cast<int>(s.size()); });
-
-    assert(v1 == 7);
-    assert(v2 == 3);
 }
 
 /* ============================================================
@@ -385,23 +320,6 @@ void test_void_map_void()
     assert(counter == 1);
 }
 
-void test_void_map_or()
-{
-    auto ok = Result<void, std::string>::Ok();
-    auto err = Result<void, std::string>::Err("fallback");
-
-    auto v1 = ok.map_or(
-        []
-        { return std::string("ok"); });
-
-    auto v2 = err.map_or(
-        []
-        { return std::string("never"); });
-
-    assert(v1 == "ok");
-    assert(v2 == "fallback");
-}
-
 void test_void_map_err()
 {
     auto ok = Result<void, std::string>::Ok();
@@ -417,21 +335,6 @@ void test_void_map_err()
 
     assert(r1.is_ok());
     assert(r2.unwrap_err() == 3);
-}
-
-void test_void_map_err_or()
-{
-    int called = 0;
-
-    auto ok = Result<void, std::string>::Ok();
-    auto err = Result<void, std::string>::Err("x");
-
-    ok.map_err_or([&](const std::string &)
-                  { ++called; });
-    err.map_err_or([&](const std::string &)
-                   { ++called; });
-
-    assert(called == 1);
 }
 
 void test_void_and_then()
@@ -468,16 +371,12 @@ int main()
     test_void_unwrap_exceptions();
 
     test_map();
-    test_map_or();
     test_map_err();
-    test_map_err_or();
     test_and_then();
 
     test_void_map_value();
     test_void_map_void();
-    test_void_map_or();
     test_void_map_err();
-    test_void_map_err_or();
     test_void_and_then();
 
     std::cout << "[Result] all tests passed.\n";
