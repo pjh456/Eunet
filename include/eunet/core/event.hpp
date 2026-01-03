@@ -28,6 +28,9 @@ namespace core
         // Data
         HTTP_SENT,
         HTTP_RECEIVED,
+        HTTP_REQUEST_BUILD,
+        HTTP_HEADERS_RECEIVED,
+        HTTP_BODY_DONE,
         // Lifecycle
         CONNECTION_IDLE, // 连接闲置中
         CONNECTION_CLOSED

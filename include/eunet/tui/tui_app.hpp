@@ -150,7 +150,7 @@ namespace ui
             lines.push_back(text("FD:     " + std::to_string(snap.fd)));
             lines.push_back(separator());
             lines.push_back(text("Message:") | bold);
-            lines.push_back(paragraph(snap.event.msg));
+            lines.push_back(paragraph(sanitize_for_tui(snap.event.msg)));
 
             if (snap.error)
             {
@@ -269,7 +269,33 @@ namespace ui
         {
             return snap.error ? "[!]" : "[✔]";
         }
+
+        inline std::string sanitize_for_tui(std::string_view s, size_t max_len = 512)
+        {
+            std::string out;
+            out.reserve(std::min(s.size(), max_len));
+
+            for (unsigned char c : s)
+            {
+                if (out.size() >= max_len)
+                    break;
+
+                // 允许的字符：可打印 ASCII + 换行
+                if (c == '\n' || c == '\r' || c == '\t')
+                    out.push_back(c);
+                else if (c >= 0x20 && c < 0x7f)
+                    out.push_back(c);
+                else
+                    out.push_back('.'); // 一律替换
+            }
+
+            if (s.size() > max_len)
+                out += "...";
+
+            return out;
+        }
     };
+
 }
 
 #endif
