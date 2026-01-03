@@ -8,12 +8,12 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# libcap-devel checker
-find_library(LIBCAP cap)
+# # libcap-devel checker
+# find_library(LIBCAP cap)
 
-if(NOT LIBCAP)
-    message(FATAL_ERROR "libcap not found, please install libcap-devel")
-endif()
+# if(NOT LIBCAP)
+# message(FATAL_ERROR "libcap not found, please install libcap-devel")
+# endif()
 
 # boost checker
 find_package(Boost REQUIRED COMPONENTS system)
