@@ -20,7 +20,7 @@ namespace core
         std::lock_guard lock(mtx);
 
         // 1. 如果事件没有 SessionId 且关联了 FD，尝试从 FSM 恢复或分配
-        // （此处简化处理，实际建议在 Client 创建时就分配好 ID）
+        // （此处简化处理，实际应该在 Client 创建时就分配好 ID）
 
         // 2. 更新 Timeline
         auto idx_res = timeline.push(e);
@@ -30,6 +30,7 @@ namespace core
                 Error::internal()
                     .resource_exhausted() // 假设是内存分配失败导致 push 失败
                     .message("Failed to append event to timeline")
+                    .context("Orchestrator::emit")
                     .wrap(idx_res.unwrap_err())
                     .build());
         }
@@ -45,8 +46,8 @@ namespace core
                 Error::internal()
                     .invalid_state()
                     .fatal()
-                    .message("FSM instance missing for active session")
-                    .context(std::to_string(e.session_id))
+                    .message("FSM instance missing for active session " + std::to_string(e.session_id))
+                    .context("Orchestrator::emit")
                     .build());
         }
 
@@ -56,7 +57,7 @@ namespace core
             return Ret::Err(
                 Error::internal()
                     .message("Failed to fetch latest event after commit")
-                    .context("orchestrator::emit")
+                    .context("Orchestrator::emit")
                     .wrap(latest_event_result.unwrap_err())
                     .build());
         }
