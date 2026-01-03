@@ -82,9 +82,9 @@ namespace util
 
     struct ErrorData
     {
-        ErrorDomain domain;
-        ErrorCategory category;
-        ErrorSeverity severity;
+        ErrorDomain domain = ErrorDomain::None;
+        ErrorCategory category = ErrorCategory::Success;
+        ErrorSeverity severity = ErrorSeverity::Logic;
         int code;
         std::string message;
         std::string context;

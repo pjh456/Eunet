@@ -47,7 +47,7 @@ namespace core
         SessionId session_id{0};
 
         std::string msg;
-        util::Error error;
+        std::optional<util::Error> error = std::nullopt;
 
     public:
         static Event info(
