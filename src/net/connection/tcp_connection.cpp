@@ -9,6 +9,7 @@ namespace net::tcp
     util::ResultV<TCPConnection>
     TCPConnection::connect(
         const platform::net::Endpoint &ep,
+        platform::poller::Poller &poller,
         int timeout_ms)
     {
         using platform::net::AddressFamily;
@@ -16,7 +17,7 @@ namespace net::tcp
         auto af = static_cast<sa_family_t>(ep.family());
         auto domain = (af == AF_INET6) ? AddressFamily::IPv6 : AddressFamily::IPv4;
 
-        auto sock = platform::net::TCPSocket::create(domain);
+        auto sock = platform::net::TCPSocket::create(poller, domain);
         if (sock.is_err())
             return util::ResultV<TCPConnection>::Err(sock.unwrap_err());
 

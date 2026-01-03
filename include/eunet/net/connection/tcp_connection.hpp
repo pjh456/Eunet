@@ -21,6 +21,7 @@ namespace net::tcp
     public:
         static util::ResultV<TCPConnection>
         connect(const platform::net::Endpoint &ep,
+                platform::poller::Poller &poller,
                 int timeout_ms = -1);
 
         static TCPConnection

@@ -10,11 +10,15 @@ namespace platform::net
 {
 
     util::ResultV<TCPSocket>
-    TCPSocket::create(AddressFamily af)
+    TCPSocket::create(
+        poller::Poller &poller,
+        AddressFamily af)
     {
         using Result = util::ResultV<TCPSocket>;
 
-        int domain = (af == AddressFamily::IPv6) ? AF_INET6 : AF_INET;
+        int domain = (af == AddressFamily::IPv6)
+                         ? AF_INET6
+                         : AF_INET;
 
         auto fd_res =
             fd::Fd::socket(
@@ -26,7 +30,7 @@ namespace platform::net
             return Result::Err(fd_res.unwrap_err());
 
         return Result::Ok(
-            TCPSocket(std::move(fd_res.unwrap())));
+            TCPSocket(std::move(fd_res.unwrap()), poller));
     }
 
     IOResult
@@ -36,9 +40,6 @@ namespace platform::net
     {
         using Ret = IOResult;
         using util::Error;
-
-        poller::Poller poller =
-            poller::Poller::create().unwrap();
 
         for (;;)
         {
@@ -75,7 +76,7 @@ namespace platform::net
             if (err == EAGAIN || err == EWOULDBLOCK)
             {
                 auto w = wait_fd_epoll(
-                    poller, view(),
+                    m_poller, view(),
                     EPOLLIN, timeout_ms);
 
                 if (w.is_err())
@@ -101,9 +102,6 @@ namespace platform::net
     {
         using Ret = IOResult;
         using util::Error;
-
-        poller::Poller poller =
-            poller::Poller::create().unwrap();
 
         while (!buf.empty())
         {
@@ -139,7 +137,7 @@ namespace platform::net
             if (err == EAGAIN || err == EWOULDBLOCK)
             {
                 auto w = wait_fd_epoll(
-                    poller, view(),
+                    m_poller, view(),
                     EPOLLOUT, timeout_ms);
 
                 if (w.is_err())
@@ -187,11 +185,8 @@ namespace platform::net
                     .build());
         }
 
-        poller::Poller poller =
-            poller::Poller::create().unwrap();
-
         auto w = wait_fd_epoll(
-            poller, view(),
+            m_poller, view(),
             EPOLLOUT, timeout_ms);
 
         if (w.is_err())

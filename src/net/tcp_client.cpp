@@ -9,7 +9,9 @@ namespace net::tcp
 {
     using util::Error;
 
-    TCPClient::TCPClient(core::Orchestrator &o) : orch(o) {}
+    TCPClient::TCPClient(core::Orchestrator &o)
+        : orch(o),
+          m_poller(platform::poller::Poller::create().unwrap()) {}
 
     // 析构时确保资源释放和事件上报
     TCPClient::~TCPClient() { close(); }
@@ -68,7 +70,7 @@ namespace net::tcp
                 fmt::format("Connecting to {}:{} (timeout={}ms)...",
                             host, port, timeout_ms)));
 
-        auto conn_res = TCPConnection::connect(ep, timeout_ms);
+        auto conn_res = TCPConnection::connect(ep, m_poller, timeout_ms);
         if (conn_res.is_err())
         {
             auto err = conn_res.unwrap_err();

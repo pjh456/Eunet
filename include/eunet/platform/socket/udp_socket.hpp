@@ -14,11 +14,14 @@ namespace platform::net
     {
     public:
         static util::ResultV<UDPSocket> create(
+            poller::Poller &poller,
             AddressFamily af = AddressFamily::IPv4);
 
     public:
-        explicit UDPSocket(fd::Fd &&fd) noexcept
-            : BaseSocket(std::move(fd)) {}
+        explicit UDPSocket(
+            fd::Fd &&fd,
+            poller::Poller &poller) noexcept
+            : BaseSocket(std::move(fd), poller) {}
 
         UDPSocket(const UDPSocket &) = delete;
         UDPSocket &operator=(const UDPSocket &) = delete;

@@ -9,6 +9,7 @@ namespace platform::net
 
     util::ResultV<UDPSocket>
     UDPSocket::create(
+        poller::Poller &poller,
         AddressFamily af)
     {
         using Result = util::ResultV<UDPSocket>;
@@ -28,7 +29,7 @@ namespace platform::net
             return Result::Err(fd_res.unwrap_err());
 
         return Result::Ok(
-            UDPSocket(std::move(fd_res.unwrap())));
+            UDPSocket(std::move(fd_res.unwrap()), poller));
     }
 
     IOResult
@@ -38,9 +39,6 @@ namespace platform::net
     {
         using Ret = IOResult;
         using util::Error;
-
-        poller::Poller poller =
-            poller::Poller::create().unwrap();
 
         for (;;)
         {
@@ -67,7 +65,7 @@ namespace platform::net
                     return Ret::Ok(0);
 
                 auto w = wait_fd_epoll(
-                    poller,
+                    m_poller,
                     view(),
                     EPOLLIN,
                     timeout_ms);
@@ -96,9 +94,6 @@ namespace platform::net
         using Ret = IOResult;
         using util::Error;
 
-        poller::Poller poller =
-            poller::Poller::create().unwrap();
-
         if (buf.empty())
             return Ret::Ok(0);
 
@@ -125,7 +120,7 @@ namespace platform::net
             if (err == EAGAIN || err == EWOULDBLOCK)
             {
                 auto w = wait_fd_epoll(
-                    poller,
+                    m_poller,
                     view(),
                     EPOLLOUT,
                     timeout_ms);
@@ -173,11 +168,8 @@ namespace platform::net
                     .build());
         }
 
-        poller::Poller poller =
-            poller::Poller::create().unwrap();
-
         auto w = wait_fd_epoll(
-            poller,
+            m_poller,
             view(),
             EPOLLOUT,
             timeout_ms);

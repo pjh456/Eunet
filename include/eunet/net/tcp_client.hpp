@@ -17,6 +17,7 @@ namespace net::tcp
     private:
         core::Orchestrator &orch;
         std::optional<TCPConnection> m_conn;
+        platform::poller::Poller m_poller;
 
     public:
         explicit TCPClient(core::Orchestrator &o);

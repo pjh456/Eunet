@@ -13,11 +13,14 @@ namespace platform::net
     {
     public:
         static util::ResultV<TCPSocket> create(
+            poller::Poller &poller,
             AddressFamily af = AddressFamily::IPv4);
 
     public:
-        explicit TCPSocket(platform::fd::Fd &&fd) noexcept
-            : BaseSocket(std::move(fd)) {}
+        explicit TCPSocket(
+            platform::fd::Fd &&fd,
+            poller::Poller &poller) noexcept
+            : BaseSocket(std::move(fd), poller) {}
 
         TCPSocket(const TCPSocket &) = delete;
         TCPSocket &operator=(const TCPSocket &) = delete;
