@@ -15,6 +15,7 @@ namespace core
         e.fd = fd;
 
         e.msg = message;
+        e.error = std::nullopt;
         return e;
     }
 
@@ -33,8 +34,8 @@ namespace core
 
     Event::Event() : ts(platform::time::wall_now()) {}
 
-    bool Event::is_ok() const noexcept { return !error; }
-    bool Event::is_error() const noexcept { return (bool)error; }
+    bool Event::is_ok() const noexcept { return !error.has_value(); }
+    bool Event::is_error() const noexcept { return error.has_value(); }
 
 }
 
