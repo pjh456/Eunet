@@ -49,7 +49,7 @@ namespace ui
             : orch_(orch), engine_(engine)
         {
             init_components();
-            reset_session(); // ★ 启动即有内容
+            reset_session();
         }
 
         void run()
@@ -156,7 +156,7 @@ namespace ui
             {
                 lines.push_back(separator());
                 lines.push_back(text("ERROR") | color(Color::Red) | bold);
-                lines.push_back(text(snap.error.format()) | color(Color::RedLight));
+                lines.push_back(text(snap.error->format()) | color(Color::RedLight));
             }
 
             return vbox(std::move(lines)) | frame | vscroll_indicator;
@@ -267,7 +267,7 @@ namespace ui
 
         std::string snapshot_icon(const core::EventSnapshot &snap) const
         {
-            return snap.error ? "[!]" : "[✔]";
+            return snap.error.has_value() ? "[!]" : "[✔]";
         }
 
         inline std::string sanitize_for_tui(std::string_view s, size_t max_len = 512)
