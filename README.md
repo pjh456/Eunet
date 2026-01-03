@@ -51,6 +51,16 @@ graph TD
 
 ## 🚀 快速开始
 
+### 0. 一键脚本！
+
+使用 `scripts/build.sh` 一键脚本从依赖安装到自动构建！
+
+在项目根目录下执行以下命令：
+```bash
+cd scripts
+bash ./build.sh
+```
+
 ### 1. 环境依赖
 
 EuNet 依赖现代 C++ 编译器和部分系统库。

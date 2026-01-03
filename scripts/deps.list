@@ -1,0 +1,14 @@
+# 编译工具链
+gcc
+gcc-c++
+make
+cmake
+
+# 基础库
+glibc-devel
+libstdc++-devel
+
+# 项目依赖库
+git
+fmt-devel
+boost-devel
