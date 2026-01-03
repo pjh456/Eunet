@@ -14,7 +14,13 @@
 
 namespace core
 {
-
+    /**
+     * @brief 核心编排器
+     *
+     * 系统的中枢神经。负责接收来自 Network 层的事件，
+     * 将其写入 Timeline，更新 FSM 状态，并将快照分发给所有注册的 Sink（如 UI）。
+     * 保证了事件处理的线性化和线程安全。
+     */
     class Orchestrator
     {
     public:
@@ -37,6 +43,14 @@ namespace core
         const LifecycleFSM *get_fsm(int fd) const;
 
     public:
+        /**
+         * @brief 提交一个新事件
+         *
+         * 此操作是线程安全的。它会触发从存储到通知的一系列流程。
+         *
+         * @param e 待提交的事件
+         * @return EmitResult 提交结果
+         */
         EmitResult emit(Event e);
 
         SessionId new_session() { return next_session_id_.fetch_add(1); }
