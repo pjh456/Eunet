@@ -20,11 +20,7 @@ int main(int argc, char **argv)
     core::NetworkEngine engine(orch);
     ui::TuiApp app(orch, engine); // 把引擎传给 UI
 
-    // 如果命令行给了参数，直接跑
-    if (argc > 1)
-    {
-        engine.execute(std::make_unique<net::http::HttpGetScenario>(target_url));
-    }
+    engine.execute(std::make_unique<net::http::HttpGetScenario>(target_url));
 
     app.run();
     return 0;
