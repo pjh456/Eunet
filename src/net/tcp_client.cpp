@@ -26,80 +26,73 @@ namespace net::tcp
         int timeout_ms)
     {
         using Ret = util::ResultV<void>;
+        using util::Error;
 
-        // 1. 发出 DNS 解析开始事件
-        (void)emit_event(core::Event::info(core::EventType::DNS_RESOLVE_START, "Resolving host: " + host));
+        (void)emit_event(
+            core::Event::info(
+                core::EventType::DNS_RESOLVE_START,
+                "Resolving host: " + host));
 
-        // 2. 使用底层 DNSResolver
-        auto resolve_res = platform::net::DNSResolver::resolve(
-            host,
-            port,
-            platform::net::AddressFamily::IPv4 // 暂时默认 IPv4
-        );
+        auto resolve_res =
+            platform::net::DNSResolver::resolve(
+                host, port,
+                platform::net::AddressFamily::IPv4);
 
         if (resolve_res.is_err())
         {
-            auto err = resolve_res.unwrap_err(); // 底层已经构造了精准的 Error::dns
-            (void)emit_event(core::Event::failure(core::EventType::DNS_RESOLVE_DONE, err));
-            return Ret::Err(err);
+            auto err = resolve_res.unwrap_err();
+
+            (void)emit_event(
+                core::Event::failure(
+                    core::EventType::DNS_RESOLVE_DONE,
+                    err));
+
+            return Ret::Err(
+                Error::dns()
+                    .message("DNS resolve failed")
+                    .context("TCPClient::connect")
+                    .wrap(err)
+                    .build());
         }
 
-        const auto &endpoints = resolve_res.unwrap();
-        // 取第一个结果（生产环境可能需要尝试所有结果）
-        const auto &target_ep = endpoints.front();
+        const auto &ep = resolve_res.unwrap().front();
 
-        (void)emit_event(core::Event::info(core::EventType::DNS_RESOLVE_DONE, "Resolved to: " + to_string(target_ep)));
+        (void)emit_event(
+            core::Event::info(
+                core::EventType::DNS_RESOLVE_DONE,
+                "Resolved to: " + to_string(ep)));
 
-        // 3. 创建 TCP Socket
-        // 使用底层 TCPSocket::create，错误已封装好
-        auto sock_res = platform::net::TCPSocket::create(platform::net::AddressFamily::IPv4);
-        if (sock_res.is_err())
-        {
-            return Ret::Err(sock_res.unwrap_err());
-        }
+        (void)emit_event(
+            core::Event::info(
+                core::EventType::TCP_CONNECT_START,
+                fmt::format("Connecting to {}:{} (timeout={}ms)...",
+                            host, port, timeout_ms)));
 
-        // 暂存 socket，但尚未建立连接
-        m_sock.emplace(std::move(sock_res.unwrap()));
-
-        // 4. 发起连接
-        (void)emit_event(core::Event::info(
-            core::EventType::TCP_CONNECT_START,
-            fmt::format("Connecting to {} (timeout={}ms)...", host, timeout_ms),
-            m_sock->view()));
-
-        // 调用底层封装的 connect (已包含 non-blocking + epoll wait 逻辑)
-        auto conn_res = m_sock->connect(target_ep, timeout_ms);
-
+        auto conn_res = TCPConnection::connect(ep, timeout_ms);
         if (conn_res.is_err())
         {
-            // 如果是超时，底层已经返回了 Error::transport().timeout()
             auto err = conn_res.unwrap_err();
 
-            // 为错误添加更具体的上下文
-            util::Error contextual_err =
+            (void)emit_event(
+                core::Event::failure(
+                    core::EventType::TCP_CONNECT_START,
+                    err));
+
+            return Ret::Err(
                 Error::transport()
-                    .message("TCP connection failed")
-                    .context(fmt::format("{}:{}", host, port))
-                    .wrap(err) // 保留底层原因
-                    .build();
-
-            (void)emit_event(core::Event::failure(
-                err.category() == util::ErrorCategory::Timeout
-                    ? core::EventType::TCP_CONNECT_TIMEOUT
-                    : core::EventType::TCP_CONNECT_START,
-                contextual_err,
-                m_sock->view()));
-
-            // 连接失败，清理 socket
-            m_sock.reset();
-            return Ret::Err(contextual_err);
+                    .message("TCP connect failed")
+                    .context("TCPClient::connect")
+                    .wrap(err)
+                    .build());
         }
 
-        // 5. 连接成功
-        (void)emit_event(core::Event::info(
-            core::EventType::TCP_CONNECT_SUCCESS,
-            "Connection established",
-            m_sock->view()));
+        m_conn.emplace(std::move(conn_res.unwrap()));
+
+        (void)emit_event(
+            core::Event::info(
+                core::EventType::TCP_CONNECT_SUCCESS,
+                "Connection established",
+                m_conn->fd()));
 
         return Ret::Ok();
     }
@@ -108,46 +101,76 @@ namespace net::tcp
     TCPClient::send(const std::vector<std::byte> &data)
     {
         using Ret = util::ResultV<size_t>;
+        using util::Error;
 
-        // 状态检查：使用 Error::state()
-        if (!m_sock || !m_sock->is_open())
+        if (!m_conn || !m_conn->is_open())
         {
-            return Ret::Err(
-                Error::state()
-                    .invalid_state()
-                    .message("Attempt to send on unconnected socket")
-                    .context("TCPClient::send")
-                    .build());
-        }
+            auto err = Error::state()
+                           .invalid_state()
+                           .message("send on unconnected")
+                           .context("TCPClient::send")
+                           .build();
 
-        (void)emit_event(core::Event::info(
-            core::EventType::HTTP_SENT,
-            fmt::format("Sending {} bytes...", data.size()),
-            m_sock->view()));
+            (void)emit_event(
+                core::Event::failure(
+                    core::EventType::HTTP_SENT,
+                    err));
 
-        // 适配接口：vector -> ByteBuffer
-        // ByteBuffer 主要是为了 Zero-copy 设计的，但这里接口是 vector，所以必须拷贝一次
-        // 如果追求极致性能，TCPClient 的接口应该改用 ByteBuffer
-        util::ByteBuffer buf(data.size());
-        buf.append(data);
-
-        // 调用底层 write
-        // timeout_ms = 0 表示非阻塞尝试写入，不做 wait
-        // 如果需要保证写完，这里应该传一个超时时间
-        auto write_res = m_sock->write(buf, 0);
-
-        if (write_res.is_err())
-        {
-            auto err = write_res.unwrap_err();
-            (void)emit_event(core::Event::failure(core::EventType::HTTP_SENT, err, m_sock->view()));
             return Ret::Err(err);
         }
 
-        size_t n = write_res.unwrap();
+        (void)emit_event(
+            core::Event::info(
+                core::EventType::HTTP_SENT,
+                fmt::format("Sending {} bytes...", data.size()),
+                m_conn->fd()));
 
-        // 如果非阻塞写入导致没有发完（Partial Write），在业务层可能需要处理
-        // 这里简单返回实际发送字节数
-        return Ret::Ok(n);
+        util::ByteBuffer buf(data.size());
+        buf.append(data);
+
+        auto res = m_conn->write(buf, 0);
+        if (res.is_err())
+        {
+            auto err = res.unwrap_err();
+
+            (void)emit_event(
+                core::Event::failure(
+                    core::EventType::HTTP_SENT,
+                    err, m_conn->fd()));
+
+            return Ret::Err(
+                Error::transport()
+                    .message("TCP send failed")
+                    .context("TCPClient::send")
+                    .wrap(err)
+                    .build());
+        }
+
+        auto flush_res = m_conn->flush();
+        if (flush_res.is_err())
+        {
+            auto err = flush_res.unwrap_err();
+
+            (void)emit_event(
+                core::Event::failure(
+                    core::EventType::HTTP_SENT,
+                    err, m_conn->fd()));
+
+            return Ret::Err(
+                Error::transport()
+                    .message("flush connection failed")
+                    .context("TCPClient::send")
+                    .wrap(err)
+                    .build());
+        }
+
+        (void)emit_event(
+            core::Event::info(
+                core::EventType::HTTP_SENT,
+                fmt::format("Sent {} bytes", data.size()),
+                m_conn->fd()));
+
+        return Ret::Ok(data.size());
     }
 
     util::ResultV<size_t>
@@ -156,51 +179,57 @@ namespace net::tcp
         size_t max_size)
     {
         using Ret = util::ResultV<size_t>;
+        using util::Error;
 
-        if (!m_sock || !m_sock->is_open())
+        if (!m_conn || !m_conn->is_open())
         {
-            return Ret::Err(
-                Error::state()
-                    .invalid_state()
-                    .message("Attempt to recv from unconnected socket")
-                    .context("TCPClient::recv")
-                    .build());
+            auto err = Error::state()
+                           .invalid_state()
+                           .message("recv on unconnected")
+                           .context("TCPClient::recv")
+                           .build();
+
+            (void)emit_event(
+                core::Event::failure(
+                    core::EventType::HTTP_RECEIVED,
+                    err));
+
+            return Ret::Err(err);
         }
 
-        // 准备 ByteBuffer
-        util::ByteBuffer internal_buf(max_size);
+        util::ByteBuffer buf(max_size);
 
-        // 调用底层 read
-        // timeout_ms = 5000 (举例)，实际应该由参数传入或配置决定
-        auto read_res = m_sock->read(internal_buf, 5000);
-
+        auto read_res = m_conn->read(buf, 5000);
         if (read_res.is_err())
         {
             auto err = read_res.unwrap_err();
 
-            // 忽略 EAGAIN/Timeout (视业务逻辑而定，这里假设超时是错误，或者返回0)
-            if (err.category() == util::ErrorCategory::Timeout ||
-                err.category() == util::ErrorCategory::Busy)
-            {
-                return Ret::Ok(0);
-            }
+            (void)emit_event(
+                core::Event::failure(
+                    core::EventType::HTTP_RECEIVED,
+                    err, m_conn->fd()));
 
-            (void)emit_event(core::Event::failure(core::EventType::HTTP_RECEIVED, err, m_sock->view()));
-            return Ret::Err(err);
+            return Ret::Err(
+                Error::transport()
+                    .message("connection recv failed")
+                    .context("TCPClient::recv")
+                    .wrap(err)
+                    .build());
         }
 
         size_t n = read_res.unwrap();
 
         if (n > 0)
         {
-            auto readable = internal_buf.readable();
+            auto readable = buf.readable();
             buffer.resize(readable.size());
             std::memcpy(buffer.data(), readable.data(), readable.size());
 
-            (void)emit_event(core::Event::info(
-                core::EventType::HTTP_RECEIVED,
-                fmt::format("Received {} bytes", n),
-                m_sock->view()));
+            (void)emit_event(
+                core::Event::info(
+                    core::EventType::HTTP_RECEIVED,
+                    fmt::format("Received {} bytes", n),
+                    m_conn->fd()));
         }
 
         return Ret::Ok(n);
@@ -208,16 +237,15 @@ namespace net::tcp
 
     void TCPClient::close() noexcept
     {
-        if (m_sock && m_sock->is_open())
+        if (m_conn && m_conn->is_open())
         {
-            (void)emit_event(core::Event::info(
-                core::EventType::CONNECTION_CLOSED,
-                "Closing connection",
-                m_sock->view()));
-            m_sock->close();
-            // m_sock.reset() 不是必须的，因为 TCPSocket::close 已经释放了 FD，
-            // 但 reset 可以让 m_sock 变回 empty 状态，逻辑更严谨
-            m_sock.reset();
+            (void)emit_event(
+                core::Event::info(
+                    core::EventType::CONNECTION_CLOSED,
+                    "Closing connection",
+                    m_conn->fd()));
+            m_conn->close();
+            m_conn.reset();
         }
     }
 }
