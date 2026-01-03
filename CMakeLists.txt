@@ -2,6 +2,13 @@ cmake_minimum_required(VERSION 3.16)
 
 project(eunet LANGUAGES CXX)
 
+# 是否构建单元测试
+option(BUILD_TESTS "Build unit tests" OFF)
+
+# 强制关闭 FTXUI 的单元测试
+set(FTXUI_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(FTXUI_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
@@ -32,8 +39,10 @@ target_link_libraries(eunet PRIVATE cap)
 target_link_libraries(eunet PRIVATE Boost::system)
 target_link_libraries(eunet PRIVATE fmt::fmt)
 
-add_executable(main src/main.cpp)
-target_link_libraries(main eunet)
+add_executable(eunet_cli src/main.cpp)
+target_link_libraries(eunet_cli eunet)
 
-enable_testing()
-add_subdirectory(tests)
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
