@@ -34,11 +34,11 @@ EuNet 采用分层架构，将 UI 展示、核心编排和底层网络实现完�
 
 ```mermaid
 graph TD
-    UI[TUI Layer (FTXUI)] --> Sink[Event Sink]
-    Sink --> Orch[Orchestrator]
-    Orch --> Timeline[Timeline & FSM]
-    Orch --> Net[Network Scenarios]
-    Net --> Platform[Platform / HAL (Epoll, Socket)]
+    UI["TUI Layer (FTXUI)"] --> Sink["Event Sink"]
+    Sink --> Orch["Orchestrator"]
+    Orch --> Timeline["Timeline & FSM"]
+    Orch --> Net["Network Scenarios"]
+    Net --> Platform["Platform / HAL (Epoll, Socket)"]
 ```
 
 📚 **深入了解**
