@@ -199,7 +199,7 @@ namespace net::tcp
 
         util::ByteBuffer buf(max_size);
 
-        auto read_res = m_conn->read(buf, 5000);
+        auto read_res = m_conn->read(buf, 3000);
         if (read_res.is_err())
         {
             auto err = read_res.unwrap_err();
