@@ -5,9 +5,6 @@
 #include <cstdint>
 #include <vector>
 
-#include <boost/beast/http.hpp>
-#include <boost/beast/core.hpp>
-
 #include "fmt/format.h"
 
 #include "eunet/core/scenario.hpp"
@@ -33,9 +30,6 @@ namespace net::http
         HttpConfig config_;
 
         void parse_url();
-
-        static std::vector<std::byte>
-        buffer_to_bytes(const boost::beast::flat_buffer &buf);
 
     public:
         explicit HttpGetScenario(std::string url)
