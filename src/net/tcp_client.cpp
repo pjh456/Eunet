@@ -1,4 +1,4 @@
-#include "eunet/net/async_tcp_client.hpp"
+#include "eunet/net/tcp_client.hpp"
 
 #include "eunet/platform/net/dns_resolver.hpp"
 #include "eunet/platform/net/endpoint.hpp"
@@ -9,18 +9,18 @@ namespace net::tcp
 {
     using util::Error;
 
-    AsyncTCPClient::AsyncTCPClient(core::Orchestrator &o) : orch(o) {}
+    TCPClient::TCPClient(core::Orchestrator &o) : orch(o) {}
 
     // 析构时确保资源释放和事件上报
-    AsyncTCPClient::~AsyncTCPClient() { close(); }
+    TCPClient::~TCPClient() { close(); }
 
-    util::ResultV<void> AsyncTCPClient::emit_event(const core::Event &e)
+    util::ResultV<void> TCPClient::emit_event(const core::Event &e)
     {
         return orch.emit(e);
     }
 
     util::ResultV<void>
-    AsyncTCPClient::connect(
+    TCPClient::connect(
         const std::string &host,
         uint16_t port,
         int timeout_ms)
@@ -105,7 +105,7 @@ namespace net::tcp
     }
 
     util::ResultV<size_t>
-    AsyncTCPClient::send(const std::vector<std::byte> &data)
+    TCPClient::send(const std::vector<std::byte> &data)
     {
         using Ret = util::ResultV<size_t>;
 
@@ -116,7 +116,7 @@ namespace net::tcp
                 Error::state()
                     .invalid_state()
                     .message("Attempt to send on unconnected socket")
-                    .context("AsyncTCPClient::send")
+                    .context("TCPClient::send")
                     .build());
         }
 
@@ -127,7 +127,7 @@ namespace net::tcp
 
         // 适配接口：vector -> ByteBuffer
         // ByteBuffer 主要是为了 Zero-copy 设计的，但这里接口是 vector，所以必须拷贝一次
-        // 如果追求极致性能，AsyncTCPClient 的接口应该改用 ByteBuffer
+        // 如果追求极致性能，TCPClient 的接口应该改用 ByteBuffer
         util::ByteBuffer buf(data.size());
         buf.append(data);
 
@@ -151,7 +151,7 @@ namespace net::tcp
     }
 
     util::ResultV<size_t>
-    AsyncTCPClient::recv(
+    TCPClient::recv(
         std::vector<std::byte> &buffer,
         size_t max_size)
     {
@@ -163,7 +163,7 @@ namespace net::tcp
                 Error::state()
                     .invalid_state()
                     .message("Attempt to recv from unconnected socket")
-                    .context("AsyncTCPClient::recv")
+                    .context("TCPClient::recv")
                     .build());
         }
 
@@ -206,7 +206,7 @@ namespace net::tcp
         return Ret::Ok(n);
     }
 
-    void AsyncTCPClient::close() noexcept
+    void TCPClient::close() noexcept
     {
         if (m_sock && m_sock->is_open())
         {

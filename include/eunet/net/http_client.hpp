@@ -6,7 +6,7 @@
 
 #include "eunet/core/orchestrator.hpp"
 #include "eunet/util/result.hpp"
-#include "eunet/net/async_tcp_client.hpp"
+#include "eunet/net/tcp_client.hpp"
 
 namespace net::http
 {
@@ -54,7 +54,7 @@ namespace net::http
 
     private:
         core::Orchestrator &orch;
-        net::tcp::AsyncTCPClient tcp;
+        net::tcp::TCPClient tcp;
 
         util::ResultV<void> emit(const core::Event &e);
     };

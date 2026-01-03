@@ -11,7 +11,6 @@
 #include "fmt/format.h"
 
 #include "eunet/core/scenario.hpp"
-#include "eunet/net/async_tcp_client.hpp"
 
 namespace net::http
 {
