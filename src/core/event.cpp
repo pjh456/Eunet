@@ -61,9 +61,15 @@ std::string to_string(core::EventType type)
         return "TLS Handshake Done";
 
     case EventType::HTTP_SENT:
-        return "HTTP sent";
+        return "HTTP Sent";
     case EventType::HTTP_RECEIVED:
         return "HTTP Received";
+    case EventType::HTTP_REQUEST_BUILD:
+        return "HTTP Request Build";
+    case EventType::HTTP_HEADERS_RECEIVED:
+        return "HTTP Headers Received";
+    case EventType::HTTP_BODY_DONE:
+        return "HTTP Body Done";
 
     case EventType::CONNECTION_IDLE:
         return "Connection Idle";
