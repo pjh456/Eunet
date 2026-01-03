@@ -40,16 +40,6 @@ namespace core
 
         // 4. 快照并分发
         const auto *fsm = fsm_manager.get(e.session_id); // 改用 session_id 索引
-        if (!fsm)
-        {
-            return Ret::Err(
-                Error::internal()
-                    .invalid_state()
-                    .fatal()
-                    .message("FSM instance missing for active session " + std::to_string(e.session_id))
-                    .context("Orchestrator::emit")
-                    .build());
-        }
 
         auto latest_event_result = timeline.latest_event();
         if (latest_event_result.is_err())
@@ -65,9 +55,10 @@ namespace core
         EventSnapshot snap{
             .event = e,
             .fd = e.fd.fd,
-            .state = fsm->current_state(),
+            .state = fsm ? fsm->current_state() : LifeState::Finished,
             .ts = e.ts,
-            .error = fsm->get_last_error()};
+            .error = fsm ? fsm->get_last_error() : std::nullopt,
+        };
 
         for (auto &sink : sinks)
         {
