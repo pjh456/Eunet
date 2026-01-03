@@ -37,12 +37,16 @@ void test_tcp_connection()
     std::thread client(
         [port]()
         {
+            auto poller_res = platform::poller::Poller::create();
+            assert(poller_res.is_ok());
+            auto poller = std::move(poller_res.unwrap());
+
             auto addr =
                 Endpoint::from_ipv4(
                     htonl(INADDR_LOOPBACK), port);
 
             auto conn_res =
-                TCPConnection::connect(addr, 500);
+                TCPConnection::connect(addr, poller, 500);
             assert(conn_res.is_ok());
 
             auto conn = std::move(conn_res.unwrap());

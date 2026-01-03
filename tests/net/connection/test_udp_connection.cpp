@@ -42,7 +42,11 @@ buffer_to_string(util::ByteBuffer &buf)
 
 void test_create_socket()
 {
-    auto res = UDPSocket::create(AddressFamily::IPv4);
+    auto poller_res = platform::poller::Poller::create();
+    assert(poller_res.is_ok());
+    auto poller = std::move(poller_res.unwrap());
+
+    auto res = UDPSocket::create(poller, AddressFamily::IPv4);
     assert(res.is_ok());
 
     auto sock = std::move(res.unwrap());
@@ -55,7 +59,11 @@ void test_create_socket()
 
 void test_local_address_after_connect()
 {
-    auto res = UDPSocket::create(AddressFamily::IPv4);
+    auto poller_res = platform::poller::Poller::create();
+    assert(poller_res.is_ok());
+    auto poller = std::move(poller_res.unwrap());
+
+    auto res = UDPSocket::create(poller, AddressFamily::IPv4);
     assert(res.is_ok());
 
     auto sock = std::move(res.unwrap());
@@ -79,8 +87,12 @@ void test_local_address_after_connect()
 
 void test_socket_send_and_receive()
 {
-    auto s_res = UDPSocket::create(AddressFamily::IPv4);
-    auto c_res = UDPSocket::create(AddressFamily::IPv4);
+    auto poller_res = platform::poller::Poller::create();
+    assert(poller_res.is_ok());
+    auto poller = std::move(poller_res.unwrap());
+
+    auto s_res = UDPSocket::create(poller, AddressFamily::IPv4);
+    auto c_res = UDPSocket::create(poller, AddressFamily::IPv4);
     assert(s_res.is_ok());
     assert(c_res.is_ok());
 
@@ -118,14 +130,18 @@ void test_socket_send_and_receive()
 
 void test_udp_connection()
 {
+    auto poller_res = platform::poller::Poller::create();
+    assert(poller_res.is_ok());
+    auto poller = std::move(poller_res.unwrap());
+
     // server
     auto s = UDPConnection::connect(
-                 Endpoint::loopback_ipv4(0))
+                 Endpoint::loopback_ipv4(0), poller)
                  .unwrap();
     auto server_ep = s.socket().local_endpoint().unwrap();
 
     // client
-    auto c = UDPConnection::connect(server_ep).unwrap();
+    auto c = UDPConnection::connect(server_ep, poller).unwrap();
 
     util::ByteBuffer out = make_buffer("ping");
     util::ByteBuffer in(64);
@@ -147,7 +163,11 @@ void test_udp_connection()
 
 void test_operate_on_closed_socket()
 {
-    auto res = UDPSocket::create(AddressFamily::IPv4);
+    auto poller_res = platform::poller::Poller::create();
+    assert(poller_res.is_ok());
+    auto poller = std::move(poller_res.unwrap());
+
+    auto res = UDPSocket::create(poller, AddressFamily::IPv4);
     assert(res.is_ok());
 
     auto sock = std::move(res.unwrap());

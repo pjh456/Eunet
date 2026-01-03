@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include "eunet/platform/poller.hpp"
 #include "eunet/platform/socket/tcp_socket.hpp"
 #include "eunet/platform/net/endpoint.hpp"
 #include "eunet/util/byte_buffer.hpp"
@@ -52,8 +53,12 @@ void test_tcp_blocking_read_write()
 
     std::this_thread::sleep_for(50ms);
 
+    auto poller_res = platform::poller::Poller::create();
+    assert(poller_res.is_ok());
+    auto poller = std::move(poller_res.unwrap());
+
     /* ---------- socket ---------- */
-    auto sock_res = TCPSocket::create(AddressFamily::IPv4);
+    auto sock_res = TCPSocket::create(poller, AddressFamily::IPv4);
     assert(sock_res.is_ok());
     TCPSocket sock = std::move(sock_res.unwrap());
 
