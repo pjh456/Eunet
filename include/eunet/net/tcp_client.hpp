@@ -8,7 +8,7 @@
 
 #include "eunet/core/orchestrator.hpp"
 #include "eunet/util/result.hpp"
-#include "eunet/platform/socket/tcp_socket.hpp"
+#include "eunet/net/connection/tcp_connection.hpp"
 
 namespace net::tcp
 {
@@ -16,8 +16,7 @@ namespace net::tcp
     {
     private:
         core::Orchestrator &orch;
-        // 使用 optional 管理 socket 生命周期，替代原本裸露的 Fd
-        std::optional<platform::net::TCPSocket> m_sock;
+        std::optional<TCPConnection> m_conn;
 
     public:
         explicit TCPClient(core::Orchestrator &o);
