@@ -24,18 +24,19 @@ namespace net::http
     {
         bool headers_emitted = false;
 
-        // ---------------- connect ----------------
+        // 首先建立 TCP 连接 此处复用 TCPClient 的逻辑
         {
             auto r = tcp.connect(cfg.host, cfg.port);
             if (r.is_err())
                 return util::ResultV<HttpResponse>::Err(r.unwrap_err());
         }
 
+        // 上报构建请求事件
         (void)emit(core::Event::info(
             core::EventType::HTTP_REQUEST_BUILD,
             "HTTP GET " + cfg.target));
 
-        // ---------------- build request ----------------
+        // 使用 Boost.Beast 构建 HTTP 请求对象 设置头部信息
         http::request<http::string_body> req{
             http::verb::get,
             cfg.target,
@@ -50,7 +51,7 @@ namespace net::http
 
         req.prepare_payload();
 
-        // ---------------- serialize & send ----------------
+        // 将请求序列化为文本 并转换为字节数组
         std::string req_text;
         {
             std::ostringstream oss;
@@ -62,6 +63,7 @@ namespace net::http
             reinterpret_cast<const std::byte *>(req_text.data()),
             reinterpret_cast<const std::byte *>(req_text.data() + req_text.size()));
 
+        // 通过 TCP 连接发送请求数据
         {
             auto r = tcp.send(send_buf);
             if (r.is_err())
@@ -75,28 +77,33 @@ namespace net::http
             }
         }
 
+        // 上报请求已发送事件
         (void)emit(core::Event::info(
             core::EventType::HTTP_SENT,
             "HTTP request sent"));
 
-        // ---------------- receive & parse ----------------
+        // 初始化 HTTP 响应解析器
         beast::flat_buffer read_buf;
         http::response_parser<http::dynamic_body> parser;
         parser.body_limit(16 * 1024 * 1024);
 
+        // 循环读取数据直到解析完成
         std::vector<std::byte> buf(4096);
         while (!parser.is_done())
         {
+            // 从 TCP 接收数据到临时缓冲区
             auto r = tcp.recv(buf, buf.size());
 
             if (r.is_ok())
             {
+                // 将接收到的数据喂给 Beast 解析器
                 auto n = r.unwrap();
                 auto bytes = boost::asio::buffer(buf.data(), n);
 
                 boost::system::error_code ec;
                 parser.put(bytes, ec);
 
+                // 如果头部解析刚刚完成 上报头部接收事件
                 if (parser.is_header_done() && !headers_emitted)
                 {
                     (void)emit(
@@ -106,6 +113,7 @@ namespace net::http
                     headers_emitted = true;
                 }
 
+                // 检查解析器错误
                 if (ec)
                 {
                     tcp.close();
@@ -122,7 +130,8 @@ namespace net::http
                 continue;
             }
 
-            // ---------- recv returned Error ----------
+            // 处理接收错误 特别是 PeerClosed 对应 EOF 情况
+            // 需要告知解析器数据流已结束 以便它完成最后的解析
             const auto &err = r.unwrap_err();
 
             if (err.category() == util::ErrorCategory::PeerClosed)
@@ -150,6 +159,7 @@ namespace net::http
             return util::ResultV<HttpResponse>::Err(err);
         }
 
+        // 关闭连接
         tcp.close();
 
         // ---------------- build response ----------------
@@ -163,10 +173,12 @@ namespace net::http
 
         out.body = beast::buffers_to_string(res.body().data());
 
+        // 上报 Body 接收完成事件
         (void)emit(core::Event::info(
             core::EventType::HTTP_BODY_DONE,
             "HTTP body received (" + std::to_string(out.body.size()) + " bytes)"));
 
+        // 构建最终的 HttpResponse 对象返回
         return util::ResultV<HttpResponse>::Ok(std::move(out));
     }
 }
