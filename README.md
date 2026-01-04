@@ -117,6 +117,21 @@ cmake --build . -j$(nproc)
 
 ---
 
+## 性能测试
+
+选取了 `Boost.Beast` 与 `LibCurl` 两个行业标准进行横向性能测试。
+
+|库名|性能(req/s)|内存占用(MB)|
+|---|----|--------|
+|LibCurl|607.9|10.2|
+|Boost.Beast|1054.9|10.4|
+|Eunet|466.9|13.0|
+
+与行业标准处于统一数量级，对于记录了事件的持久性程序来说属于中等偏上水平。
+
+![性能测试](./docs/images/benchmark.png)
+
+
 ## 🧩 运行效果示例
 
 当执行 `eunet http://example.com` 时，终端界面将显示如下事件流：
