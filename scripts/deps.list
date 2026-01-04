@@ -13,3 +13,6 @@ git
 libcap-devel
 fmt-devel
 boost-devel
+
+# 用于测试
+libcurl-devel
