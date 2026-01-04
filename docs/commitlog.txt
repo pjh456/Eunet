@@ -1,0 +1,1277 @@
+6b6b83a79115fad7782f5c5de75c5e9cb004fa7a
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 01:59:11 +0800
+
+    init: 初始化仓库
+
+30f8e27661e179b421173fe35b0f6b3913c9ee6e
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 02:23:29 +0800
+
+    feat: 初步搭建了 CMake 框架
+
+9bf744289a64ba41fba3ef2fcc4f0d6b5d3deaf7
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 02:30:51 +0800
+
+    docs: 更新了项目文档
+
+9f89761d945cb5bbf419f76c5319f61058205929
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 02:32:08 +0800
+
+    docs: 补充了少量文档架构和内容
+
+a3deb852530e7a2757d7cb3debd13df599be87d6
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 02:52:31 +0800
+
+    feat: 初步封装时间相关 API
+
+16fbaaeb521b77cb1552c72f8a82492c26f21bf8
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 02:55:23 +0800
+
+    feat: 添加休眠相关封装
+
+2e3d4f80bcd737ba1b7c28337a8ee1e1102005ef
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 02:58:05 +0800
+
+    test: 封装 CMake 测试
+
+1f70db98d1ec6e860882f6ebee1563eb3410d1ff
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 02:58:11 +0800
+
+    test: 时间 API 测试通过
+
+dc7e99b3761dcb6a7f56a5c5ca4f09cb096172d7
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 03:26:51 +0800
+
+    refactor: 重命名 Time 头文件
+
+d87490e69ee8232bf66edcccd28bf68869954d77
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 03:54:00 +0800
+
+    feat: 添加文件描述符封装
+
+9d748b9c33f071bb903d50e6592b36e4e9a36339
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 03:54:09 +0800
+
+    test: 文件描述符测试通过
+
+570e263c5bdadae5d39e386793e88414e26f2dc9
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 03:55:35 +0800
+
+    refactor: 重构 Fd 头文件
+
+d631d43eeca5b62ec83b79fe80cb675e8da94130
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 04:13:04 +0800
+
+    fix: 添加了 include guard
+
+b5ed7485b15c5de658050cdbd488170ca67d96db
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 04:18:54 +0800
+
+    refactor: 移除无用头文件依赖
+
+30efd3c0f0f019f819c3f1cf3084ea3d8fc43818
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 04:19:13 +0800
+
+    test: 添加了 vscode 调试配置
+
+6711c0117cea0ed35cc54ab7d290fe5ee6bcf6eb
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 04:29:36 +0800
+
+    fix: 修复了 Fd 所有权异常的问题
+
+43e33b88f5a6942bd6c876e4f1f2b1fac4d97c67
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 04:30:35 +0800
+
+    feat: 添加了事件队列封装
+
+d1df7faf263ff1be25b3afd94b22be53d68f12d9
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-25 04:30:44 +0800
+
+    test: 事件队列测试通过
+
+3b2b06ecf94a00c2586785a0cce243260357fa9a
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 04:47:06 +0800
+
+    refactor: 改进了单元测试架构
+
+eebeac497032fa26606fed3848a49ea95da7fd6a
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 04:47:39 +0800
+
+    test: 添加了对引入包的 CMake 检查
+
+5329ab2597b2a6982c9bb96dca041972e690844b
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 05:20:00 +0800
+
+    feat: 添加了 Result<T, E> 异常封装
+
+af734e42bf3829777e39f568b0400a22208b77a6
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 05:20:15 +0800
+
+    test: Result 测试通过
+
+0ad567db413b650f20b608032eb21b5846b0753b
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 05:22:53 +0800
+
+    test: 调整了部分 Result 测试缩进
+
+914bd7ed32f565fc002733d52fde1859bc75e655
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 06:23:36 +0800
+
+    feat: 为 Result 添加了 unwrap_or API
+
+54fef435f5fb0bf73090e8d200495ca2a1fb12fb
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 06:41:30 +0800
+
+    feat: 添加了 Linux 权限系统封装
+
+2487274ea61225fcd53248558671e3c029ec8c03
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 06:41:43 +0800
+
+    test: 权限系统测试通过
+
+9343794b7f4ca0890d8b32f7f5a6cdf175682a41
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 08:01:30 +0800
+
+    fix: 修复了文件描述符所有权异常的问题
+
+35dac1ce5efb5d9cc879606c1eda3cf7f991eee9
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 08:02:01 +0800
+
+    refactor: 通过 Result 重构了事件队列封装
+
+e5c5c46face30b2ce10f40833455ce04e1b4fbc3
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 08:02:32 +0800
+
+    test: 新版事件队列测试通过
+
+f71a85963d96cbd02b45d1fdc896eeabd9b0aae2
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 08:03:24 +0800
+
+    refactor: 移除了对 .vscode 目录的追踪
+
+5feb7ade8821f76f422db613f88f285ae83d97e2
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 19:16:32 +0800
+
+    feat: 明确了 Result 的拷贝和移动语义
+
+e3a16190f95965cbd02b4e11265c2ce0678d999b
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 19:18:42 +0800
+
+    feat: 进一步区分了权限保护的移动语义
+
+298b24f753bef409389419d597c976cb69677b15
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 19:30:20 +0800
+
+    feat: 为时间封装添加了格式化输出 API
+
+17af7da755336feb11a88ed41b59dcafa88efeb0
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 19:30:40 +0800
+
+    test: 新版时间测试通过
+
+196f1044590a2109dc1a2b56ed8bad421d71cc4c
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 19:36:38 +0800
+
+    feat: 添加了网络事件封装
+
+1526b011cd4fdd54942fecbb62c40e7212d2d1c1
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 19:36:52 +0800
+
+    test: 网络事件测试通过
+
+8a24dcba6371d41105170b4504906ac7ff4529f3
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 20:48:32 +0800
+
+    feat: 添加了事件时间线封装
+
+f53a65b93c18afe228943419ade3b297b03610e7
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-27 20:48:43 +0800
+
+    test: 事件时间线测试通过
+
+052bb9492f5513c19b54e863c3e19a25bafbc134
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 01:53:25 +0800
+
+    refactor: 为时间线新增语义化的类型声明
+
+8d3dae2d05357fa261af4d190be35d2926c788eb
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 02:37:19 +0800
+
+    refactor: 重构时间线返回值与异常处理
+
+5e0068b8b076482c0e26e41fa69397be7cfbb040
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 02:37:40 +0800
+
+    test: 新版时间线测试通过
+
+b43ba0e3f34eb37a27570ab6542b36242e517cfb
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 03:40:30 +0800
+
+    fix: 修复了 Result 对移动语义不友好的问题
+
+4ff005c36f160ccdd0428cadc77670e4997e7b73
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 03:40:48 +0800
+
+    feat: 添加了统一报错封装
+
+fa30fdde378009f35d5574bbc1bbf16cf8ef9918
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 03:41:28 +0800
+
+    refactor: 通过统一报错重构文件描述符报错
+
+22858b44e4800483676a2648ada9c0ec9a6bfcc1
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 03:41:43 +0800
+
+    test: 新版文件描述符测试通过
+
+7926d8a5c8e5055003593ec9e16800364ae7ec5e
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 03:42:09 +0800
+
+    refactor: 通过统一报错重构权限系统报错
+
+98cd71fca5559098ce081ad4267837ec392cc09f
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 03:42:40 +0800
+
+    refactor: 通过统一报错重构事件队列报错
+
+929ccf4d44ef512f39908668669f905073251494
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 03:42:51 +0800
+
+    test: 新版事件队列测试通过
+
+5028bd2dbee9abde2cc3b1e7a8bb24960bf4bdd0
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 04:46:05 +0800
+
+    refactor: 统一了网络事件报错模型
+
+30e37a046f63bb54e30321bc06f3900872da8e8f
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 04:46:59 +0800
+
+    test: 新版网络事件模型测试通过
+
+540a3d7a6a094ce23c69831bde69f2d8415ec2d7
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 04:47:51 +0800
+
+    refactor: 通过报错模型重构了事件时间线
+
+6678a8779836112085f3ab04b8733dd20de3282a
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 04:48:03 +0800
+
+    test: 新版时间线测试通过
+
+0c90eee13562c3694f96fc15c3777a1f909bfcb9
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 05:05:31 +0800
+
+    feat: 添加了网络状态机封装
+
+11cc0cc679b507a7a024217f9fe2d1c2ff7712d9
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 05:05:40 +0800
+
+    test: 网络状态机测试通过
+
+b2d0a2b79a2105a37bb0fa52c840b17706bfb045
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 05:26:45 +0800
+
+    feat: 添加了 Orchestrator 封装
+
+ca427154147aa0785e67eec80ec3a649d60c77f3
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 05:27:00 +0800
+
+    test: Orchestrator 测试通过
+
+550751cff3844f5a553aa70f8d7aea53c4ad1587
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 05:33:22 +0800
+
+    refactor: 补充了 Orchestrator 的报错机制
+
+d84161314e0145692a552ac1358b887d908eca08
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 05:33:32 +0800
+
+    test: 新版 Orchestrator 通过测试
+
+23f122ed0fc4dec88f57842c8ff382603c312f1f
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 05:53:39 +0800
+
+    feat: 新增了对 Result<void, E> 的支持
+
+eac310a43fc0761cf454f4125e842af40acfb477
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 05:53:51 +0800
+
+    test: 新版 Result 测试通过
+
+b8713ef328adcdd6cb9055cc6e9c2e1139cf80d0
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 05:59:51 +0800
+
+    refactor: 用 Result<void, E> 重构权限模型
+
+8e8788d5fe099443a069a6544b919c67ede71c85
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 06:01:08 +0800
+
+    test: 新版权限模型测试通过
+
+640b5c30b9883216a16aa71f8baf5ab3117c743c
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 06:07:36 +0800
+
+    refactor: 用 Result<void, E> 重构 Orchestrator
+
+08dd0e40533b344806db5e07dac8ceda17533871
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 06:24:38 +0800
+
+    feat: 添加快照封装并重构路径
+
+1e7016db25cbdd8e1309acd41cc2de2048edb6be
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 06:28:06 +0800
+
+    refactor: 将时间点格式化函数提至全局
+
+03bb256a168a74e3cbf642d8006625b47a10ce55
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 06:47:11 +0800
+
+    feat: 添加了多个派生 Sink 封装
+
+030a4da89673aaf5c02dcbb3256981168b3740c0
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 06:47:22 +0800
+
+    test: 派生 Sink 封装测试通过
+
+240d016b6d67d82de52108a747ffc6aa7af0f577
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 06:50:50 +0800
+
+    fix: 修复了事件快照的拼写错误
+
+8d059920ff9f7eaa2c220947ee09c114812c4cd2
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 07:15:57 +0800
+
+    feat: 将 Receiving 与 Finished 等效化
+
+8dab307eb5141dad091df4bfed33f9d6f5140698
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 07:16:27 +0800
+
+    refactor: 重构了 Sink 基类路径
+
+e05af525817da92bd26b57407ab29aa8e3bdc849
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 07:54:01 +0800
+
+    fix: 修复了 Fd 析构语义歧义问题
+
+4007cb7d8a7fe9d0066bdd1a87c2b8c8b338d068
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 07:54:21 +0800
+
+    feat: 为网络事件类型新增关闭连接事件
+
+a8fcfbf1b7f6e7a62d39b0b33f3833e30d866aa5
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 07:54:44 +0800
+
+    feat: 添加 Scenario 基类封装
+
+940eb5f10633d6f5ffc400e3fc471454bd27ca50
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 07:55:39 +0800
+
+    feat: 添加同步 TCP 客户端
+
+a165925d970113ddf059e16ab45d5b60034941ef
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 07:55:51 +0800
+
+    test: 同步 TCP 客户端测试通过
+
+99389cc7136973b2fdfd7f200066ea8cc443fe1e
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 08:25:58 +0800
+
+    refactor: 细化了网络事件并大规模重构
+
+74857c4c8098cf8380e9c88b62d16b4d7ba6740e
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 17:42:27 +0800
+
+    refactor: 提供 Fd 的只读接口并重构
+
+0a8ef30a78481257caad2461b40e01de426cd324
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 17:42:40 +0800
+
+    test: 新版 Poller 通过测试
+
+792b550e4da965d4455a7fd7d6ea8df5f1e87cd6
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 19:22:08 +0800
+
+    refactor: 彻底统一了报错模型
+
+176054b1891fa135418e16a6d9079d9c9c948034
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 19:22:30 +0800
+
+    test: 根据新的报错模型翻新了单元测试
+
+c4e17763e98d022b7dcfc6e3c704d750b7e5cf2e
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 19:23:01 +0800
+
+    fix: 修复了 CMake 无法自动链接 fmt 的问题
+
+b25047fbf9eb357f263facc13bc2708a9772f750
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 19:37:25 +0800
+
+    refactor: 完成了剩余报错模型的替换
+
+0c39ceb369e35fcf85ec7dbfddf39d23315ca0b8
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 19:37:40 +0800
+
+    test: 翻新了单元测试
+
+eda486c0e7916fe2fb159f90ed5f064467f86b02
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 20:39:04 +0800
+
+    refactor: 构建了分层继承报错模型
+
+757f00658c4a3aa1581433d5498af7613df53f0a
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 20:39:30 +0800
+
+    refactor: 封装了分层报错 TCPClient
+
+dd1d12b2667f89c9bc998584c2f76d45767d4f8d
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 20:39:43 +0800
+
+    test: 翻新了单元测试
+
+47b553b86458d1e3ea7119fa8e8624acbda8ed07
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 20:54:14 +0800
+
+    feat: 添加异步 TCP 客户端
+
+2b832d9d912d85ee5c4548be1c8833753c687768
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 20:54:28 +0800
+
+    test: 异步 TCP 客户端测试通过
+
+96c69fe980294ea6e1d18f91c2bb93fe70165670
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 22:31:57 +0800
+
+    feat: 导入了 FTXUI 库
+
+6d52ffe51a31068ac92d8bd7b9e762f2f27b8e9c
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 22:32:11 +0800
+
+    feat: 实现了最简 TUI
+
+92bb1865b93aac202047658772739b1b5a03c9be
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 22:57:36 +0800
+
+    fix: 修复了 vector 扩容产生的悬空引用问题
+
+3e506ea0cc6356ad88aa857c34aa765eb985bc84
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 22:57:47 +0800
+
+    test: 翻新了单元测试
+
+8cf5f24455ed457c8bcb6624a545c98f52fa7f55
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 23:04:01 +0800
+
+    fix: 修复了报错模型不统一的问题
+
+aa9ca885f7d57d20b887512bbb90b77a2acbb019
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-28 23:12:49 +0800
+
+    feat: 初步构建了带输入框 TUI
+
+72ded006d21683db70ef980fd6ee4ed8660da3b7
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 00:01:37 +0800
+
+    refactor: 修改了 Time 的计数单位
+
+6d04890aa7ccd3224208a1f9761b4da07eed4b0e
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 00:02:04 +0800
+
+    feat: 添加 TCPSocket 封装
+
+d0b4ceb926e77171d006a11766d5c1817843c112
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 00:02:17 +0800
+
+    test: TCPSocket 测试通过
+
+926e3215c9aa80622e569aa36e2ae3c9ee6575b8
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 00:03:03 +0800
+
+    feat: 添加了 SocketAddress 封装
+
+1ce76659d6150ad15ce034c216bde008fc36630c
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 00:06:23 +0800
+
+    test: TCPSocket 测试更新
+
+736395abde07ae846f2c3060151c2ec751c65326
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 00:34:37 +0800
+
+    feat: 添加网络读写缓冲区封装
+
+920136578f6caa04121a03b1973c2b00abee08e9
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 00:34:47 +0800
+
+    test: 缓冲区测试通过
+
+91febb412386c37016814bdc91f77c75a06c6b48
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 00:35:01 +0800
+
+    feat: 添加 TCP 连接封装
+
+b01a2b4b8c09c600f38c13ef007b8fd702d1f3d2
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 00:35:12 +0800
+
+    test: TCP 连接测试通过
+
+18dcaa73c0ee261e3afabf1659699d0f780e2fdb
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 04:46:35 +0800
+
+    refactor: 重构了 TCP 连接工厂构造函数
+
+1cba1a7c02da23a44641bb70dcfe390621abdd0f
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 04:46:47 +0800
+
+    test: 新版 TCP 连接测试通过
+
+f103f5c124a4de8f5bdbdbdcecab8d29fd3b3906
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 05:09:46 +0800
+
+    refactor: 为 TCP 套接字增加 noexcept 修饰
+
+09e29edba319987d195b8705cda27ed420cd8f5a
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 05:10:20 +0800
+
+    refactor: 重构 TCP 连接并提取抽象基类
+
+0278ecbb44be3767cfb048eb392be2ddf9e4de99
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 05:10:45 +0800
+
+    test: 新版 TCP 连接测试通过
+
+de4ca502c268e8d8bf899939b6fb91ab5745205c
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 05:12:01 +0800
+
+    refactor: 更新了 TCP 连接的源文件路径
+
+dd82c87f259f1d047c03bd93a3d52b41c244fa59
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 05:13:55 +0800
+
+    refactor: 更新了 include guard 命名
+
+026db70fe8617a426fc11f97cc55ba22a01738e7
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 05:25:43 +0800
+
+    refactor: 重构 TCP 套接字并提取抽象基类
+
+69f91490524bc146d3693ca2e2aee0e65f72febf
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 05:26:00 +0800
+
+    test: 更新了单元测试 include 路径
+
+5d5706f349ac8a1d41a9542b9d44dcc2906bf048
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 05:30:20 +0800
+
+    refactor: 更新了 TCP 套接字单元测试路径
+
+c025c7ee86b22b9bf7146408fd81f61e57026f99
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 05:33:07 +0800
+
+    feat: 添加 UDP 套接字封装
+
+e3bcd2d0689285792f64a14bea0b11d5dfc694ba
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 05:33:22 +0800
+
+    test: UDP 套接字测试通过
+
+5d755663c3e914b8814c0acdcf0d1978fab1a47a
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 05:47:11 +0800
+
+    feat: 新增连接设置非阻塞策略接口
+
+113937f1073b71ff9a2dacd2983e86ddf6484cbf
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 07:26:59 +0800
+
+    refactor: 完善了套接字地址封装
+
+74a423566ee9843edbcdccce5d6a1625ee5f8183
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 07:27:47 +0800
+
+    refactor: 将非阻塞行为与套接字职责分离
+
+14deccb10396c8a52918bafec2fceaa5fadc2fc2
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 07:28:14 +0800
+
+    refactor: 重构了网络连接职责与行为
+
+020e062583b6937ae28cfe8a958b28a11497be72
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 07:28:39 +0800
+
+    test: 新版套接字地址测试通过
+
+b11c0ab985aec975645020cbf52f4e773fdbd2d8
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 07:28:53 +0800
+
+    test: 新版套接字测试通过
+
+37fa031d5d79bb0f781ab9197675d24ef9ed90d0
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-29 07:29:07 +0800
+
+    test: 新版网络连接测试通过
+
+9af2007c01b6db13ab928d879628cc820c8ee158
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-31 01:03:19 +0800
+
+    fix: 修复了 Orchestrator 的删除组件问题
+
+4af720c4c71621a45122b7af9034a0467fead11e
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-31 03:08:42 +0800
+
+    fix: 修复了网络引擎多线程不安全的问题
+
+386013d062b003cf3fe77bd8536ac813e818bb13
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-31 03:09:14 +0800
+
+    fix: 初步修复了文件复用的记录重叠问题
+
+5c2d21f409f77fee3696cb8db7d7113e10799f12
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-31 03:09:28 +0800
+
+    test: 更新了单元测试
+
+564d7a6c1e12c741666d233e6c6304ac9e9ecf88
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-31 21:01:24 +0800
+
+    refactor: 暂时移除了对同步 TCP 客户端的支持
+
+3e13db0c58ddf55d035cb751672bcb0af78bc2c1
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-31 21:57:41 +0800
+
+    refactor: 统一错误系统并工程化
+
+31ab5edf4b2c310b78a3851cf196e1b313fb51b9
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2025-12-31 21:58:16 +0800
+
+    test: 更新单元测试并舍弃部分暂无支持特性
+
+7867be9fb002d5b219077054c83d71e6303b4256
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 05:22:19 +0800
+
+    feat: 添加字节缓冲区
+
+9458d752a7275dccd43f29e1434bc8915ba08392
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 05:23:00 +0800
+
+    refactor: 显式允许了报错的拷贝和移动构造
+
+954e746da386c59c866908af416c301566ada2c9
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 05:24:28 +0800
+
+    feat: 改变部分网络职责并拆分对端解析逻辑
+
+c5d346e71a2b28828a168ec4da780fadd8e8b01b
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 05:25:51 +0800
+
+    refactor: 为重构时允许构建暂时注释部分代码
+
+1e459dcf4af9fce6c6ef09184166f8deaaaf9400
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 05:26:55 +0800
+
+    refactor: 重命名套接字基类并修改基础接口
+
+e39794089a22d564bf49cc38661f4886d87082b8
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 05:27:09 +0800
+
+    feat: 添加读写协程上下文
+
+139e2640b02774d8cce0e8007e108ded898379e5
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 05:38:53 +0800
+
+    fix: 修复了字节缓冲区写逻辑异常的问题
+
+607a73f1c4a793709e8dfd349f149e1c32b34d24
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 05:39:02 +0800
+
+    test: 字节缓冲区测试通过
+
+330d9e66884989788a70c110cbdaa6869b922ca8
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 05:58:53 +0800
+
+    feat: 新版 DNS 解析和构造封装完成
+
+1cc16c1657277cdea830268f14386f99106f4d86
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 05:59:09 +0800
+
+    test: DNS 解析测试通过
+
+97ecbdd466afb1f4f2c071729c8d552ba7cf92c9
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 07:20:05 +0800
+
+    feat: 为字节缓冲区提供更弱检查接口
+
+c4cef5ec640f8ef6a757614eca73fbc6e31b60ee
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 07:20:47 +0800
+
+    refactor: 移除了连接对旧读写缓冲区的依赖
+
+74331c1735df8e6c86f7f66292e6d839bc30e19c
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 07:21:13 +0800
+
+    feat: 新增了错误类型分类获取接口
+
+0e440b6611e999ff2f845fda085d8ba40890bc3e
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 07:21:44 +0800
+
+    feat: 完善了消息队列枚举类型
+
+ccf4795c44c128e27686dd695279b058ff42efb0
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 07:22:17 +0800
+
+    feat: 新增套接字连接对端接口
+
+22087960ec51fc0b548480be186970a8c8fee982
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 07:23:09 +0800
+
+    feat: 添加 TCP 套接字阻塞接口并修复缓冲区漏洞
+
+105bd28f7b2f45f6abf8746622797ac23e2616aa
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 07:23:21 +0800
+
+    test: 恢复 TCP 套接字单元测试
+
+133631b87a9c582336881681560f9d4fa1c7ee5f
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 19:39:49 +0800
+
+    refactor: 为消息队列提供 FdView 接口并修复事件检验问题
+
+266690fe8c3f852ffa381d29a5dfbd1169b74875
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 20:44:14 +0800
+
+    feat: 添加了对端主动关闭的报错语义
+
+1d7e6f9e666a393c6a8c7ee4d7bc2763c361684b
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 20:45:58 +0800
+
+    refactor: 移除套接字基类阻塞连接接口
+
+a190770dfe32ee92654405ee98f48e4d17133b52
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 20:46:23 +0800
+
+    feat: 补充了消息队列的事件检查接口
+
+3ad8f48eb9610b68f33518ac008c132ad891837a
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 20:47:02 +0800
+
+    refactor: 异步 TCP 客户端接口对接新版消息队列
+
+f0bf5dd17f68debd464f768c98c4ccf8d0e2476b
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 20:47:38 +0800
+
+    refactor: 移除了 TCP 套接字的阻塞接口
+
+3b29917587fab979d328666966bac60e9fca8d94
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 20:48:03 +0800
+
+    feat: 进一步完善了统一 IO 协程上下文
+
+b1b07ef21735b886a60a7dd824c0483a4e35d329
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 20:48:26 +0800
+
+    test: 单元测试对接新版消息队列接口测试通过
+
+7a56f01753880321377293a9478930c93305c400
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 20:49:19 +0800
+
+    test: TCP 套接字与 IO 协程上下文协作测试通过
+
+717b1838b7284d81026ea9ae2b4bf8a816f56445
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 20:54:35 +0800
+
+    refactor: 将获取对端的逻辑提升至套接字基类
+
+bffa298bf7a885daa951cc7ead722dc1872e69e4
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 21:04:57 +0800
+
+    test: 提高了 TCP 套接字测试超时时限
+
+32af2c99430cb91c22e1c66545af9ac439ffcadb
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 21:13:27 +0800
+
+    fix: 修复消息队列的 fd 多次添加边界异常
+
+00e831a9f739d46228c63e72686d0bc1ff6674fb
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 21:13:50 +0800
+
+    feat: 恢复 UDP 套接字实现
+
+548d58fe9ed604aca13442c5bc99de9d5c391411
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 21:14:04 +0800
+
+    test: 恢复 UDP 套接字测试函数
+
+3a240f858635e5eeca6c517028530ad7d3891983
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 22:22:47 +0800
+
+    refactor: 移除了 IO 协程上下文
+
+74c7e316cca911a99343d568eb42292189c85491
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 22:23:09 +0800
+
+    refactor: 暂时注释了 UDP 套接字相关实现
+
+7a546ab468f44cb758a12b6384f12694e486975f
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 22:23:29 +0800
+
+    refactor: 套接字如今只支持阻塞版本
+
+7cbd224457aae5239b6ca5c67a94d5255c3d8716
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 22:23:41 +0800
+
+    test: TCP 套接字测试通过
+
+3626ac6ab3de5a4d1ad6a2bd69135a1bdab800ad
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 22:28:13 +0800
+
+    refactor: UDP 套接字只支持阻塞版本
+
+3de3b0ed0fa34f9e1997d6058a039c3769a3d9b6
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-01 22:28:24 +0800
+
+    test: UDP 套接字测试通过
+
+055037457d316c48064bd969aa624c96d2e09b87
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-02 23:51:30 +0800
+
+    refactor: 重构网络连接基类以适配套接字
+
+510b69830acb03b8d1a1f58bdb3b0dccd56fd6e5
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-02 23:52:05 +0800
+
+    refactor: 恢复 TCP 连接实现
+
+6e432e423a915ff6e5e75603177614e55aef4ea3
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-02 23:52:22 +0800
+
+    test: 恢复 TCP 连接单元测试
+
+9931397914f33da712c41c997a2c4321c38fa6d7
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 00:35:16 +0800
+
+    fix: 修复套接字内部计数越界问题
+
+8c5a4e834b6860aa8b3ec0a7c8f21b9f49db5547
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 00:35:44 +0800
+
+    feat: 为 TCP 连接提供了套接字访问借口
+
+c3164cda47e4f1752eeb81e33c2538f6db3917e3
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 00:37:36 +0800
+
+    refactor: 恢复 UDP 连接实现
+
+2d9f1fc731bbcd44f00c88a6200f28d00ca536df
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 00:37:47 +0800
+
+    test: 恢复 UDP 连接单元测试
+
+a9a60acea6fd3c12bc02a10ec270589750463662
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 00:49:43 +0800
+
+    feat: 添加了更详细的 UI
+
+dc056571d9408fe802357a551d1910a02c44347e
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 01:14:05 +0800
+
+    feat: 添加了更完整的错误模型
+
+8061762ea0384cd4f7a79827caff94a2eb885b1f
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 01:40:05 +0800
+
+    feat: 更新了从事件类型到字符串的映射
+
+2de7b3eded96829b08e70b343adf654c90a81c5d
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 01:48:25 +0800
+
+    feat: 使用新版封装对接了客户端实现
+
+627395f0f15f7462bb70a9ec5ea47f8b47541d60
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 01:48:48 +0800
+
+    feat: 使用新版错误模型更新现有实现
+
+5455525d2226bc32458c4be8e357d9f8489a0a87
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 02:09:36 +0800
+
+    refactor: 状态格式化接口返回类型调整
+
+20d6fc106d787a022284b908e227f41272b27a60
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 02:09:49 +0800
+
+    feat: 修改了 TUI
+
+01062c4cb8ad645c00ba9bf188d059d9cb2e9b07
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 02:12:22 +0800
+
+    refactor: 移除 TUI 中的输入框
+
+823c6a541cfd1a2447dfe7232f0c2e3a14a07bd2
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 18:22:56 +0800
+
+    fix: 修复了命令行无参数无法启动的问题
+
+06266b93cca53327fc3ce7c08e85755b6ce2d7f3
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 18:35:58 +0800
+
+    feat: 美化页面布局，提供更详细信息
+
+dc9d8d242562c112e233fce5ec16dcce3a46ad8d
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 18:38:39 +0800
+
+    fix: 修复了报错信息越界问题
+
+50610d3b2e051845bd78bb7a683bee87407a0f66
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 18:47:37 +0800
+
+    refactor: 更改了对端关闭的错误信息
+
+51b33e1dbd7ba108ef8c0cc052e9aa9656ee8ca8
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 18:47:58 +0800
+
+    feat: 更新 CMake 配置，准备导入 Boost 库
+
+a9a3a8063514a68a7f1188c546649d3ff6b7161b
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 19:52:07 +0800
+
+    feat: 引入 Boost 并更新 HTTP 请求实现
+
+a7ef19d28118a61f5548907cdc636bc9442c93cb
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 19:57:00 +0800
+
+    fix: 修复了传输结束后对端不关闭的问题
+
+aca6458d6b65b4783ce256c4c1c0faa89509c56a
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 20:00:34 +0800
+
+    fix: 明确了 TCP 客户端的阻塞语义
+
+bb291853c0ea427fbfc0de994cb0a6fbd7f75757
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 20:05:27 +0800
+
+    refactor: 重构了 HTTP 相关数据结构路径
+
+aa649efc3b6a428c1a1d4b5b677f6460612c01b4
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 20:32:43 +0800
+
+    feat: 完善了 TCP 客户端消息输出
+
+0fce8b011d1a6c2bf940d60f16ff9a9d96a700cb
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 20:36:33 +0800
+
+    refactor: 将 TCP 客户端等待时间降至 3000 ms
+
+a81a259063dd718689b05f0dae68bba6edd64d51
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 20:40:14 +0800
+
+    feat: 移除了不必要的第三方库依赖
+
+cccf5e3e9907d09e2279b4a197626102336c84c8
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 20:47:28 +0800
+
+    docs: 更新了项目文档构建教程
+
+38755e7ced05c247dc329afc621d76b36f59a89e
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 23:42:47 +0800
+
+    feat: 共享了连接之间的消息队列
+
+e22115eb1f0cb641150e650135e9e1cbdda9fd4b
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 23:43:02 +0800
+
+    test: 翻新了单元测试
+
+4ca2df547250f7f78bf66505e4babc959bc0a223
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-03 23:57:06 +0800
+
+    refactor: 移除了不需要的头文件依赖
+
+cfebc98eb14eef6a36b5c62dfbd68afa1992293c
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 00:06:49 +0800
+
+    feat: 更新了状态机状态与转移
+
+cef42bbfda42c4449d06aeacc11eea4ad89c111a
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 00:07:14 +0800
+
+    feat: 细化了 Orchestrator 报错事件
+
+acb381c4c882bc250465dd892e34b4e654fd2300
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 00:07:23 +0800
+
+    test: 翻新了单元测试
+
+7e711892d23488e41f326525a3121f20af2a78cf
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 00:53:17 +0800
+
+    feat: 事件报错改为可选项
+
+8c92a617fdd2d0fac3ca3b2bf37be5cb252b1dc2
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 00:53:35 +0800
+
+    test: 翻新了单元测试
+
+6c7aa15a0192e55d7a2554c985e35881d72a461d
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 01:07:10 +0800
+
+    feat: 事件快照报错成为可选项
+
+d76e9ffb6276e096b42a5f52d38ed4d8517886b3
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 01:07:18 +0800
+
+    test: 翻新了单元测试
+
+211f456a4ef126d80a4cee67fe6922abf5ea5824
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 01:10:11 +0800
+
+    feat: 为对端关闭报错开洞
+
+79fff9f498b6aef1f7cb57989fc449589eb6439d
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 01:10:31 +0800
+
+    feat: 允许了请求终止后的事件调度
+
+e7bf31c905d7841e2bd5b20f6bb920fd511b3aa1
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 04:16:53 +0800
+
+    fix: 修复了 TUI 代码有误的问题
+
+8b84ef9f56e20bad56a7eb4dab5aa3eba87fd658
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 04:41:37 +0800
+
+    docs: 更新了工具层、平台层和全局设计文档
+
+1560839607d4d9ee3b5a8b783cf144d83db8bc14
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 04:45:52 +0800
+
+    docs: 更新了核心层、网络层和终端层设计文档
+
+5084c32bc6b66d1ddc3902734052baa79253e9d8
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 04:56:14 +0800
+
+    docs: 更新了项目文档
+
+2444e62592670a63907101efe7cb7b7f10f98f12
+Author: 爱特小登队 <t202510423998135@eduxiji.net>
+Date:   2026-01-04 05:05:17 +0800
+
+    docs: 更新了错误模型的代码注释
+
+6f403b95133efc8a6ea5d2167f891c67fdc40434
+Author: Rain <rain@foxmail.com>
+Date:   2026-01-03 21:12:50 +0800
+
+    docs: add project changelog based on commit history
+
+0fa2544d85e8e76e70b364092667de1621aa0d83
+Author: Rain <rain@foxmail.com>
+Date:   2026-01-03 21:19:03 +0800
+
+    docs: format CHANGELOG to unified heading structure
