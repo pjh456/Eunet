@@ -214,11 +214,6 @@ namespace net::http
 
         out.body = beast::buffers_to_string(res.body().data());
 
-        // 上报 Body 接收完成事件
-        (void)emit(core::Event::info(
-            core::EventType::HTTP_BODY_DONE,
-            "HTTP body received (" + std::to_string(out.body.size()) + " bytes)"));
-
         // 构建最终的 HttpResponse 对象返回
         return util::ResultV<HttpResponse>::Ok(std::move(out));
     }
