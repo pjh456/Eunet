@@ -4,6 +4,8 @@ file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
 )
 
+find_package(CURL REQUIRED)
+
 foreach(test_src ${TEST_SOURCES})
     # 2. 生成“相对路径名”作为唯一 test 名
     file(RELATIVE_PATH rel_path
@@ -19,7 +21,7 @@ foreach(test_src ${TEST_SOURCES})
     # 3. 可执行文件
     add_executable(${test_name} ${test_src})
 
-    target_link_libraries(${test_name} PRIVATE eunet)
+    target_link_libraries(${test_name} PRIVATE eunet CURL::libcurl)
 
     # 4. 统一输出到 build/tests
     set_target_properties(${test_name} PROPERTIES
