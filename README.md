@@ -11,8 +11,10 @@
 
 EuNet 的核心目标不是“发送请求”，而是 **展示一次网络请求从开始到结束究竟发生了什么**。
 
-演示视频链接：https://pan.baidu.com/s/1G-FuzizKAmF1V6w0vFRFrQ
-提取码：e5ex
+[EuNet 代码迭代日志](./docs/CHANGELOG.md)
+
+演示视频链接：https://pan.baidu.com/s/163B803rBUjAwitUo_2O8kw?pwd=1t7x
+提取码：1t7x
 
 ---
 
@@ -52,7 +54,7 @@ graph TD
 
 我们提供了详细的架构设计文档，包含模块职责、类图设计和实现细节。
 
-👉 **[点击查看：EuNet 架构与设计文档](docs/design_all.md)**
+👉 **[点击查看：EuNet 架构与设计文档](./docs/design_all.md)**
 
 ---
 
@@ -79,6 +81,8 @@ graph TD
 cd scripts
 bash ./build.sh
 ```
+
+即可直接跳过以下第一、二两步！
 
 ### 1. 环境依赖
 
