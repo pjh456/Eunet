@@ -128,6 +128,7 @@ namespace core
                 // still Receiving
                 break;
             case EventType::HTTP_BODY_DONE:
+            case EventType::CONNECTION_CLOSED:
                 transit(LifeState::Finished);
                 break;
             default:
