@@ -105,4 +105,11 @@ namespace core
                 std::remove(sinks.begin(), sinks.end(), sink),
                 sinks.end());
     }
+
+    void Orchestrator::reset()
+    {
+        std::lock_guard lock(mtx);
+        timeline.clear();
+        fsm_manager.clear();
+    }
 }
