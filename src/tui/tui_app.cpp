@@ -253,7 +253,8 @@ namespace ui
 
             lines.push_back(
                 paragraph(hex_view) |
-                focusPositionRelative(0.0f, scroll_percent) | vscroll_indicator | frame |
+                focusPositionRelative(0.0f, scroll_percent) |
+                vscroll_indicator | frame |
                 size(HEIGHT, EQUAL, VIEW_HEIGHT) | border);
         }
 
@@ -264,7 +265,7 @@ namespace ui
             lines.push_back(text(snap.error->format()) | color(Color::RedLight));
         }
 
-        return vbox(std::move(lines)) | frame | vscroll_indicator;
+        return vbox(std::move(lines));
     }
 
     MenuOption TuiApp::menu_option()
