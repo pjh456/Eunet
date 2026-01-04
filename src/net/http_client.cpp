@@ -141,10 +141,29 @@ namespace net::http
                 // 如果头部解析刚刚完成 上报头部接收事件
                 if (parser.is_header_done() && !headers_emitted)
                 {
+                    const auto &msg = parser.get();
+
+                    std::stringstream ss;
+
+                    // 构造 HTTP 状态行 (e.g., "HTTP/1.1 200 OK")
+                    // msg.version() 返回 11 代表 HTTP/1.1, 10 代表 HTTP/1.0
+                    ss << "HTTP/" << (msg.version() / 10)
+                       << "." << (msg.version() % 10) << " "
+                       << msg.result_int() << " " // 状态码 (200)
+                       << msg.reason() << "\r\n"; // 原因短语 (OK)
+
+                    // 遍历所有 Header 字段
+                    for (auto const &field : msg)
+                    {
+                        ss << field.name_string() << ": "
+                           << field.value() << "\r\n";
+                    }
+
+                    // 发送事件
                     (void)emit(
                         core::Event::info(
                             core::EventType::HTTP_HEADERS_RECEIVED,
-                            "..."));
+                            ss.str()));
                     headers_emitted = true;
                 }
 
