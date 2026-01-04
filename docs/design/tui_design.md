@@ -25,17 +25,22 @@ UI 线程和网络线程是分离的。FTXUI 不是线程安全的。Sink 需要
 
 **外部依赖**: `FTXUI` (Menu, Renderer, Component, Screen), `fmt`
 
-**设计思路**：
-使用 FTXUI 构建终端界面。
+**设计目标**:
+除了展示元数据（FD, State, Error），重点解决**长 Payload 数据的可视化**问题。
 
 **模块职责**：
 UI 布局、渲染、交互处理。
 
-**实现方法**：
-*   **Layout**: 左侧列表（Menu），右侧详情（Detail Panel），顶部状态栏。
-*   **Data Binding**: 维护一个 `snapshots_` 列表。
-*   **Concurrency**: 使用 `std::mutex` 保护数据，因为 `on_event` 在网络线程回调，而 `Render` 在 UI 线程。
-*   **Render Logic**: 根据 Event 状态（Error 红色，Success 绿色）动态生成 UI 元素。
+**实现逻辑**:
+1.  **Hex Dump 格式化**:
+    *   将 `std::vector<std::byte>` 格式化为 `Offset | Hex Bytes (16) | ASCII` 的经典三段式布局。
+    *   对于不可打印字符，在 ASCII 区域替换为 `.`。
+2.  **虚拟滚动 (Virtual Scrolling)**:
+    *   由于 FTXUI 的 `vbox` 渲染大量元素会有性能瓶颈，且终端高度有限。
+    *   维护 `payload_scroll_` 状态，仅截取当前可视窗口内的行进行渲染 (`focusPositionRelative` 配合 slice)。
+3.  **鼠标交互**:
+    *   使用 `CatchEvent` 捕获 `Mouse::WheelUp` 和 `WheelDown`。
+    *   仅当鼠标指针悬停在详情面板区域时响应滚动事件，避免干扰左侧菜单。
 
 ## 3 `main.cpp`
 
