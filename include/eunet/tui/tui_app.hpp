@@ -69,10 +69,11 @@ namespace ui
 
         // ---------------- state ----------------
         int selected_menu_idx_ = 0;
-        std::string current_url_ = "http://www.example.com";
+        std::string input_url_val_ = "http://www.example.com";
 
         // ---------------- components ----------------
         Component event_menu_;
+        Component input_component_;
         Component root_;
 
     public:
@@ -144,9 +145,35 @@ namespace ui
 
         std::string snapshot_icon(const core::EventSnapshot &snap) const;
 
+    private:
+        /**
+         * @brief 清洗 TUI 输出
+         *
+         * 移除不合法的事件数据输出，清洗事件消息字符串
+         *
+         * @return 返回清洗后的字符串
+         */
         std::string sanitize_for_tui(
             std::string_view s,
             size_t max_len = 512);
+
+        /**
+         * @brief 启动新的场景
+         *
+         * 在网络请求执行结束后使用。清理现有数据并重新执行请求。
+         *
+         * @note 当网络请求未结束时执行无作用。
+         */
+        void trigger_scenario();
+
+        /**
+         * @brief 清洗 URL 字符串
+         *
+         * 移除 URL 串里的不合法字符（换行和空格）
+         *
+         * @return 返回一个清洗后的 URL 字符串
+         */
+        std::string clean_url(std::string s);
     };
 }
 

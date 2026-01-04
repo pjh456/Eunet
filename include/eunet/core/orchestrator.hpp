@@ -75,6 +75,7 @@ namespace core
 
         void attach(SinkPtr sink);
         void detach(SinkPtr sink);
+        void reset();
     };
 }
 

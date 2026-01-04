@@ -41,20 +41,29 @@ namespace core
         {
             if (worker_ && worker_->joinable())
             {
-                // 如果引擎销毁时线程还在跑，应在此处考虑停止逻辑
-                // 生产环境建议通过 stop_token 通知 scenario 退出
                 worker_->join();
             }
         }
 
     public:
-        void execute(std::unique_ptr<scenario::Scenario> scenario)
+        bool execute(std::unique_ptr<scenario::Scenario> scenario)
         {
             // 确保同一时间只有一个 Scenario 在运行（如果需要多并发，可改用线程池）
             bool expected = false;
             if (!running_.compare_exchange_strong(expected, true))
             {
-                return;
+                return false; // 引擎忙碌中，忽略本次请求
+            }
+
+            // 在创建新线程前，回收旧线程资源
+            if (worker_)
+            {
+                if (worker_->joinable())
+                {
+                    // 因为 running_ 已经是 false，这里的 join 会立即返回
+                    worker_->join();
+                }
+                worker_.reset(); // 释放旧指针
             }
 
             worker_ = std::make_unique<std::thread>(
@@ -70,6 +79,8 @@ namespace core
                     }
                     running_.store(false);
                 });
+
+            return true;
         }
 
         bool is_running() const { return running_; }

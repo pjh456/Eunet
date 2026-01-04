@@ -52,23 +52,58 @@ namespace ui
 
     void TuiApp::init_components()
     {
+        // 配置 Input
+        InputOption opt;
+        opt.content = &input_url_val_;
+        opt.placeholder = "Enter URL (e.g., www.baidu.com)";
+
+        auto input_base = Input(opt);
+
+        input_component_ =
+            input_base |
+            CatchEvent(
+                [this](Event event)
+                {
+                    // 拦截回车键
+                    if (event == Event::Return)
+                    {
+                        trigger_scenario();
+                        // 返回 true 表示事件已被处理，不再传递给 Input 组件，防止插入 \n
+                        return true;
+                    }
+                    return false;
+                }) |
+            size(HEIGHT, EQUAL, 1); // 强制高度为 1
+
         event_menu_ = Menu(
             &dummy_entries_,
             &selected_menu_idx_,
             menu_option());
 
-        auto main_container = Container::Vertical({
-            // input_row,
+        auto container = Container::Vertical({
+            input_component_,
             event_menu_,
         });
 
         // ---- root renderer ----
         root_ = Renderer(
-            main_container,
-            [&]
+            container,
+            [this]
             {
                 apply_pending_events();
-                return render_layout();
+                return vbox({
+                           render_header(),
+                           separator(),
+                           // 渲染输入框
+                           hbox({
+                               text(" Target: "),
+                               input_component_->Render() | flex,
+                           }) | size(HEIGHT, EQUAL, 1), // 渲染时也限制高度
+                           separator(),
+                           // 渲染内容
+                           render_content(),
+                       }) |
+                       border;
             });
     }
 
@@ -76,6 +111,8 @@ namespace ui
     {
         return vbox({
                    render_header(),
+                   separator(),
+                   input_component_->Render() | border,
                    separator(),
                    render_content(),
                }) |
@@ -262,5 +299,41 @@ namespace ui
             out += "...";
 
         return out;
+    }
+
+    void TuiApp::trigger_scenario()
+    {
+        if (engine_.is_running())
+            return;
+
+        // 清理 UI 数据
+        reset_session();
+
+        // 清理底层数据
+        orch_.reset();
+
+        // 使用清理后的 URL
+        std::string safe_url = clean_url(input_url_val_);
+        if (safe_url.empty())
+            return;
+
+        // 把清理后的 URL 写回输入框
+        input_url_val_ = safe_url;
+
+        // 执行新请求
+        engine_.execute(
+            std::make_unique<
+                net::http::HttpGetScenario>(
+                safe_url));
+    }
+
+    std::string TuiApp::clean_url(std::string s)
+    {
+        s.erase(std::remove(s.begin(), s.end(), '\n'), s.end());
+        s.erase(std::remove(s.begin(), s.end(), '\r'), s.end());
+        // 去除前后空格
+        s.erase(0, s.find_first_not_of(" \t"));
+        s.erase(s.find_last_not_of(" \t") + 1);
+        return s;
     }
 }

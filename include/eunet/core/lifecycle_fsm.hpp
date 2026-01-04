@@ -109,6 +109,7 @@ namespace core
 
     public:
         void on_event(const Event &e);
+        void clear();
     };
 }
 

@@ -178,6 +178,11 @@ namespace core
 
         fsms[key].on_event(e);
     }
+
+    void FsmManager::clear()
+    {
+        fsms.clear();
+    }
 }
 
 std::string to_string(core::LifeState s) noexcept
