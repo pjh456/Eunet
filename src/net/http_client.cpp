@@ -124,10 +124,19 @@ namespace net::http
             {
                 // 将接收到的数据喂给 Beast 解析器
                 auto n = r.unwrap();
+                if (n == 0)
+                    break;
+
                 auto bytes = boost::asio::buffer(buf.data(), n);
 
                 boost::system::error_code ec;
                 parser.put(bytes, ec);
+
+                // 如果是 "需要更多数据"，则不是错误，继续循环读取即可
+                if (ec == beast::http::error::need_more)
+                {
+                    ec = {}; // 清除错误状态
+                }
 
                 // 如果头部解析刚刚完成 上报头部接收事件
                 if (parser.is_header_done() && !headers_emitted)
@@ -165,6 +174,12 @@ namespace net::http
                 // 告知 parser：输入已结束（EOF）
                 boost::system::error_code ec;
                 parser.put(boost::asio::const_buffer{}, ec);
+
+                // 如果是 "需要更多数据"，则不是错误，继续循环读取即可
+                if (ec == beast::http::error::need_more)
+                {
+                    ec = {}; // 清除错误状态
+                }
 
                 if (ec)
                 {
