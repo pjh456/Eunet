@@ -1,3 +1,29 @@
+/*
+ * ============================================================================
+ *  File Name   : benchmark_test.cpp
+ *  Module      : test
+ *
+ *  Description :
+ *      性能基准测试套件。
+ *      横向对比 LibCurl (C), Boost.Beast (C++) 与 EuNet 的 HTTP GET 性能。
+ *
+ *  Metrics :
+ *      - RPS (Requests Per Second)
+ *      - CPU Usage (User/System)
+ *      - Memory Footprint (Max RSS)
+ *
+ *  Notes :
+ *      为了公平对比，所有客户端均配置为：
+ *      1. 关闭代理 (No Proxy)
+ *      2. 开启 TCP_NODELAY (禁用 Nagle 算法)
+ *      3. 使用 Keep-Alive (长连接复用)
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-5
+ *
+ * ============================================================================
+ */
+
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <curl/curl.h>
