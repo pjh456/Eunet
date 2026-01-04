@@ -240,13 +240,21 @@ namespace net::tcp
         {
             auto err = read_res.unwrap_err();
 
+            if (err.category() == util::ErrorCategory::PeerClosed)
+            {
+                (void)emit_event(
+                    core::Event::info(
+                        core::EventType::CONNECTION_CLOSED,
+                        "Peer closed",
+                        m_conn->fd()));
+
+                return Ret::Err(err);
+            }
+
             (void)emit_event(
                 core::Event::failure(
                     core::EventType::HTTP_RECEIVED,
                     err, m_conn->fd()));
-
-            if (err.category() == util::ErrorCategory::PeerClosed)
-                return Ret::Err(err);
 
             return Ret::Err(
                 Error::transport()
