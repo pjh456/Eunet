@@ -245,12 +245,19 @@ namespace ui
             if (payload_scroll_ > total_lines - VIEW_HEIGHT)
                 payload_scroll_ = std::max(0, total_lines - VIEW_HEIGHT);
 
+            // --- 滚动条逻辑 ---
+            // 计算滚动百分比，用于 FTXUI 的 focusPositionRelative
+            // 这确保了即使文本很长，渲染窗口也始终跟随 payload_scroll_ 的位置
             float scroll_percent = 0.0f;
             if (total_lines > VIEW_HEIGHT)
             {
-                scroll_percent = (float)payload_scroll_ / (float)(total_lines - VIEW_HEIGHT);
+                scroll_percent =
+                    (float)payload_scroll_ /
+                    (float)(total_lines - VIEW_HEIGHT);
             }
 
+            // 使用 vscroll_indicator 显示右侧滚动条
+            // 使用 frame | border 限制渲染区域大小
             lines.push_back(
                 paragraph(hex_view) |
                 focusPositionRelative(0.0f, scroll_percent) |

@@ -71,7 +71,11 @@ namespace ui
         // ---------------- state ----------------
         int menu_focused_idx_ = 0; // 菜单当前的焦点位置（随滚轮/键盘动）
         int detail_view_idx_ = 0;  // 右侧详情显示的索引（仅点击/回车变）
-        int payload_scroll_ = 0;   // Payload 滚动位置
+
+        // 详情面板的垂直滚动偏移量 (行数)
+        // 通过鼠标滚轮事件 (WheelUp/WheelDown) 修改
+        int payload_scroll_ = 0;
+
         std::string input_url_val_ = "http://www.example.com";
 
         // ---------------- components ----------------
@@ -175,18 +179,21 @@ namespace ui
         /**
          * @brief 清洗 URL 字符串
          *
-         * 移除 URL 串里的不合法字符（换行和空格）
+         * 移除用户粘贴可能引入的换行符 (\n, \r) 和首尾空格。
+         * 防止传递给底层 HTTP Client 时因格式错误导致解析失败。
          *
-         * @return 返回一个清洗后的 URL 字符串
+         * @return std::string 清洗后的 URL
          */
         static std::string clean_url(std::string s);
 
         /**
-         * @brief 格式化十六进制输出
+         * @brief 生成十六进制 + ASCII 对照视图
          *
-         * 将十六进制字节串格式化为字符串
+         * 格式示例:
+         * 00000000: 48 65 6c 6c 6f 20 57 6f 72 6c 64 21 0a       | Hello World!.
          *
-         * @return 输出格式化后的字符串
+         * @param data 原始字节流
+         * @return std::string 格式化后的多行字符串
          */
         static std::string format_hex_dump(
             std::span<const std::byte> data);
