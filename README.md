@@ -13,6 +13,8 @@ EuNet 的核心目标不是“发送请求”，而是 **展示一次网络请�
 
 [EuNet 代码迭代日志](./docs/CHANGELOG.md)
 
+[EuNet 过程性文档](./docs/progress.pdf)
+
 演示视频链接：https://pan.baidu.com/s/163B803rBUjAwitUo_2O8kw?pwd=1t7x
 提取码：1t7x
 
