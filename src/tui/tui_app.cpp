@@ -157,7 +157,7 @@ namespace ui
                            }) | size(HEIGHT, EQUAL, 1), // 渲染时也限制高度
                            separator(),
                            // 渲染内容
-                           render_content(),
+                           render_content() | flex,
                        }) |
                        border;
             });
