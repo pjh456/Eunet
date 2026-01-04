@@ -160,7 +160,8 @@ namespace ui
     Element TuiApp::render_content()
     {
         return hbox({
-            event_menu_->Render() | frame | vscroll_indicator | size(WIDTH, LESS_THAN, 40) | flex,
+            event_menu_->Render() | yframe |
+                vscroll_indicator | size(WIDTH, LESS_THAN, 40) | flex,
             separator(),
             render_detail_panel() | size(WIDTH, GREATER_THAN, 60) | flex,
         });
