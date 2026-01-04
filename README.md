@@ -4,7 +4,7 @@
 ![Platform](https://img.shields.io/badge/platform-openEuler-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
 
-![Image Menu](./docs/images/menu.png)
+![Image Menu](./docs/images/eunet.gif)
 
 > **EuNet** 是一个基于 **openEuler** 的现代 C++ 网络请求可视化工具。
 > 它聚焦于 **“让网络请求过程变得可观察”**，将黑盒的网络 IO 拆解为可视化的事件流。
@@ -53,6 +53,18 @@ graph TD
 我们提供了详细的架构设计文档，包含模块职责、类图设计和实现细节。
 
 👉 **[点击查看：EuNet 架构与设计文档](docs/design_all.md)**
+
+---
+
+## 实机演示
+
+### 页面展示
+
+![Image Menu](./docs/images/menu.png)
+
+### HTTP 头浏览
+
+![Header View](./docs/images/header.png)
 
 ---
 
