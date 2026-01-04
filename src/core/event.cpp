@@ -26,7 +26,8 @@ namespace core
     Event Event::info(
         EventType type,
         std::string message,
-        platform::fd::FdView fd) noexcept
+        platform::fd::FdView fd,
+        std::optional<std::vector<std::byte>> payload) noexcept
     {
         Event e;
         e.type = type;
@@ -34,6 +35,7 @@ namespace core
 
         e.msg = message;
         e.error = std::nullopt;
+        e.payload = std::move(payload);
         return e;
     }
 

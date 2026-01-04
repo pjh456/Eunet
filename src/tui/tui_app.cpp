@@ -25,6 +25,10 @@
 
 #include "eunet/tui/tui_app.hpp"
 
+#include "fmt/format.h"
+
+#include <cctype>
+
 namespace ui
 {
     TuiApp::TuiApp(
@@ -125,7 +129,9 @@ namespace ui
         return hbox({
             text(" EuNet Visualizer ") | bold | color(Color::Cyan),
             filler(),
-            text(running ? " RUNNING " : " IDLE ") | bgcolor(running ? Color::Green : Color::GrayDark) | color(Color::Black),
+            text(running ? " RUNNING " : " IDLE ") |
+                bgcolor(running ? Color::Green : Color::GrayDark) |
+                color(Color::Black),
         });
     }
 
@@ -163,6 +169,15 @@ namespace ui
         lines.push_back(separator());
         lines.push_back(text("Message:") | bold);
         lines.push_back(paragraph(sanitize_for_tui(snap.event.msg)));
+
+        if (snap.payload.has_value() && !snap.payload->empty())
+        {
+            lines.push_back(separator());
+            lines.push_back(text("Payload (Hex Dump)") | bold);
+
+            std::string hex_view = format_hex_dump(*snap.payload);
+            lines.push_back(paragraph(hex_view));
+        }
 
         if (snap.error)
         {
@@ -259,8 +274,34 @@ namespace ui
         pending_.clear();
     }
 
+    void TuiApp::trigger_scenario()
+    {
+        if (engine_.is_running())
+            return;
+
+        // 清理 UI 数据
+        reset_session();
+
+        // 清理底层数据
+        orch_.reset();
+
+        // 使用清理后的 URL
+        std::string safe_url = clean_url(input_url_val_);
+        if (safe_url.empty())
+            return;
+
+        // 把清理后的 URL 写回输入框
+        input_url_val_ = safe_url;
+
+        // 执行新请求
+        engine_.execute(
+            std::make_unique<
+                net::http::HttpGetScenario>(
+                safe_url));
+    }
+
     Color TuiApp::snapshot_color(
-        const core::EventSnapshot &snap) const
+        const core::EventSnapshot &snap)
     {
         if (!snap.error)
             return Color::Green;
@@ -268,7 +309,7 @@ namespace ui
     }
 
     std::string TuiApp::snapshot_icon(
-        const core::EventSnapshot &snap) const
+        const core::EventSnapshot &snap)
     {
         return snap.error.has_value() ? "[!]" : "[✔]";
     }
@@ -301,32 +342,6 @@ namespace ui
         return out;
     }
 
-    void TuiApp::trigger_scenario()
-    {
-        if (engine_.is_running())
-            return;
-
-        // 清理 UI 数据
-        reset_session();
-
-        // 清理底层数据
-        orch_.reset();
-
-        // 使用清理后的 URL
-        std::string safe_url = clean_url(input_url_val_);
-        if (safe_url.empty())
-            return;
-
-        // 把清理后的 URL 写回输入框
-        input_url_val_ = safe_url;
-
-        // 执行新请求
-        engine_.execute(
-            std::make_unique<
-                net::http::HttpGetScenario>(
-                safe_url));
-    }
-
     std::string TuiApp::clean_url(std::string s)
     {
         s.erase(std::remove(s.begin(), s.end(), '\n'), s.end());
@@ -335,5 +350,57 @@ namespace ui
         s.erase(0, s.find_first_not_of(" \t"));
         s.erase(s.find_last_not_of(" \t") + 1);
         return s;
+    }
+
+    std::string TuiApp::format_hex_dump(
+        std::span<const std::byte> data)
+    {
+        if (data.empty())
+        {
+            return "[ Empty Payload ]";
+        }
+
+        std::stringstream ss;
+        constexpr size_t bytes_per_line = 16;
+
+        for (size_t offset = 0; offset < data.size(); offset += bytes_per_line)
+        {
+            // 1. Offset
+            ss << fmt::format("{:08x}: ", offset);
+
+            // 2. Hex bytes
+            for (size_t i = 0; i < bytes_per_line; ++i)
+            {
+                if (offset + i < data.size())
+                {
+                    ss << fmt::format("{:02x} ", static_cast<unsigned char>(data[offset + i]));
+                }
+                else
+                {
+                    ss << "   "; // padding
+                }
+                if (i == 7)
+                {
+                    ss << " "; // separator in the middle
+                }
+            }
+            ss << " |";
+
+            // 3. ASCII chars
+            for (size_t i = 0; i < bytes_per_line && offset + i < data.size(); ++i)
+            {
+                char c = static_cast<char>(data[offset + i]);
+                if (std::isprint(static_cast<unsigned char>(c)))
+                {
+                    ss << c;
+                }
+                else
+                {
+                    ss << '.';
+                }
+            }
+            ss << "\n";
+        }
+        return ss.str();
     }
 }

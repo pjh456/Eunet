@@ -78,6 +78,7 @@ namespace core
             .state = fsm ? fsm->current_state() : LifeState::Finished,
             .ts = e.ts,
             .error = fsm ? fsm->get_last_error() : std::nullopt,
+            .payload = e.payload,
         };
 
         // 遍历所有注册的 Sink 分发快照

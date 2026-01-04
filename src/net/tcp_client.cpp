@@ -158,7 +158,8 @@ namespace net::tcp
             core::Event::info(
                 core::EventType::HTTP_SENT,
                 fmt::format("Sending {} bytes...", data.size()),
-                m_conn->fd()));
+                m_conn->fd(),
+                data));
 
         util::ByteBuffer buf(data.size());
         buf.append(data);
@@ -198,12 +199,6 @@ namespace net::tcp
                     .wrap(err)
                     .build());
         }
-
-        (void)emit_event(
-            core::Event::info(
-                core::EventType::HTTP_SENT,
-                fmt::format("Sent {} bytes", data.size()),
-                m_conn->fd()));
 
         return Ret::Ok(data.size());
     }
@@ -272,11 +267,15 @@ namespace net::tcp
             buffer.resize(readable.size());
             std::memcpy(buffer.data(), readable.data(), readable.size());
 
+            std::vector<std::byte> received_payload(
+                readable.begin(), readable.end());
+
             (void)emit_event(
                 core::Event::info(
                     core::EventType::HTTP_RECEIVED,
                     fmt::format("Received {} bytes", n),
-                    m_conn->fd()));
+                    m_conn->fd(),
+                    received_payload));
         }
 
         return Ret::Ok(n);

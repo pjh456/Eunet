@@ -20,6 +20,7 @@
 #define INCLUDE_EUNET_CORE_EVENT
 
 #include <string>
+#include <vector>
 #include <optional>
 #include <variant>
 #include <any>
@@ -76,12 +77,14 @@ namespace core
 
         std::string msg;
         std::optional<util::Error> error = std::nullopt;
+        std::optional<std::vector<std::byte>> payload = std::nullopt;
 
     public:
         static Event info(
             EventType type,
             std::string message,
-            platform::fd::FdView fd = {-1}) noexcept;
+            platform::fd::FdView fd = {-1},
+            std::optional<std::vector<std::byte>> payload = std::nullopt) noexcept;
 
         static Event failure(
             EventType type,

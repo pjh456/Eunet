@@ -33,6 +33,7 @@
 #include <fmt/format.h>
 #include <mutex>
 #include <vector>
+#include <span>
 
 #include "eunet/core/orchestrator.hpp"
 #include "eunet/tui/tui_sink.hpp"
@@ -137,26 +138,6 @@ namespace ui
          */
         void apply_pending_events();
 
-        // ============================================================
-        // helpers
-        // ============================================================
-
-        Color snapshot_color(const core::EventSnapshot &snap) const;
-
-        std::string snapshot_icon(const core::EventSnapshot &snap) const;
-
-    private:
-        /**
-         * @brief 清洗 TUI 输出
-         *
-         * 移除不合法的事件数据输出，清洗事件消息字符串
-         *
-         * @return 返回清洗后的字符串
-         */
-        std::string sanitize_for_tui(
-            std::string_view s,
-            size_t max_len = 512);
-
         /**
          * @brief 启动新的场景
          *
@@ -166,6 +147,28 @@ namespace ui
          */
         void trigger_scenario();
 
+        // ============================================================
+        // helpers
+        // ============================================================
+
+    private:
+        static Color snapshot_color(
+            const core::EventSnapshot &snap);
+
+        static std::string snapshot_icon(
+            const core::EventSnapshot &snap);
+
+        /**
+         * @brief 清洗 TUI 输出
+         *
+         * 移除不合法的事件数据输出，清洗事件消息字符串
+         *
+         * @return 返回清洗后的字符串
+         */
+        static std::string sanitize_for_tui(
+            std::string_view s,
+            size_t max_len = 512);
+
         /**
          * @brief 清洗 URL 字符串
          *
@@ -173,7 +176,17 @@ namespace ui
          *
          * @return 返回一个清洗后的 URL 字符串
          */
-        std::string clean_url(std::string s);
+        static std::string clean_url(std::string s);
+
+        /**
+         * @brief 格式化十六进制输出
+         *
+         * 将十六进制字节串格式化为字符串
+         *
+         * @return 输出格式化后的字符串
+         */
+        static std::string format_hex_dump(
+            std::span<const std::byte> data);
     };
 }
 

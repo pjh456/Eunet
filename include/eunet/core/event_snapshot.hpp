@@ -19,6 +19,7 @@
 #ifndef INCLUDE_EUNET_CORE_EVENT_SNAPSHOT
 #define INCLUDE_EUNET_CORE_EVENT_SNAPSHOT
 
+#include <vector>
 #include <optional>
 
 #include "eunet/util/error.hpp"
@@ -34,6 +35,7 @@ namespace core
         LifeState state;
         platform::time::WallPoint ts;
         std::optional<util::Error> error = std::nullopt;
+        std::optional<std::vector<std::byte>> payload = std::nullopt;
     };
 
 }
