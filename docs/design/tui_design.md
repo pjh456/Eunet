@@ -1,5 +1,10 @@
 # 用户界面层 (UI)
 
+## 第三方依赖汇总
+UI 层高度依赖渲染库。
+*   **FTXUI** (License: MIT): 用于构建 TUI（Terminal User Interface），提供组件、布局和渲染循环。
+*   **fmt** (License: MIT): 用于界面上文本的格式化显示。
+
 ## 1 `tui_sink.hpp`
 
 **设计思路**：

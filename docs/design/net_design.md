@@ -1,5 +1,11 @@
 # 网络协议层 (Net)
 
+## 第三方依赖汇总
+此层负责具体协议的解析与传输，重度依赖 Boost 库。
+*   **Boost.Beast** (License: Boost): 工业级的 HTTP/WebSocket 协议解析与序列化实现。
+*   **Boost.Asio** (License: Boost): Beast 的底层依赖（主要使用其 Buffer 概念）。
+*   **fmt** (License: MIT): 用于事件日志的格式化。
+
 ## 1 `net/connection.hpp` (及 `tcp_connection.hpp`, `udp_connection.hpp`)
 
 **设计思路**：
