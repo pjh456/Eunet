@@ -81,7 +81,7 @@ namespace ui
 
         event_menu_ = Menu(
             &dummy_entries_,
-            &selected_menu_idx_,
+            &menu_focused_idx_,
             menu_option());
 
         auto container = Container::Vertical({
@@ -89,9 +89,31 @@ namespace ui
             event_menu_,
         });
 
+        auto event_handler =
+            container |
+            CatchEvent(
+                [this](Event event)
+                {
+                // 鼠标左键释放：提交当前焦点
+                if (event.is_mouse() &&
+                    event.mouse().button == Mouse::Left &&
+                    event.mouse().motion == Mouse::Released)
+                {
+                    detail_view_idx_ = menu_focused_idx_;
+                    return false; // 让 Menu 继续处理（更新焦点）
+                }
+
+                if (event == Event::Custom)
+                {
+                    apply_pending_events();
+                    return true;
+                }
+
+                return false; });
+
         // ---- root renderer ----
         root_ = Renderer(
-            container,
+            event_handler,
             [this]
             {
                 apply_pending_events();
@@ -146,19 +168,24 @@ namespace ui
 
     Element TuiApp::render_detail_panel()
     {
-        if (snapshots_.empty() ||
-            selected_menu_idx_ < 0 ||
-            selected_menu_idx_ >= (int)snapshots_.size())
+        if (snapshots_.empty())
         {
-            return vbox({
-                       text("No Event Selected") | center,
-                       separator(),
-                       text("Waiting for events...") | dim | center,
-                   }) |
+            return vbox({text("Waiting for events...") |
+                         dim | center}) |
+                   center;
+        }
+        if (detail_view_idx_ >= (int)snapshots_.size())
+            detail_view_idx_ = 0;
+
+        if (detail_view_idx_ < 0)
+        {
+            return vbox({text("No Selection") |
+                         center}) |
                    center;
         }
 
-        const auto &snap = snapshots_[selected_menu_idx_];
+        const auto &snap = snapshots_[detail_view_idx_];
+
         Color c = snapshot_color(snap);
 
         Elements lines;
@@ -192,6 +219,11 @@ namespace ui
     MenuOption TuiApp::menu_option()
     {
         MenuOption opt;
+        opt.on_enter = [this]()
+        {
+            detail_view_idx_ = menu_focused_idx_;
+        };
+
         opt.entries_option.transform =
             [this](const EntryState &state)
         {
@@ -207,16 +239,21 @@ namespace ui
             if (preview.size() > 40)
                 preview = preview.substr(0, 37) + "...";
 
-            Element e = hbox({
+            // 如果这一行是当前详情页显示的行，给一个特殊标记
+            bool is_viewing = (state.index == detail_view_idx_);
+
+            auto row = hbox({
+                text(is_viewing ? " > " : "   ") | bold | color(Color::Yellow),
                 text(snapshot_icon(snap)) | color(c),
                 text(to_string(snap.state)) | bold,
                 text(preview) | dim,
             });
 
+            // Menu 默认的 focused 样式（反色）
             if (state.focused)
-                e = e | inverted;
+                row = row | inverted;
 
-            return e;
+            return row;
         };
         return opt;
     }
@@ -228,7 +265,9 @@ namespace ui
         snapshots_.clear();
         pending_.clear();
         dummy_entries_.clear();
-        selected_menu_idx_ = 0;
+
+        menu_focused_idx_ = 0;
+        detail_view_idx_ = 0;
 
         snapshots_.push_back(
             core::EventSnapshot{
@@ -238,6 +277,10 @@ namespace ui
                 0, core::LifeState::Init});
 
         dummy_entries_.resize(1);
+
+        // 强制激活 Menu 的初始焦点
+        screen_.PostEvent(Event::ArrowDown);
+        screen_.PostEvent(Event::ArrowUp);
     }
 
     void TuiApp::on_new_event(
@@ -254,6 +297,13 @@ namespace ui
     {
         std::lock_guard lock(data_mtx_);
 
+        if (pending_.empty())
+            return;
+
+        // 只有当用户目前的焦点就在列表的最底部时，新数据来了我们才自动滚动到底部。
+        // 如果用户正在往上翻看旧日志，我们不应该强行把他拽回来。
+        bool user_is_tracking_latest = (menu_focused_idx_ >= (int)snapshots_.size() - 1);
+
         for (auto &snap : pending_)
         {
             snapshots_.push_back(snap);
@@ -261,16 +311,28 @@ namespace ui
             if (snapshots_.size() > MAX_EVENTS)
             {
                 snapshots_.erase(snapshots_.begin());
-                if (selected_menu_idx_ > 0)
-                    --selected_menu_idx_;
+
+                // 数据被删了，索引要前移以保持指向原来的条目
+                if (menu_focused_idx_ > 0)
+                    --menu_focused_idx_;
+                if (detail_view_idx_ > 0)
+                    --detail_view_idx_;
             }
         }
 
-        if (!pending_.empty())
-            selected_menu_idx_ = snapshots_.size() - 1;
+        // 仅当用户本来就在看最新消息时，才更新焦点到最新
+        if (user_is_tracking_latest)
+        {
+            menu_focused_idx_ = snapshots_.size() - 1;
+        }
+
+        // 如果是第一条数据，自动显示详情
+        if (snapshots_.size() == 1)
+        {
+            detail_view_idx_ = 0;
+        }
 
         dummy_entries_.resize(snapshots_.size());
-
         pending_.clear();
     }
 

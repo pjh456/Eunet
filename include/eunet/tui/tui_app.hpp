@@ -69,7 +69,8 @@ namespace ui
         std::vector<std::string> dummy_entries_; // 只占位
 
         // ---------------- state ----------------
-        int selected_menu_idx_ = 0;
+        int menu_focused_idx_ = 0; // 菜单当前的焦点位置（随滚轮/键盘动）
+        int detail_view_idx_ = 0;  // 右侧详情显示的索引（仅点击/回车变）
         std::string input_url_val_ = "http://www.example.com";
 
         // ---------------- components ----------------
