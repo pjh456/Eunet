@@ -1,3 +1,24 @@
+/*
+ * ============================================================================
+ *  File Name   : error.hpp
+ *  Module      : util
+ *
+ *  Description :
+ *      定义了统一的错误处理系统。包含错误域 (Domain)、错误分类 (Category)
+ *      和严重程度 (Severity)。实现了 Error 类用于错误传递，以及 ErrorBuilder
+ *      用于链式构建错误信息。
+ *
+ *  Third-Party Dependencies :
+ *      - fmt
+ *          Usage     : 格式化错误信息字符串
+ *          License   : MIT License
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_UTIL_ERROR
 #define INCLUDE_EUNET_UTIL_ERROR
 

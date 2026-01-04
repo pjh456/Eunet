@@ -1,3 +1,22 @@
+/*
+ * ============================================================================
+ *  File Name   : poller.hpp
+ *  Module      : platform/poller
+ *
+ *  Description :
+ *      Linux epoll 系统调用的面向对象封装。
+ *      负责管理 IO 多路复用，提供 add/modify/remove/wait 接口，
+ *      是 reactor 模型的核心组件。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_PLATFORM_POLLER
 #define INCLUDE_EUNET_PLATFORM_POLLER
 

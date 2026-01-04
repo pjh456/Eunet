@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : http_request.hpp
+ *  Module      : net/http
+ *
+ *  Description :
+ *      HTTP 请求的数据结构定义。包含 Host、Port、Target (Path)
+ *      以及 Headers Map，用于参数传递。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_NET_HTTP_REQUEST
 #define INCLUDE_EUNET_NET_HTTP_REQUEST
 

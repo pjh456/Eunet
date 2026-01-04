@@ -1,3 +1,23 @@
+/*
+ * ============================================================================
+ *  File Name   : capability.cpp
+ *  Module      : platform/capability
+ *
+ *  Description :
+ *      Capability 实现。调用 libcap 库函数检查和设置进程的 Capabilities，
+ *      实现提权和降权操作。
+ *
+ *  Third-Party Dependencies :
+ *      - libcap
+ *          Usage     : 系统 Capabilities 操作
+ *          License   : BSD-style License / GPL
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/platform/capability.hpp"
 
 #include <errno.h>

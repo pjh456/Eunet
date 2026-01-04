@@ -1,3 +1,23 @@
+/*
+ * ============================================================================
+ *  File Name   : tcp_client.cpp
+ *  Module      : net/tcp
+ *
+ *  Description :
+ *      TCP 客户端逻辑实现。串联 DNS 解析 -> 建立 TCP 连接 -> 发送/接收数据
+ *      的完整流程，并在每一步产生对应的 Timeline 事件。
+ *
+ *  Third-Party Dependencies :
+ *      - fmt
+ *          Usage     : 格式化事件日志
+ *          License   : MIT License
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/net/tcp_client.hpp"
 
 #include "eunet/platform/net/dns_resolver.hpp"

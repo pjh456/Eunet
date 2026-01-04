@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : http_response.hpp
+ *  Module      : net/http
+ *
+ *  Description :
+ *      HTTP 响应的数据结构定义。包含状态码、状态原因、响应头
+ *      和响应体。提供简便的 header 查找和状态判断方法。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_NET_HTTP_RESPONSE
 #define INCLUDE_EUNET_NET_HTTP_RESPONSE
 

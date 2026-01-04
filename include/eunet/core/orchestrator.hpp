@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : orchestrator.hpp
+ *  Module      : core
+ *
+ *  Description :
+ *      系统编排器（中枢）。集成 Timeline、FsmManager 和 Sinks。
+ *      提供统一的 `emit` 接口供网络模块上报事件，处理后分发给 UI 等观察者。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_CORE_ORCHESTRATOR
 #define INCLUDE_EUNET_CORE_ORCHESTRATOR
 

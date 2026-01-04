@@ -1,3 +1,23 @@
+/*
+ * ============================================================================
+ *  File Name   : tui_sink.hpp
+ *  Module      : tui
+ *
+ *  Description :
+ *      实现了 core::sink::IEventSink 接口。充当 Core 层与 TUI 层
+ *      之间的桥梁，将后端产生的事件安全地投递到 UI 线程并触发重绘。
+ *
+ *  Third-Party Dependencies :
+ *      - FTXUI
+ *          Usage     : 触发 Screen 的重绘事件
+ *          License   : MIT License
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_TUI_TUI_SINK
 #define INCLUDE_EUNET_TUI_TUI_SINK
 

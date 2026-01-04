@@ -1,3 +1,22 @@
+/*
+ * ============================================================================
+ *  File Name   : udp_socket.hpp
+ *  Module      : platform/net
+ *
+ *  Description :
+ *      UDP 套接字的具体实现。继承自 BaseSocket，
+ *      实现了数据报 (Datagram) 的 send/recv 逻辑，
+ *      处理 UDP 特有的非连接特性。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_PLATFORM_SOCKET_UDP_SOCKET
 #define INCLUDE_EUNET_PLATFORM_SOCKET_UDP_SOCKET
 

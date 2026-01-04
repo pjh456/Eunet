@@ -1,3 +1,23 @@
+/*
+ * ============================================================================
+ *  File Name   : error.cpp
+ *  Module      : util
+ *
+ *  Description :
+ *      Error 类的实现。包含错误信息的格式化逻辑、errno/gai_error 到内部
+ *      ErrorCategory 的映射转换逻辑。
+ *
+ *  Third-Party Dependencies :
+ *      - fmt
+ *          Usage     : 格式化错误输出
+ *          License   : MIT License
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/util/error.hpp"
 
 #include <cstring>

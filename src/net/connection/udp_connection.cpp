@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : udp_connection.cpp
+ *  Module      : net/udp
+ *
+ *  Description :
+ *      UDP Connection 实现。包含客户端 Bind Loopback 的逻辑（为了分配端口），
+ *      实现了基于 ByteBuffer 的数据报读写。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/net/connection/udp_connection.hpp"
 
 namespace net::udp

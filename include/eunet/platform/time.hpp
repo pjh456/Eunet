@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : time.hpp
+ *  Module      : platform/time
+ *
+ *  Description :
+ *      时间与时钟的封装。区分单调时钟 (Monotonic Clock，用于计时)
+ *      和墙上时钟 (Wall Clock，用于展示)。提供时间点计算和格式化功能。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_PLATFORM_TIME
 #define INCLUDE_EUNET_PLATFORM_TIME
 

@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : orchestrator.cpp
+ *  Module      : core
+ *
+ *  Description :
+ *      Orchestrator 实现。线程安全地接收 emit 请求，顺序更新 Timeline 和
+ *      FSM，构建 Snapshot 并分发给所有注册的 Sink。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/core/orchestrator.hpp"
 
 #include "eunet/core/event_snapshot.hpp"

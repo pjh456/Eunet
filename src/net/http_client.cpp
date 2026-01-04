@@ -1,3 +1,28 @@
+/*
+ * ============================================================================
+ *  File Name   : http_client.cpp
+ *  Module      : net/http
+ *
+ *  Description :
+ *      HTTP 客户端核心逻辑实现。使用 Boost.Beast 序列化请求，
+ *      通过 TCPClient 发送，解析响应数据，并在关键节点（如 Headers Received）
+ *      触发业务事件。
+ *
+ *  Third-Party Dependencies :
+ *      - Boost.Beast
+ *          Usage     : HTTP 协议处理
+ *          License   : Boost Software License 1.0
+ *
+ *      - Boost.Asio
+ *          Usage     : 缓冲区适配
+ *          License   : Boost Software License 1.0
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/net/http_client.hpp"
 
 #include <sstream>

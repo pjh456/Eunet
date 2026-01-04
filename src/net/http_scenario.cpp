@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : http_scenario.cpp
+ *  Module      : net/http
+ *
+ *  Description :
+ *      HTTP 场景逻辑。包含简单的 URL 解析器（Scheme/Host/Port/Path），
+ *      驱动 HTTPClient 执行 GET 请求并处理可能的错误。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/net/http_scenario.hpp"
 #include "eunet/net/http_client.hpp"
 

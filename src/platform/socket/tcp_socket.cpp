@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : tcp_socket.cpp
+ *  Module      : platform/net
+ *
+ *  Description :
+ *      TCPSocket 实现。具体实现了 read/write 的循环读取逻辑，
+ *      以及非阻塞 connect 的处理逻辑（EINPROGRESS + epoll + getsockopt）。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/platform/socket/tcp_socket.hpp"
 #include "eunet/platform/poller.hpp"
 #include "eunet/platform/time.hpp"

@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : endpoint.hpp
+ *  Module      : platform/net
+ *
+ *  Description :
+ *      IP 地址与端口的抽象 (sockaddr_storage 封装)。
+ *      支持 IPv4 与 IPv6 的统一表达，提供从字符串解析和转换为字符串的功能。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_PLATFORM_NET_ENDPOINT
 #define INCLUDE_EUNET_PLATFORM_NET_ENDPOINT
 

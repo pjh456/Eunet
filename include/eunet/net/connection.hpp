@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : connection.hpp
+ *  Module      : net
+ *
+ *  Description :
+ *      通用连接接口定义。抽象了面向连接的读写操作 (Read/Write)，
+ *      结合 ByteBuffer 使用，为上层业务提供统一的 IO 视图。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_NET_CONNECTION
 #define INCLUDE_EUNET_NET_CONNECTION
 

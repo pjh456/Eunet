@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : dns_resolver.cpp
+ *  Module      : platform/net
+ *
+ *  Description :
+ *      DNS Resolver 实现。调用 getaddrinfo 并将结果链表转换为 C++ 友好的
+ *      Endpoint 向量，统一处理 IPv4/IPv6 结果。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/platform/net/dns_resolver.hpp"
 
 #include <netdb.h>

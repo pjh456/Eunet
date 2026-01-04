@@ -1,3 +1,22 @@
+/*
+ * ============================================================================
+ *  File Name   : tcp_socket.hpp
+ *  Module      : platform/net
+ *
+ *  Description :
+ *      TCP 套接字的具体实现。继承自 BaseSocket，
+ *      实现了流式数据的 read/write 和面向连接的 connect 逻辑，
+ *      集成了非阻塞模式下的 epoll 等待机制。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_PLATFORM_SOCKET_TCP_SOCKET
 #define INCLUDE_EUNET_PLATFORM_SOCKET_TCP_SOCKET
 

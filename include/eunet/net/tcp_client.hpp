@@ -1,3 +1,22 @@
+/*
+ * ============================================================================
+ *  File Name   : tcp_client.hpp
+ *  Module      : net/tcp
+ *
+ *  Description :
+ *      高层 TCP 客户端封装。组合了 Poller、TCPConnection 和 DNS Resolver。
+ *      管理连接建立的过程（DNS -> Connect），提供简化的 send/recv 接口，
+ *      并负责生成 TCP 层的生命周期事件。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_NET_TCP_CLIENT
 #define INCLUDE_EUNET_NET_TCP_CLIENT
 
