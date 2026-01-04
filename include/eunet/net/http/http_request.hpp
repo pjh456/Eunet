@@ -31,6 +31,8 @@ namespace net::http
         uint16_t port = 80;
         std::string target = "/";
         std::map<std::string, std::string> headers;
+        int timeout_ms = 3000;
+        bool connection_close = true;
     };
 }
 

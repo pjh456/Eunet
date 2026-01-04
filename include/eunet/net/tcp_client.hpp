@@ -69,9 +69,9 @@ namespace net::tcp
         util::ResultV<void> connect(
             const std::string &host, uint16_t port, int timeout_ms = 3000);
         util::ResultV<size_t> send(
-            const std::vector<std::byte> &data);
+            const std::vector<std::byte> &data, int timeout_ms = 3000);
         util::ResultV<size_t> recv(
-            std::vector<std::byte> &buffer, size_t max_size);
+            std::vector<std::byte> &buffer, size_t max_size, int timeout_ms = 3000);
         void close() noexcept;
 
     private:
