@@ -1,3 +1,22 @@
+/*
+ * ============================================================================
+ *  File Name   : fd.hpp
+ *  Module      : platform/fd
+ *
+ *  Description :
+ *      Linux 文件描述符 (File Descriptor) 的 RAII 封装。
+ *      确保 FD 在析构时自动关闭，提供 socket 和 pipe 的创建工厂方法，
+ *      以及 FdView 用于无所有权的引用传递。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_PLATFORM_FD
 #define INCLUDE_EUNET_PLATFORM_FD
 

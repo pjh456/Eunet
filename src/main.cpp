@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : main.cpp
+ *  Module      : root
+ *
+ *  Description :
+ *      程序主入口。解析命令行参数，初始化 Orchestrator、Engine 和 TUI App，
+ *      组装各模块并启动主循环。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include <thread>
 #include <string>
 #include <chrono>

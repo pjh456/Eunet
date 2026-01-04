@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : engine.hpp
+ *  Module      : core
+ *
+ *  Description :
+ *      执行引擎。负责在独立的后台线程中运行 Scenario，确保网络阻塞操作
+ *      不会卡住 UI 线程。管理 Worker 线程的生命周期。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_CORE_ENGINE
 #define INCLUDE_EUNET_CORE_ENGINE
 

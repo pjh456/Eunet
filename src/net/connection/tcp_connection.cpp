@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : tcp_connection.cpp
+ *  Module      : net/tcp
+ *
+ *  Description :
+ *      TCP Connection 实现。在 Socket 与 ByteBuffer 之间搬运数据，
+ *      提供 flush 机制确保数据在非阻塞 Socket 上尽可能写出。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/net/connection/tcp_connection.hpp"
 
 #include <utility>

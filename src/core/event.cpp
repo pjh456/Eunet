@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : event.cpp
+ *  Module      : core
+ *
+ *  Description :
+ *      Event 实现。提供便捷的工厂方法 (info/failure) 创建事件，
+ *      实现了事件类型到字符串的转换逻辑。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/core/event.hpp"
 
 #include <sstream>

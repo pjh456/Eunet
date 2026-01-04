@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : poller.cpp
+ *  Module      : platform/poller
+ *
+ *  Description :
+ *      Poller 实现。封装 epoll_create1, epoll_ctl, epoll_wait 等系统调用，
+ *      提供类型安全的事件注册与等待机制。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/platform/poller.hpp"
 
 #include <sys/epoll.h>

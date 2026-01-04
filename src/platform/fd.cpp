@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : fd.cpp
+ *  Module      : platform/fd
+ *
+ *  Description :
+ *      Fd 类实现。包含 socket()、pipe2() 的工厂方法实现，
+ *      以及析构时的 close() 逻辑。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/platform/fd.hpp"
 
 #include <unistd.h>

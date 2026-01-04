@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : udp_socket.cpp
+ *  Module      : platform/net
+ *
+ *  Description :
+ *      UDPSocket 实现。具体实现了 send/recv 的数据报读写逻辑，
+ *      包含对 EAGAIN/EWOULDBLOCK 的重试处理。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/platform/socket/udp_socket.hpp"
 #include "eunet/platform/poller.hpp"
 

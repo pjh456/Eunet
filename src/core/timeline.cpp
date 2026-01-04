@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : timeline.cpp
+ *  Module      : core
+ *
+ *  Description :
+ *      Timeline 实现。维护事件的主存储 vector 以及基于 FD 和 Type 的
+ *      辅助索引 (Hash Map)，提供线程安全的查询、排序和回放功能。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/core/timeline.hpp"
 
 #include <algorithm>

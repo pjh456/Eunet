@@ -1,3 +1,28 @@
+/*
+ * ============================================================================
+ *  File Name   : tui_app.hpp
+ *  Module      : tui
+ *
+ *  Description :
+ *      TUI 应用程序的主入口类。基于 FTXUI 库构建终端界面，
+ *      负责渲染事件列表、详情面板以及处理用户输入。
+ *      维护 UI 层的本地状态快照。
+ *
+ *  Third-Party Dependencies :
+ *      - FTXUI
+ *          Usage     : 终端用户界面构建与渲染
+ *          License   : MIT License
+ *
+ *      - fmt
+ *          Usage     : 字符串格式化
+ *          License   : MIT License
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_TUI_TUI_APP
 #define INCLUDE_EUNET_TUI_TUI_APP
 

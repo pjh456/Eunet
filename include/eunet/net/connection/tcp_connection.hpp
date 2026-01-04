@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : tcp_connection.hpp
+ *  Module      : net/tcp
+ *
+ *  Description :
+ *      TCP 连接的高级封装。持有 TCPSocket 实例以及输入/输出缓冲区 (ByteBuffer)。
+ *      实现了从 Socket 到 Buffer 的数据搬运逻辑，处理非阻塞 IO 的读写细节。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_NET_CONNECTION_TCP_CONNECTION
 #define INCLUDE_EUNET_NET_CONNECTION_TCP_CONNECTION
 

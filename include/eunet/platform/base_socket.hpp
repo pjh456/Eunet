@@ -1,3 +1,22 @@
+/*
+ * ============================================================================
+ *  File Name   : base_socket.hpp
+ *  Module      : platform/net
+ *
+ *  Description :
+ *      Socket 的抽象基类。封装了文件描述符 (Fd) 和 Poller 的引用，
+ *      提供通用的 bind, connect, close 接口定义，以及
+ *      获取本地/远端 Endpoint 的通用实现。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_PLATFORM_BASE_SOCKET
 #define INCLUDE_EUNET_PLATFORM_BASE_SOCKET
 

@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : dns_resolver.hpp
+ *  Module      : platform/net
+ *
+ *  Description :
+ *      DNS 解析器封装。主要包装了 getaddrinfo 系统调用，
+ *      将域名转换为 Endpoint 列表。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_PLATFORM_NET_DNS_RESOLVER
 #define INCLUDE_EUNET_PLATFORM_NET_DNS_RESOLVER
 

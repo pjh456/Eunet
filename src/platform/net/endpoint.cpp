@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : endpoint.cpp
+ *  Module      : platform/net
+ *
+ *  Description :
+ *      Endpoint 实现。包含 inet_pton/inet_ntop 的封装，
+ *      实现 sockaddr 结构体与 IP 字符串/端口号之间的相互转换。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/platform/net/endpoint.hpp"
 
 #include <arpa/inet.h>

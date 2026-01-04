@@ -1,3 +1,22 @@
+/*
+ * ============================================================================
+ *  File Name   : lifecycle_fsm.hpp
+ *  Module      : core
+ *
+ *  Description :
+ *      网络请求生命周期状态机。定义了从 Init -> Resolving -> Connecting
+ *      -> Established -> Sending -> Receiving -> Finished 的状态流转逻辑。
+ *      FsmManager 负责管理多路并发会话的状态机实例。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_CORE_LIFECYCLE_FSM
 #define INCLUDE_EUNET_CORE_LIFECYCLE_FSM
 

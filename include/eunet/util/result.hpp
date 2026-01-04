@@ -1,3 +1,22 @@
+/*
+ * ============================================================================
+ *  File Name   : result.hpp
+ *  Module      : util
+ *
+ *  Description :
+ *      提供 Result<T, E> 模板类，实现类似 Rust 的错误处理模式。
+ *      强制调用者检查返回值，消除异常 (Exception) 的使用，
+ *      支持 map/and_then 等链式操作。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_UTIL_RESULT
 #define INCLUDE_EUNET_UTIL_RESULT
 

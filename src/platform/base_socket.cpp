@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : base_socket.cpp
+ *  Module      : platform/net
+ *
+ *  Description :
+ *      BaseSocket 实现。包含 getsockname/getpeername 的系统调用封装，
+ *      以及基于 epoll 的通用 wait_fd_epoll 等待逻辑实现。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/platform/base_socket.hpp"
 
 #include <fcntl.h>

@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : udp_connection.hpp
+ *  Module      : net/udp
+ *
+ *  Description :
+ *      UDP 连接的高级封装。尽管 UDP 无连接，但此类抽象了“到一个特定对端”
+ *      的通信上下文，持有 UDPSocket 和缓冲区，统一了 IO 接口。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_NET_CONNECTION_UDP_CONNECTION
 #define INCLUDE_EUNET_NET_CONNECTION_UDP_CONNECTION
 

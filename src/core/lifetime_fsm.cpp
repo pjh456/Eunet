@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : lifecycle_fsm.cpp
+ *  Module      : core
+ *
+ *  Description :
+ *      生命周期状态机实现。核心逻辑是 on_event 方法，根据接收到的事件类型
+ *      和当前状态，计算下一个状态并更新时间戳。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/core/lifecycle_fsm.hpp"
 
 #define STATE_CASE(name)        \

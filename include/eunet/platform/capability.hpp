@@ -1,3 +1,24 @@
+/*
+ * ============================================================================
+ *  File Name   : capability.hpp
+ *  Module      : platform/capability
+ *
+ *  Description :
+ *      Linux Capabilities (libcap) 的封装。
+ *      用于细粒度的权限管理（如 CAP_NET_RAW 用于原始套接字），
+ *      支持动态申请和释放特权，提供 RAII 风格的 ScopedCapability。
+ *
+ *  Third-Party Dependencies :
+ *      - libcap
+ *          Usage     : 系统 Capabilities 管理接口 (cap_get_proc 等)
+ *          License   : BSD-style License / GPL
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_PLATFORM_CAPABILITY
 #define INCLUDE_EUNET_PLATFORM_CAPABILITY
 

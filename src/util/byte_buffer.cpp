@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : byte_buffer.cpp
+ *  Module      : util
+ *
+ *  Description :
+ *      ByteBuffer 的实现代码。包含内存移动 (compact)、扩容 (ensure_writable)
+ *      以及读写指针的具体操作逻辑。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/util/byte_buffer.hpp"
 
 #include <cstring>

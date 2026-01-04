@@ -1,3 +1,22 @@
+/*
+ * ============================================================================
+ *  File Name   : timeline.hpp
+ *  Module      : core
+ *
+ *  Description :
+ *      时间线存储与查询引擎。负责按时序存储所有 Event，并维护 FD 索引
+ *      和 Type 索引，支持高效的按时间范围、按类型或按 FD 查询事件历史。
+ *      线程安全。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_CORE_TIMELINE
 #define INCLUDE_EUNET_CORE_TIMELINE
 

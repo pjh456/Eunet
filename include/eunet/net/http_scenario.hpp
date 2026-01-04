@@ -1,3 +1,24 @@
+/*
+ * ============================================================================
+ *  File Name   : http_scenario.hpp
+ *  Module      : net/http
+ *
+ *  Description :
+ *      HTTP GET 请求场景的具体实现。
+ *      负责解析用户输入的 URL，配置 HTTP Client，并执行完整的请求流程。
+ *      是 Scenario 接口的具体实现之一。
+ *
+ *  Third-Party Dependencies :
+ *      - fmt
+ *          Usage     : 格式化日志或错误信息
+ *          License   : MIT License
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_NET_HTTP_SCENARIO
 #define INCLUDE_EUNET_NET_HTTP_SCENARIO
 

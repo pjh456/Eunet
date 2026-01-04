@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : time.cpp
+ *  Module      : platform/time
+ *
+ *  Description :
+ *      时间工具实现。基于 std::chrono 封装单调时钟与系统时钟的获取与转换，
+ *      提供 human-readable 的时间字符串格式化功能。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #include "eunet/platform/time.hpp"
 #include <thread>
 #include <iomanip>

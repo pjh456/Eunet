@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ *  File Name   : event.hpp
+ *  Module      : core
+ *
+ *  Description :
+ *      系统核心事件定义。包含事件类型 (EventType)、关联的 FD、时间戳
+ *      以及可选的错误信息。是系统各模块间通信的基本单元。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_CORE_EVENT
 #define INCLUDE_EUNET_CORE_EVENT
 

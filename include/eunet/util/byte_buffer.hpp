@@ -1,3 +1,22 @@
+/*
+ * ============================================================================
+ *  File Name   : byte_buffer.hpp
+ *  Module      : util
+ *
+ *  Description :
+ *      动态字节缓冲区实现。提供类似 Netty ByteBuf 的读写指针管理，
+ *      支持自动扩容、空间预留 (prepare) 和提交 (commit) 机制，
+ *      用于非阻塞网络 IO 的数据缓冲。
+ *
+ *  Third-Party Dependencies :
+ *      None
+ *
+ *  Author      : 爱特小登队
+ *  Created On  : 2026-1-4
+ *
+ * ============================================================================
+ */
+
 #ifndef INCLUDE_EUNET_UTIL_BYTE_BUFFER
 #define INCLUDE_EUNET_UTIL_BYTE_BUFFER
 

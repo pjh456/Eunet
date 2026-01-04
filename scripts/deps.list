@@ -10,5 +10,6 @@ libstdc++-devel
 
 # 项目依赖库
 git
+libcap-devel
 fmt-devel
 boost-devel
