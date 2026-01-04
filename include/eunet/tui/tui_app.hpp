@@ -71,11 +71,13 @@ namespace ui
         // ---------------- state ----------------
         int menu_focused_idx_ = 0; // 菜单当前的焦点位置（随滚轮/键盘动）
         int detail_view_idx_ = 0;  // 右侧详情显示的索引（仅点击/回车变）
+        int payload_scroll_ = 0;   // Payload 滚动位置
         std::string input_url_val_ = "http://www.example.com";
 
         // ---------------- components ----------------
         Component event_menu_;
         Component input_component_;
+        Component detail_component_;
         Component root_;
 
     public:

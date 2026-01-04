@@ -84,13 +84,42 @@ namespace ui
             &menu_focused_idx_,
             menu_option());
 
-        auto container = Container::Vertical({
+        auto left_container = Container::Vertical({
             input_component_,
             event_menu_,
         });
 
+        detail_component_ = Renderer(
+            [this]
+            { return render_detail_panel(); });
+
+        detail_component_ |= CatchEvent(
+            [this](Event event)
+            {
+                // 仅当鼠标在右侧区域且是滚轮事件时处理
+                if (event.is_mouse())
+                {
+                    if (event.mouse().button == Mouse::WheelDown)
+                    {
+                        payload_scroll_++;
+                        return true; // 消耗事件
+                    }
+                    if (event.mouse().button == Mouse::WheelUp)
+                    {
+                        if (payload_scroll_ > 0)
+                            payload_scroll_--;
+                        return true; // 消耗事件
+                    }
+                }
+                return false; // 其他事件忽略
+            });
+
+        auto main_container = Container::Horizontal(
+            {left_container,
+             detail_component_});
+
         auto event_handler =
-            container |
+            main_container |
             CatchEvent(
                 [this](Event event)
                 {
@@ -100,6 +129,7 @@ namespace ui
                     event.mouse().motion == Mouse::Released)
                 {
                     detail_view_idx_ = menu_focused_idx_;
+                    payload_scroll_ = 0; 
                     return false; // 让 Menu 继续处理（更新焦点）
                 }
 
@@ -163,7 +193,7 @@ namespace ui
             event_menu_->Render() | yframe |
                 vscroll_indicator | size(WIDTH, LESS_THAN, 40) | flex,
             separator(),
-            render_detail_panel() | size(WIDTH, GREATER_THAN, 60) | flex,
+            detail_component_->Render() | size(WIDTH, GREATER_THAN, 60) | flex,
         });
     }
 
@@ -204,7 +234,27 @@ namespace ui
             lines.push_back(text("Payload (Hex Dump)") | bold);
 
             std::string hex_view = format_hex_dump(*snap.payload);
-            lines.push_back(paragraph(hex_view));
+
+            int total_lines = std::count(
+                hex_view.begin(), hex_view.end(), '\n');
+            if (total_lines == 0)
+                total_lines = 1;
+
+            constexpr int VIEW_HEIGHT = 18;
+
+            if (payload_scroll_ > total_lines - VIEW_HEIGHT)
+                payload_scroll_ = std::max(0, total_lines - VIEW_HEIGHT);
+
+            float scroll_percent = 0.0f;
+            if (total_lines > VIEW_HEIGHT)
+            {
+                scroll_percent = (float)payload_scroll_ / (float)(total_lines - VIEW_HEIGHT);
+            }
+
+            lines.push_back(
+                paragraph(hex_view) |
+                focusPositionRelative(0.0f, scroll_percent) | vscroll_indicator | frame |
+                size(HEIGHT, EQUAL, VIEW_HEIGHT) | border);
         }
 
         if (snap.error)
@@ -223,6 +273,7 @@ namespace ui
         opt.on_enter = [this]()
         {
             detail_view_idx_ = menu_focused_idx_;
+            payload_scroll_ = 0;
         };
 
         opt.entries_option.transform =
