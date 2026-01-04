@@ -6,6 +6,8 @@
 
 ## 1 `platform/fd.hpp` & `fd.cpp`
 
+**外部依赖**: 无 (Linux Kernel API: `close`, `socket`, `pipe2`)
+
 **设计思路**：
 Linux 文件描述符是整数，容易忘记 `close`。RAII（资源获取即初始化）是 C++ 管理资源的黄金法则。
 
@@ -18,6 +20,8 @@ Linux 文件描述符是整数，容易忘记 `close`。RAII（资源获取即�
 *   提供 `FdView`：非拥有权的弱引用，用于传参给 `epoll` 等函数，避免所有权转移。
 
 ## 2 `platform/poller.hpp` & `poller.cpp`
+
+**外部依赖**: 无 (Linux Kernel API: `epoll_create1`, `epoll_ctl`, `epoll_wait`)
 
 **设计思路**：
 封装 `epoll` 的复杂性，提供面向对象的接口。
@@ -32,6 +36,8 @@ IO 多路复用器的管理。
 
 ## 3 `platform/base_socket.hpp` & `base_socket.cpp`
 
+**外部依赖**: 无 (Linux Kernel API: `getsockname`, `getpeername`)
+
 **设计思路**：
 提取 TCP 和 UDP 共有的逻辑（绑定 FD，获取本地/远程地址）。
 
@@ -44,6 +50,8 @@ Socket 的抽象基类。
 *   提供 `wait_fd_epoll` 辅助函数，用于实现带超时的阻塞等待。
 
 ## 4 `platform/socket/tcp_socket.hpp` & `cpp`
+
+**外部依赖**: 无 (Linux Kernel API: `send`, `recv`, `connect`, `getsockopt`)
 
 **设计思路**：
 实现 TCP 特有的流式读写。
@@ -58,6 +66,8 @@ TCP Socket 的具体操作。
 
 ## 5 `platform/socket/udp_socket.hpp` & `cpp`
 
+**外部依赖**: 无 (Linux Kernel API: `send`, `recv`)
+
 **设计思路**：
 UDP 是数据报，读写逻辑与 TCP 不同（不保证顺序，无连接状态）。
 
@@ -68,6 +78,8 @@ UDP Socket 的具体操作。
 *   `connect()`: 在 UDP 中调用 `connect` 只是为了设置默认的目标地址，不进行握手。
 
 ## 6 `platform/net/dns_resolver.hpp` & `cpp`
+
+**外部依赖**: 无 (Linux Kernel API: `getaddrinfo`, `freeaddrinfo`)
 
 **设计思路**：
 将域名转换为 IP 地址。
@@ -82,6 +94,8 @@ DNS 解析。
 
 ## 7 `platform/time.hpp` & `cpp`
 
+**外部依赖**: 无 (C++ Std: `std::chrono`, `std::put_time`)
+
 **设计思路**：
 区分“经过了多久”（Monotonic）和“现在几点”（Wall/System）。
 
@@ -91,3 +105,17 @@ DNS 解析。
 **实现方法**：
 *   `MonoClock`: 用于超时判断 (`std::chrono::steady_clock`)。
 *   `WallClock`: 用于日志记录和 Event 时间戳 (`std::chrono::system_clock`)。
+
+## 8 `platform/capability.hpp` & `cpp`
+
+**外部依赖**: `libcap` (用于 `cap_get_proc`, `cap_set_flag`)
+
+**设计思路**：
+普通用户无法创建 Raw Socket。需要封装 libcap 以便程序能动态申请 `CAP_NET_RAW` 或 `CAP_NET_BIND_SERVICE`。
+
+**模块职责**：
+特权能力的查询、申请与释放。
+
+**实现方法**：
+*   封装 libcap 的 C 接口。
+*   提供 RAII 风格的 `ScopedCapability`，确保特权在使用后立即释放。

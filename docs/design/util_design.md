@@ -6,6 +6,8 @@
 
 ## 1 `util/error.hpp` & `error.cpp`
 
+**外部依赖**: `fmt` (用于 `Error::format` 方法)
+
 **设计思路**：
 传统的 `errno` 或 `std::exception` 携带信息太少。我们需要一个结构化的错误对象，能够指导业务逻辑（例如：是网络断了还是证书错了？应该重试还是报错？）。
 
@@ -21,6 +23,8 @@
 
 ## 2 `util/result.hpp`
 
+**外部依赖**: 无 (纯标准库 `std::variant`, `std::monostate`)
+
 **设计思路**：
 C++ 异常在高性能或嵌入式场景受限，且不够显式。采用 Monadic 编程风格（类似 Rust/Swift/C++23 expected）能让错误处理路径极其清晰。
 
@@ -33,6 +37,8 @@ C++ 异常在高性能或嵌入式场景受限，且不够显式。采用 Monadi
 *   `unwrap()` 方法在错误时抛出异常，防止未检查的访问。
 
 ## 3 `util/byte_buffer.hpp` & `byte_buffer.cpp`
+
+**外部依赖**: 无 (纯标准库 `std::vector`, `std::span`)
 
 **设计思路**：
 裸指针 `char*` 操作容易越界。需要一个管理读写指针的动态缓冲区。

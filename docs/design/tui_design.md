@@ -7,6 +7,8 @@ UI 层高度依赖渲染库。
 
 ## 1 `tui_sink.hpp`
 
+**外部依赖**: `FTXUI` (依赖 `ftxui::ScreenInteractive::PostEvent`)
+
 **设计思路**：
 UI 线程和网络线程是分离的。FTXUI 不是线程安全的。Sink 需要一种机制通知 UI 刷新。
 
@@ -21,6 +23,8 @@ UI 线程和网络线程是分离的。FTXUI 不是线程安全的。Sink 需要
 
 ## 2 `tui_app.hpp`
 
+**外部依赖**: `FTXUI` (Menu, Renderer, Component, Screen), `fmt`
+
 **设计思路**：
 使用 FTXUI 构建终端界面。
 
@@ -34,6 +38,8 @@ UI 布局、渲染、交互处理。
 *   **Render Logic**: 根据 Event 状态（Error 红色，Success 绿色）动态生成 UI 元素。
 
 ## 3 `main.cpp`
+
+**外部依赖**: `FTXUI` (App loop), `fmt` (Console output fallback)
 
 **模块职责**：
 程序入口。
