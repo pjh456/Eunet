@@ -1,5 +1,9 @@
 # 基础工具层 (Util)
 
+## 第三方依赖汇总
+在此层中，尽量减少外部依赖以保证通用性。
+*   **fmt** (License: MIT): 用于格式化错误信息字符串，替代繁琐的 `sprintf` 或 `std::stringstream`。
+
 ## 1 `util/error.hpp` & `error.cpp`
 
 **设计思路**：

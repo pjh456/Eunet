@@ -1,5 +1,9 @@
 # 平台抽象层 (Platform)
 
+## 第三方依赖汇总
+此层主要封装 Linux 原生接口，唯一的外部库依赖用于特权管理。
+*   **libcap** (License: BSD/GPL): 用于操作 Linux Capabilities (CAP_NET_RAW 等)。
+
 ## 1 `platform/fd.hpp` & `fd.cpp`
 
 **设计思路**：
