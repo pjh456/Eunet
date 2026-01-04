@@ -131,7 +131,9 @@ namespace net::tcp
     }
 
     util::ResultV<size_t>
-    TCPClient::send(const std::vector<std::byte> &data)
+    TCPClient::send(
+        const std::vector<std::byte> &data,
+        int timeout_ms)
     {
         using Ret = util::ResultV<size_t>;
         using util::Error;
@@ -161,7 +163,7 @@ namespace net::tcp
         util::ByteBuffer buf(data.size());
         buf.append(data);
 
-        auto res = m_conn->write(buf, 0);
+        auto res = m_conn->write(buf, timeout_ms);
         if (res.is_err())
         {
             auto err = res.unwrap_err();
@@ -209,7 +211,8 @@ namespace net::tcp
     util::ResultV<size_t>
     TCPClient::recv(
         std::vector<std::byte> &buffer,
-        size_t max_size)
+        size_t max_size,
+        int timeout_ms)
     {
         using Ret = util::ResultV<size_t>;
         using util::Error;
@@ -232,7 +235,7 @@ namespace net::tcp
 
         util::ByteBuffer buf(max_size);
 
-        auto read_res = m_conn->read(buf, 3000);
+        auto read_res = m_conn->read(buf, timeout_ms);
         if (read_res.is_err())
         {
             auto err = read_res.unwrap_err();
