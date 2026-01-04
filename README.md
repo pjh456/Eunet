@@ -11,6 +11,9 @@
 
 EuNet 的核心目标不是“发送请求”，而是 **展示一次网络请求从开始到结束究竟发生了什么**。
 
+演示视频链接：https://pan.baidu.com/s/1G-FuzizKAmF1V6w0vFRFrQ
+提取码：e5ex
+
 ---
 
 ## ✨ 核心特性
